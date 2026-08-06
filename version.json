@@ -1,14 +1,13 @@
 {
-  "version": "0.4.0",
-  "label": "v0.4.0",
-  "releasedAt": "2026-08-06T22:20:00Z",
-  "build": "remote-admin-peerjs",
+  "version": "0.5.0",
+  "label": "v0.5.0",
+  "releasedAt": "2026-08-06T23:00:00Z",
+  "build": "premium-soldier-sprite",
   "notes": [
-    "Painel administrativo remoto em página separada",
-    "Código de sessão exibido ao pausar",
-    "Conexão PeerJS/WebRTC entre dispositivos",
-    "Cura, dano, spawn de mobs, boss e limpeza de arena",
-    "Congelamento, velocidade dos mobs e invencibilidade",
-    "Reconexão automática e estado da partida em tempo real"
+    "Soldado premium integrado como sprite animado",
+    "Animação de parado, caminhada e disparo",
+    "Skin espelhada automaticamente conforme a mira",
+    "Painel remoto PeerJS mantido",
+    "Skin oficial: soldier-premium-01"
   ]
 }
