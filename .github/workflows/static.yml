@@ -1,4 +1,5 @@
 # Simple workflow for deploying static content to GitHub Pages
+# Trigger atualizado em 2026-08-06 para validar o deploy manual
 name: Deploy static content to Pages
 
 on:
