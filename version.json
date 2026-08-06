@@ -1,12 +1,14 @@
 {
-  "version": "0.3.1",
-  "label": "v0.3.1",
-  "releasedAt": "2026-08-06T22:22:00Z",
-  "build": "detailed-soldier",
+  "version": "0.4.0",
+  "label": "v0.4.0",
+  "releasedAt": "2026-08-06T22:20:00Z",
+  "build": "remote-admin-peerjs",
   "notes": [
-    "Soldado detalhado restaurado",
-    "Arma acompanha o alvo",
-    "Versão visível dentro do jogo",
-    "Ajuste de cache"
+    "Painel administrativo remoto em página separada",
+    "Código de sessão exibido ao pausar",
+    "Conexão PeerJS/WebRTC entre dispositivos",
+    "Cura, dano, spawn de mobs, boss e limpeza de arena",
+    "Congelamento, velocidade dos mobs e invencibilidade",
+    "Reconexão automática e estado da partida em tempo real"
   ]
 }
