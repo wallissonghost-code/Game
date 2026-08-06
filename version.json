@@ -1,12 +1,12 @@
 {
-  "version": "0.5.1",
-  "label": "v0.5.1",
-  "releasedAt": "2026-08-06T23:13:00Z",
-  "build": "premium-soldier-local-loader-fix",
+  "version": "0.5.2",
+  "label": "v0.5.2",
+  "releasedAt": "2026-08-06T23:55:00Z",
+  "build": "premium-soldier-asset-fixed",
   "notes": [
-    "Sprite carregada pelo caminho local da branch main",
-    "Indicador visual confirma se a skin premium carregou",
-    "Fallback militar impede o personagem de ficar invisível",
+    "Arquivo PNG da skin premium adicionado corretamente na branch main",
+    "Caminho local assets/soldier-premium-01.png agora existe",
+    "Correção do personagem invisível",
     "Painel remoto e comandos administrativos mantidos",
     "Skin oficial: soldier-premium-01"
   ]
