@@ -1,0 +1,11 @@
+{
+  "version": "0.3.0",
+  "label": "v0.3.0",
+  "releasedAt": "2026-08-06T22:00:00Z",
+  "build": "version-system",
+  "notes": [
+    "Indicador público de versão",
+    "Verificação de atualização",
+    "Controle de cache para evitar versão antiga"
+  ]
+}
