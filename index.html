@@ -2,11 +2,51 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#070913">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>Caos Live</title>
   <style>
-    *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#070913;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow:hidden}body{display:grid;place-items:center;padding:10px}.wrap{width:min(100%,1100px)}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.top h1{font-size:clamp(22px,5vw,40px);margin:0;letter-spacing:-1px}.top strong{color:#8b5cf6}.hud{display:flex;gap:8px}.hud div{background:#111528;border:1px solid #2a3151;border-radius:14px;padding:8px 12px;min-width:76px;text-align:center}.hud span{display:block;font-size:10px;color:#98a2c8}.hud b{font-size:18px}.stage{position:relative;border:1px solid #2a3151;border-radius:20px;overflow:hidden;background:radial-gradient(circle at center,#151a35 0,#090b18 72%);box-shadow:0 24px 80px #0008}.stage canvas{display:block;width:100%;height:auto;touch-action:none}.overlay{position:absolute;inset:0;display:none;place-items:center;background:#050710d9;backdrop-filter:blur(5px);padding:24px;text-align:center}.overlay.show{display:grid}.card{max-width:480px}.card h2{font-size:clamp(28px,7vw,54px);margin:0 0 10px}.card p{color:#aeb7d4;line-height:1.5}.btn{border:0;border-radius:16px;background:linear-gradient(135deg,#7c3aed,#ec4899);color:white;font-weight:800;padding:14px 22px;font-size:16px;box-shadow:0 10px 30px #7c3aed55}.tip{text-align:center;color:#8791b7;font-size:12px;margin-top:8px}@media(max-width:700px){body{padding:0}.wrap{width:100%}.top{position:absolute;z-index:3;left:10px;right:10px;top:8px;margin:0}.top h1{font-size:20px}.hud div{min-width:58px;padding:6px 8px}.hud span{font-size:8px}.hud b{font-size:14px}.stage{border:0;border-radius:0;width:100vw;height:100vh}.stage canvas{width:100%;height:100%;object-fit:cover}.tip{display:none}}
+    :root{color-scheme:dark}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;width:100%;height:100%;background:#070913;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow:hidden;overscroll-behavior:none}
+    body{display:grid;place-items:center;padding:10px;touch-action:none;-webkit-user-select:none;user-select:none}
+    button{font:inherit;touch-action:manipulation}
+    .wrap{width:min(100%,1100px)}
+    .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px}
+    .top h1{font-size:clamp(22px,5vw,40px);margin:0;letter-spacing:-1px;white-space:nowrap}
+    .top strong{color:#8b5cf6}
+    .hud{display:flex;gap:8px}
+    .hud div{background:#111528;border:1px solid #2a3151;border-radius:14px;padding:8px 12px;min-width:76px;text-align:center;box-shadow:0 8px 24px #0004}
+    .hud span{display:block;font-size:10px;color:#98a2c8}
+    .hud b{font-size:18px;font-variant-numeric:tabular-nums}
+    .stage{position:relative;border:1px solid #2a3151;border-radius:20px;overflow:hidden;background:#090b18;box-shadow:0 24px 80px #0008;aspect-ratio:1000/620}
+    .stage canvas{display:block;width:100%;height:100%;touch-action:none}
+    .overlay{position:absolute;inset:0;display:none;place-items:center;background:#050710df;backdrop-filter:blur(5px);padding:24px;text-align:center;z-index:5}
+    .overlay.show{display:grid}
+    .card{max-width:480px}
+    .card h2{font-size:clamp(28px,7vw,54px);margin:0 0 10px}
+    .card p{color:#aeb7d4;line-height:1.5;margin:0 0 18px}
+    .btn{border:0;border-radius:16px;background:linear-gradient(135deg,#7c3aed,#ec4899);color:white;font-weight:800;padding:15px 24px;font-size:16px;min-height:52px;box-shadow:0 10px 30px #7c3aed55;cursor:pointer}
+    .btn:active{transform:scale(.98)}
+    .tip{text-align:center;color:#8791b7;font-size:12px;margin-top:8px}
+    .rotate{display:none}
+    @media(max-width:700px){
+      body{padding:0;display:block}
+      .wrap{width:100%;height:100dvh;min-height:100svh}
+      .top{position:fixed;z-index:4;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));top:max(8px,env(safe-area-inset-top));margin:0;pointer-events:none}
+      .top h1{font-size:18px;text-shadow:0 2px 12px #000}
+      .hud{gap:5px}
+      .hud div{min-width:54px;padding:6px 7px;border-radius:11px;background:#0c1020d9;backdrop-filter:blur(5px)}
+      .hud span{font-size:7px}.hud b{font-size:13px}
+      .stage{border:0;border-radius:0;width:100vw;height:100dvh;min-height:100svh;aspect-ratio:auto}
+      .tip{display:none}
+      .overlay{padding:max(24px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left))}
+      .card p{font-size:14px}.btn{width:min(100%,300px)}
+    }
+    @media(max-width:700px) and (orientation:portrait){.rotate{display:block;font-size:12px;color:#8e98b8;margin-top:12px}}
+    @media(prefers-reduced-motion:reduce){.btn{transition:none}}
   </style>
 </head>
 <body>
@@ -19,44 +59,110 @@
         <div><span>RECORDE</span><b id="record">0</b></div>
       </div>
     </header>
-    <section class="stage">
-      <canvas id="game" width="1000" height="620"></canvas>
-      <div id="start" class="overlay show"><div class="card"><h2>Sobreviva ao caos</h2><p>Mova com WASD, setas ou arrastando na tela. O personagem atira automaticamente no inimigo mais próximo.</p><button id="startBtn" class="btn">COMEÇAR</button></div></div>
+    <section class="stage" id="stage">
+      <canvas id="game" aria-label="Arena do jogo"></canvas>
+      <div id="start" class="overlay show"><div class="card"><h2>Sobreviva ao caos</h2><p>Mova com WASD, setas ou arrastando na tela. O personagem atira automaticamente no inimigo mais próximo.</p><button id="startBtn" class="btn">COMEÇAR</button><div class="rotate">Funciona em pé e deitado.</div></div></div>
       <div id="over" class="overlay"><div class="card"><h2>Fim de jogo</h2><p id="finalText">Você fez 0 pontos.</p><button id="restartBtn" class="btn">JOGAR NOVAMENTE</button></div></div>
     </section>
     <div class="tip">WASD · setas · toque e arraste</div>
   </main>
-  <script>
-    const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
-    const scoreEl=document.getElementById('score'),lifeEl=document.getElementById('life'),recordEl=document.getElementById('record');
-    const start=document.getElementById('start'),over=document.getElementById('over'),finalText=document.getElementById('finalText');
-    const keys={}; let running=false,last=0,spawnTimer=0,shotTimer=0,score=0,record=Number(localStorage.getItem('caos-record')||0),pointer=null;
-    recordEl.textContent=record;
-    const player={x:500,y:310,r:18,speed:260,life:100}; let enemies=[],bullets=[],particles=[];
-    addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true}); addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
-    function pos(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height}}
-    canvas.addEventListener('pointerdown',e=>{pointer=pos(e);canvas.setPointerCapture(e.pointerId)});canvas.addEventListener('pointermove',e=>{if(pointer)pointer=pos(e)});canvas.addEventListener('pointerup',()=>pointer=null);canvas.addEventListener('pointercancel',()=>pointer=null);
-    function reset(){player.x=500;player.y=310;player.life=100;score=0;enemies=[];bullets=[];particles=[];spawnTimer=0;shotTimer=0;scoreEl.textContent=0;lifeEl.textContent=100;over.classList.remove('show');start.classList.remove('show');running=true;last=performance.now();requestAnimationFrame(loop)}
-    function spawn(){const side=Math.floor(Math.random()*4),m=40;let x,y;if(side===0){x=Math.random()*canvas.width;y=-m}else if(side===1){x=canvas.width+m;y=Math.random()*canvas.height}else if(side===2){x=Math.random()*canvas.width;y=canvas.height+m}else{x=-m;y=Math.random()*canvas.height}const elite=Math.random()<Math.min(.25,score/2500);enemies.push({x,y,r:elite?24:15,speed:(elite?52:72)+Math.random()*28,hp:elite?4:1,max:elite?4:1})}
-    function shoot(){if(!enemies.length)return;let t=enemies[0],d=Infinity;for(const e of enemies){const q=(e.x-player.x)**2+(e.y-player.y)**2;if(q<d){d=q;t=e}}const a=Math.atan2(t.y-player.y,t.x-player.x);bullets.push({x:player.x,y:player.y,vx:Math.cos(a)*520,vy:Math.sin(a)*520,r:5})}
-    function burst(x,y,n=8){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=50+Math.random()*170;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.45+Math.random()*.3})}}
-    function end(){running=false;if(score>record){record=score;localStorage.setItem('caos-record',record);recordEl.textContent=record}finalText.textContent=`Você fez ${score} pontos.`;over.classList.add('show')}
-    function update(dt){let dx=(keys['d']||keys['arrowright']?1:0)-(keys['a']||keys['arrowleft']?1:0),dy=(keys['s']||keys['arrowdown']?1:0)-(keys['w']||keys['arrowup']?1:0);if(pointer){dx=pointer.x-player.x;dy=pointer.y-player.y}const len=Math.hypot(dx,dy)||1;if(dx||dy){player.x+=dx/len*player.speed*dt;player.y+=dy/len*player.speed*dt}player.x=Math.max(player.r,Math.min(canvas.width-player.r,player.x));player.y=Math.max(player.r,Math.min(canvas.height-player.r,player.y));
-      spawnTimer-=dt;if(spawnTimer<=0){spawn();spawnTimer=Math.max(.28,.95-score/4500)}shotTimer-=dt;if(shotTimer<=0){shoot();shotTimer=.34}
-      for(const b of bullets){b.x+=b.vx*dt;b.y+=b.vy*dt}bullets=bullets.filter(b=>b.x>-30&&b.x<canvas.width+30&&b.y>-30&&b.y<canvas.height+30);
-      for(const e of enemies){const a=Math.atan2(player.y-e.y,player.x-e.x);e.x+=Math.cos(a)*e.speed*dt;e.y+=Math.sin(a)*e.speed*dt;if(Math.hypot(e.x-player.x,e.y-player.y)<e.r+player.r){e.dead=true;player.life=Math.max(0,player.life-(e.max===4?24:12));lifeEl.textContent=player.life;burst(e.x,e.y,14);if(player.life<=0)end()}}
-      for(const b of bullets){for(const e of enemies){if(!e.dead&&Math.hypot(b.x-e.x,b.y-e.y)<b.r+e.r){b.dead=true;e.hp--;burst(b.x,b.y,4);if(e.hp<=0){e.dead=true;score+=e.max===4?40:10;scoreEl.textContent=score;burst(e.x,e.y,12)}break}}}
-      bullets=bullets.filter(b=>!b.dead);enemies=enemies.filter(e=>!e.dead);
-      for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.96;p.vy*=.96;p.life-=dt}particles=particles.filter(p=>p.life>0)
+<script>
+(()=>{
+  'use strict';
+  const canvas=document.getElementById('game'),stage=document.getElementById('stage');
+  const ctx=canvas.getContext('2d',{alpha:false,desynchronized:true});
+  const scoreEl=document.getElementById('score'),lifeEl=document.getElementById('life'),recordEl=document.getElementById('record');
+  const startEl=document.getElementById('start'),overEl=document.getElementById('over'),finalText=document.getElementById('finalText');
+  const keys=Object.create(null);
+  const MAX_ENEMIES=90,MAX_BULLETS=80,MAX_PARTICLES=180;
+  let W=1000,H=620,dpr=1,running=false,paused=false,raf=0,last=0,spawnTimer=0,shotTimer=0,score=0,pointer=null;
+  let record=0;try{record=Number(localStorage.getItem('caos-record')||0)}catch{}recordEl.textContent=record;
+  const player={x:500,y:310,r:18,speed:270,life:100,inv:0};
+  let enemies=[],bullets=[],particles=[];
+
+  function resize(){
+    const rect=stage.getBoundingClientRect();
+    const oldW=W,oldH=H;
+    W=Math.max(320,Math.round(rect.width));H=Math.max(320,Math.round(rect.height));
+    dpr=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);
+    canvas.style.width=W+'px';canvas.style.height=H+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    if(oldW&&oldH){player.x=player.x/oldW*W;player.y=player.y/oldH*H}
+    player.r=Math.max(15,Math.min(20,Math.min(W,H)*.032));
+    draw();
+  }
+
+  addEventListener('resize',resize,{passive:true});
+  addEventListener('orientationchange',()=>setTimeout(resize,120),{passive:true});
+  addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys[k]=true;if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault()});
+  addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
+  addEventListener('blur',()=>{for(const k in keys)keys[k]=false;pointer=null});
+  document.addEventListener('visibilitychange',()=>{paused=document.hidden;if(!paused&&running){last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop)}});
+
+  function pointerPos(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}
+  canvas.addEventListener('pointerdown',e=>{if(!running)return;pointer=pointerPos(e);try{canvas.setPointerCapture(e.pointerId)}catch{}e.preventDefault()},{passive:false});
+  canvas.addEventListener('pointermove',e=>{if(pointer){pointer=pointerPos(e);e.preventDefault()}},{passive:false});
+  const clearPointer=()=>{pointer=null};canvas.addEventListener('pointerup',clearPointer);canvas.addEventListener('pointercancel',clearPointer);canvas.addEventListener('lostpointercapture',clearPointer);
+  canvas.addEventListener('contextmenu',e=>e.preventDefault());
+
+  function reset(){
+    cancelAnimationFrame(raf);player.x=W/2;player.y=H/2;player.life=100;player.inv=0;score=0;
+    enemies.length=0;bullets.length=0;particles.length=0;spawnTimer=.35;shotTimer=.2;pointer=null;
+    scoreEl.textContent='0';lifeEl.textContent='100';overEl.classList.remove('show');startEl.classList.remove('show');
+    running=true;paused=false;last=performance.now();raf=requestAnimationFrame(loop);
+  }
+  function spawn(){
+    if(enemies.length>=MAX_ENEMIES)return;
+    const side=(Math.random()*4)|0,m=35;let x,y;
+    if(side===0){x=Math.random()*W;y=-m}else if(side===1){x=W+m;y=Math.random()*H}else if(side===2){x=Math.random()*W;y=H+m}else{x=-m;y=Math.random()*H}
+    const elite=Math.random()<Math.min(.24,score/2800),radius=elite?Math.max(21,player.r*1.35):Math.max(13,player.r*.82);
+    enemies.push({x,y,r:radius,speed:(elite?48:68)+Math.random()*26,hp:elite?4:1,max:elite?4:1,dead:false});
+  }
+  function shoot(){
+    if(!enemies.length||bullets.length>=MAX_BULLETS)return;
+    let target=null,best=Infinity;
+    for(const e of enemies){if(e.dead)continue;const dx=e.x-player.x,dy=e.y-player.y,q=dx*dx+dy*dy;if(q<best){best=q;target=e}}
+    if(!target)return;const a=Math.atan2(target.y-player.y,target.x-player.x);
+    bullets.push({x:player.x,y:player.y,vx:Math.cos(a)*Math.max(460,W*.52),vy:Math.sin(a)*Math.max(460,W*.52),r:4.5,dead:false});
+  }
+  function burst(x,y,n=8){
+    const room=MAX_PARTICLES-particles.length;n=Math.min(n,room);
+    for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=45+Math.random()*145;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.35+Math.random()*.3,max:.65})}
+  }
+  function end(){
+    if(!running)return;running=false;cancelAnimationFrame(raf);
+    if(score>record){record=score;try{localStorage.setItem('caos-record',String(record))}catch{}recordEl.textContent=record}
+    finalText.textContent=`Você fez ${score} pontos.`;overEl.classList.add('show');
+  }
+  function update(dt){
+    let dx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),dy=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
+    if(pointer){dx=pointer.x-player.x;dy=pointer.y-player.y;if(Math.hypot(dx,dy)<8){dx=0;dy=0}}
+    const len=Math.hypot(dx,dy)||1;if(dx||dy){player.x+=dx/len*player.speed*dt;player.y+=dy/len*player.speed*dt}
+    player.x=Math.max(player.r,Math.min(W-player.r,player.x));player.y=Math.max(player.r,Math.min(H-player.r,player.y));player.inv=Math.max(0,player.inv-dt);
+    spawnTimer-=dt;if(spawnTimer<=0){spawn();spawnTimer=Math.max(.30,.92-score/5200)}
+    shotTimer-=dt;if(shotTimer<=0){shoot();shotTimer=.33}
+    for(const b of bullets){b.x+=b.vx*dt;b.y+=b.vy*dt;if(b.x<-30||b.x>W+30||b.y<-30||b.y>H+30)b.dead=true}
+    for(const e of enemies){
+      if(e.dead)continue;const a=Math.atan2(player.y-e.y,player.x-e.x);e.x+=Math.cos(a)*e.speed*dt;e.y+=Math.sin(a)*e.speed*dt;
+      const dx=e.x-player.x,dy=e.y-player.y,rr=e.r+player.r;if(dx*dx+dy*dy<rr*rr){e.dead=true;if(player.inv<=0){player.life=Math.max(0,player.life-(e.max===4?24:12));player.inv=.22;lifeEl.textContent=player.life}burst(e.x,e.y,12);if(player.life<=0){end();return}}
     }
-    function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#0a0d1c';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.strokeStyle='#171d39';ctx.lineWidth=1;for(let x=0;x<canvas.width;x+=50){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke()}for(let y=0;y<canvas.height;y+=50){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke()}
-      for(const p of particles){ctx.globalAlpha=Math.max(0,p.life);ctx.fillStyle='#f59e0b';ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;
-      for(const b of bullets){ctx.fillStyle='#67e8f9';ctx.shadowColor='#22d3ee';ctx.shadowBlur=14;ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fill()}ctx.shadowBlur=0;
-      for(const e of enemies){ctx.fillStyle=e.max===4?'#ef4444':'#a855f7';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=18;ctx.beginPath();ctx.arc(e.x,e.y,e.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;if(e.max>1){ctx.fillStyle='#2a1320';ctx.fillRect(e.x-22,e.y-e.r-12,44,5);ctx.fillStyle='#fb7185';ctx.fillRect(e.x-22,e.y-e.r-12,44*(e.hp/e.max),5)}}
-      ctx.fillStyle='#fff';ctx.shadowColor='#8b5cf6';ctx.shadowBlur=24;ctx.beginPath();ctx.arc(player.x,player.y,player.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#7c3aed';ctx.beginPath();ctx.arc(player.x,player.y,8,0,Math.PI*2);ctx.fill()
-    }
-    function loop(t){if(!running)return;const dt=Math.min(.033,(t-last)/1000);last=t;update(dt);draw();if(running)requestAnimationFrame(loop)}
-    document.getElementById('startBtn').onclick=reset;document.getElementById('restartBtn').onclick=reset;draw();
-  </script>
+    for(const b of bullets){if(b.dead)continue;for(const e of enemies){if(e.dead)continue;const dx=b.x-e.x,dy=b.y-e.y,rr=b.r+e.r;if(dx*dx+dy*dy<rr*rr){b.dead=true;e.hp--;burst(b.x,b.y,3);if(e.hp<=0){e.dead=true;score+=e.max===4?40:10;scoreEl.textContent=score;burst(e.x,e.y,10)}break}}}
+    bullets=bullets.filter(b=>!b.dead);enemies=enemies.filter(e=>!e.dead);
+    for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.94;p.vy*=.94;p.life-=dt}particles=particles.filter(p=>p.life>0);
+  }
+  function draw(){
+    if(!W||!H)return;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#0a0d1c';ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='#171d39';ctx.lineWidth=1;const grid=Math.max(44,Math.min(58,W/18));for(let x=0;x<W;x+=grid){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}for(let y=0;y<H;y+=grid){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+    for(const p of particles){ctx.globalAlpha=Math.max(0,p.life/p.max);ctx.fillStyle='#f59e0b';ctx.beginPath();ctx.arc(p.x,p.y,2.8,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;
+    ctx.shadowColor='#22d3ee';ctx.shadowBlur=10;ctx.fillStyle='#67e8f9';for(const b of bullets){ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fill()}ctx.shadowBlur=0;
+    for(const e of enemies){ctx.fillStyle=e.max===4?'#ef4444':'#a855f7';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=12;ctx.beginPath();ctx.arc(e.x,e.y,e.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;if(e.max>1){ctx.fillStyle='#2a1320';ctx.fillRect(e.x-22,e.y-e.r-11,44,5);ctx.fillStyle='#fb7185';ctx.fillRect(e.x-22,e.y-e.r-11,44*(e.hp/e.max),5)}}
+    ctx.globalAlpha=player.inv>0&&Math.floor(player.inv*30)%2?0.35:1;ctx.fillStyle='#fff';ctx.shadowColor='#8b5cf6';ctx.shadowBlur=18;ctx.beginPath();ctx.arc(player.x,player.y,player.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#7c3aed';ctx.beginPath();ctx.arc(player.x,player.y,player.r*.44,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  }
+  function loop(t){if(!running||paused)return;const dt=Math.min(.034,Math.max(.001,(t-last)/1000));last=t;update(dt);draw();if(running)raf=requestAnimationFrame(loop)}
+  document.getElementById('startBtn').addEventListener('click',reset);document.getElementById('restartBtn').addEventListener('click',reset);
+  resize();
+})();
+</script>
 </body>
 </html>
