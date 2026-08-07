@@ -1,13 +1,13 @@
 {
-  "version": "0.6.2",
-  "label": "v0.6.2",
-  "releasedAt": "2026-08-07T10:22:00Z",
-  "build": "smart-auto-premium-freeze-shield",
+  "version": "0.6.3",
+  "label": "v0.6.3",
+  "releasedAt": "2026-08-07T10:48:00Z",
+  "build": "sanguinario-medical-drop",
   "notes": [
-    "Modo automático com desvio inteligente e distância segura dos mobs",
-    "Congelamento premium com partículas, vinheta de gelo e timer discreto",
-    "Escudo de invencibilidade premium com energia pulsante e contagem regressiva",
-    "Skin premium do soldado preservada",
-    "Painel administrativo sincronizado com os novos efeitos"
+    "Nova skill Sanguinário com gatilho a cada 10 abates",
+    "10% de chance de ganhar +1 HP máximo e +1 HP atual",
+    "90% de chance de curar 0,5 HP no gatilho do Sanguinário",
+    "Kit médico raro no mapa a cada cerca de 3 minutos",
+    "Kit médico recupera 10% da vida máxima e só existe um drop ativo por vez"
   ]
 }
