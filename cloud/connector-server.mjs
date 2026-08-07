@@ -13,7 +13,7 @@ const __filename=fileURLToPath(import.meta.url),ROOT=path.resolve(path.dirname(_
 const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.ico':'image/x-icon'};
 
 function currentVersion(){try{return String(JSON.parse(fs.readFileSync(path.join(ROOT,'version.json'),'utf8')).version||'0.0.0')}catch{return'0.0.0'}}
-function patchSharedVersion(html){const v=currentVersion();return html.replace(/Caos Live v\d+\.\d+\.\d+/g,`Caos Live v${v}`).replace(/Caos Admin v\d+\.\d+\.\d+/g,`Caos Admin v${v}`).replace(/VERSÃO v\d+\.\d+\.\d+/g,`VERSÃO v${v}`).replace(/PAINEL v\d+\.\d+\.\d+/g,`PAINEL v${v}`).replace(/const VERSION='\d+\.\d+\.\d+'/g,`const VERSION='${v}'`)}
+function patchSharedVersion(html){const v=currentVersion();return html.replace(/Caos Live v\d+\.\d+\.\d+/g,`Caos Live v${v}`).replace(/Caos Admin v\d+\.\d+\.\d+/g,`Caos Admin v${v}`).replace(/VERSÃO v\d+\.\d+\.\d+/g,`VERSÃO v${v}`).replace(/PAINEL v\d+\.\d+\.\d+/g,`PAINEL v${v}`).replace(/(<div class=\"version\">)v\d+\.\d+\.\d+/g,`$1v${v}`).replace(/(<div class=\"version\">PAINEL )v\d+\.\d+\.\d+/g,`$1v${v}`).replace(/const VERSION='\d+\.\d+\.\d+'/g,`const VERSION='${v}'`)}
 
 function patchGameHtml(html){
  let out=patchSharedVersion(html);
