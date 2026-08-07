@@ -4,22 +4,35 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#070913">
-<title>Caos Live · TikTok</title>
+<title>Caos Live · Cloud Connector</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#070913;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{display:flex;flex-direction:column}.bar{padding:12px;display:grid;grid-template-columns:1fr auto auto;gap:8px;border-bottom:1px solid #293153;background:#0b1020}.bar input{min-width:0;padding:12px;border:1px solid #35406d;border-radius:12px;background:#070b16;color:#fff;font-weight:800}.bar button{border:0;border-radius:12px;padding:12px 14px;background:#7c3aed;color:#fff;font-weight:900}.bar button.danger{background:#36131c}.status{grid-column:1/-1;font-size:11px;color:#aeb7d8}.status.ok{color:#22c55e}.status.err{color:#ef4444}.note{grid-column:1/-1;font-size:10px;color:#7f8ab4;line-height:1.4}iframe{border:0;width:100%;flex:1;background:#070913}@media(max-width:640px){.bar{grid-template-columns:1fr 1fr}.bar input{grid-column:1/-1}}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#070913;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{display:flex;flex-direction:column}.bar{padding:12px;display:grid;grid-template-columns:1.2fr 1fr 1fr auto auto;gap:8px;border-bottom:1px solid #293153;background:#0b1020}.bar input,.bar select{min-width:0;padding:12px;border:1px solid #35406d;border-radius:12px;background:#070b16;color:#fff;font-weight:800}.bar button{border:0;border-radius:12px;padding:12px 14px;background:#7c3aed;color:#fff;font-weight:900}.bar button.danger{background:#36131c}.status{grid-column:1/-1;font-size:11px;color:#aeb7d8}.status.ok{color:#22c55e}.status.err{color:#ef4444}.note{grid-column:1/-1;font-size:10px;color:#7f8ab4;line-height:1.4}iframe{border:0;width:100%;flex:1;background:#070913}@media(max-width:780px){.bar{grid-template-columns:1fr 1fr}.bar input,.bar select{grid-column:1/-1}.bar button{grid-column:auto}}
 </style>
 </head>
 <body>
 <div class="bar">
+  <select id="mode"><option value="local">LOCAL / PC</option><option value="cloud">CAOS CLOUD</option></select>
+  <input id="endpoint" placeholder="wss://seu-connector.exemplo.com">
+  <input id="key" type="password" placeholder="Chave do Connector">
+  <button id="open">CONECTAR CONNECTOR</button>
+  <button id="close" class="danger">DESCONECTAR</button>
   <input id="username" placeholder="@usuario do TikTok">
-  <button id="connect">CONECTAR LIVE</button>
-  <button id="disconnect" class="danger">DESCONECTAR</button>
-  <div id="status" class="status">Bridge local: procurando ws://127.0.0.1:2121...</div>
-  <div class="note">Para o teste real, deixe o bridge local rodando no PC. Os presentes recebidos aqui são enviados automaticamente ao motor de regras do painel abaixo.</div>
+  <button id="live">CONECTAR LIVE</button>
+  <button id="stop" class="danger">PARAR LIVE</button>
+  <div id="status" class="status">Connector desconectado.</div>
+  <div class="note">LOCAL usa ws://127.0.0.1:2121. CAOS CLOUD usa um endereço WSS hospedado e funciona também no celular. Nenhuma senha do TikTok é enviada por este painel.</div>
 </div>
 <iframe id="admin" src="painel.html" title="Caos Admin"></iframe>
 <script>
-(()=>{'use strict';const $=id=>document.getElementById(id),admin=$('admin');let ws=null,retry=null;const saved=localStorage.getItem('chaos-tiktok-user')||'';$('username').value=saved?('@'+saved):'';function set(t,c=''){const s=$('status');s.textContent=t;s.className='status '+c}function giftToAdmin(d){try{const win=admin.contentWindow;if(typeof win.caosTikTokGift==='function'){win.caosTikTokGift({gift:d.gift,count:d.count,user:'@'+(d.user||'viewer'),giftId:d.giftId});set('🎁 @'+(d.user||'viewer')+' enviou '+d.count+'× '+d.gift,'ok')}else set('Painel carregando; aguarde alguns segundos.','err')}catch(e){set('Falha ao enviar presente ao painel: '+e.message,'err')}}function openBridge(){clearTimeout(retry);try{ws?.close()}catch{}ws=new WebSocket('ws://127.0.0.1:2121');ws.onopen=()=>{set('Bridge local conectado. Informe o @ e toque em CONECTAR LIVE.','ok');const u=$('username').value.trim().replace(/^@/,'');if(u&&localStorage.getItem('chaos-tiktok-autoconnect')==='1')ws.send(JSON.stringify({type:'connect',username:u}))};ws.onmessage=e=>{let d;try{d=JSON.parse(e.data)}catch{return}if(d.type==='bridge')set('Bridge local pronto.','ok');if(d.type==='status'){if(d.status==='connecting')set('Conectando à LIVE de @'+d.username+'...');if(d.status==='connected')set('TIKTOK LIVE CONECTADO · @'+d.username,'ok');if(d.status==='disconnected')set('LIVE desconectada.')}if(d.type==='gift')giftToAdmin(d);if(d.type==='error')set('Erro TikTok: '+d.message,'err')};ws.onclose=()=>{set('Bridge local offline. Abra iniciar-tiktok.bat no PC.','err');retry=setTimeout(openBridge,3000)};ws.onerror=()=>set('Não consegui acessar o bridge local.','err')}$('connect').onclick=()=>{const u=$('username').value.trim().replace(/^@/,'');if(!u)return set('Informe o @usuario que está AO VIVO.','err');localStorage.setItem('chaos-tiktok-user',u);localStorage.setItem('chaos-tiktok-autoconnect','1');if(ws?.readyState!==1)return set('Bridge local ainda não está conectado.','err');ws.send(JSON.stringify({type:'connect',username:u}));set('Solicitando conexão com @'+u+'...')};$('disconnect').onclick=()=>{localStorage.setItem('chaos-tiktok-autoconnect','0');if(ws?.readyState===1)ws.send(JSON.stringify({type:'disconnect'}));set('Desconectando...')};openBridge()})();
+(()=>{'use strict';const $=id=>document.getElementById(id),admin=$('admin');let ws=null;const cfg=JSON.parse(localStorage.getItem('caos-cloud-config')||'{}');$('mode').value=cfg.mode||'local';$('endpoint').value=cfg.endpoint||'';$('key').value=cfg.key||'';$('username').value=cfg.user?('@'+cfg.user):'';
+function save(){localStorage.setItem('caos-cloud-config',JSON.stringify({mode:$('mode').value,endpoint:$('endpoint').value.trim(),key:$('key').value,user:$('username').value.trim().replace(/^@/,'')}))}
+function set(t,c=''){const s=$('status');s.textContent=t;s.className='status '+c}
+function url(){if($('mode').value==='local')return'ws://127.0.0.1:2121';return $('endpoint').value.trim()}
+function send(x){if(ws?.readyState===1){ws.send(JSON.stringify(x));return true}set('Connector desconectado.','err');return false}
+function giftToAdmin(d){try{const win=admin.contentWindow;if(typeof win.caosTikTokGift==='function'){win.caosTikTokGift({gift:d.gift,count:d.count,user:'@'+(d.user||'viewer'),giftId:d.giftId});set('🎁 @'+(d.user||'viewer')+' enviou '+d.count+'× '+d.gift,'ok')}else set('Painel ainda carregando.','err')}catch(e){set('Falha ao enviar presente: '+e.message,'err')}}
+function open(){save();const u=url();if(!u)return set('Informe o endereço WSS do Caos Cloud.','err');try{ws?.close()}catch{}set('Conectando ao Connector...');try{ws=new WebSocket(u)}catch(e){return set('URL inválida: '+e.message,'err')}ws.onopen=()=>{set('Connector conectado.','ok');if($('key').value)send({type:'auth',key:$('key').value})};ws.onmessage=e=>{let d;try{d=JSON.parse(e.data)}catch{return}if(d.type==='bridge'){set(d.authRequired?'Connector online · autenticação necessária':'Connector online.','ok')}if(d.type==='auth')set(d.ok?'Connector autenticado.':'Chave do Connector inválida.',d.ok?'ok':'err');if(d.type==='status'){if(d.status==='connecting')set('Conectando à LIVE de @'+d.username+'...');if(d.status==='connected')set('TIKTOK LIVE CONECTADO · @'+d.username,'ok');if(d.status==='disconnected')set('LIVE desconectada.')}if(d.type==='gift')giftToAdmin(d);if(d.type==='error')set('Erro: '+d.message,'err')};ws.onclose=()=>set('Connector desconectado.','err');ws.onerror=()=>set('Falha de conexão com o Connector.','err')}
+$('open').onclick=open;$('close').onclick=()=>{try{ws?.close()}catch{}set('Connector desconectado.')};$('live').onclick=()=>{save();const u=$('username').value.trim().replace(/^@/,'');if(!u)return set('Informe o @usuario que está AO VIVO.','err');send({type:'connect',username:u})};$('stop').onclick=()=>send({type:'disconnect'});$('mode').onchange=()=>{if($('mode').value==='local'){$('endpoint').value='';set('Modo local selecionado.')}else set('Informe o WSS do Caos Cloud.')};
+})();
 </script>
 </body>
 </html>
