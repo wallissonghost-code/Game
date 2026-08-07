@@ -1,13 +1,13 @@
 {
-  "version": "0.6.0",
-  "label": "v0.6.0",
-  "releasedAt": "2026-08-07T04:40:00Z",
-  "build": "progression-bosses-skills-environment",
+  "version": "0.6.1",
+  "label": "v0.6.1",
+  "releasedAt": "2026-08-07T09:31:00Z",
+  "build": "auto-premium-flash-boss10",
   "notes": [
-    "Mais mobs por onda e limite ampliado",
-    "Cenário e gráficos dos inimigos melhorados",
-    "Dois bosses com 100 de vida",
-    "Sistema de XP e níveis com dificuldade crescente",
-    "Escolha de skill a cada novo nível"
+    "Boss automático a cada 10 levels",
+    "Modo automático controlável pelo painel admin",
+    "Flash de luz em feixe reto",
+    "Seleção de skills redesenhada com descrições detalhadas",
+    "Skin premium do soldado restaurada"
   ]
 }
