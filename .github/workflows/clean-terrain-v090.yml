@@ -1,0 +1,41 @@
+name: Clean terrain v0.9.0
+on:
+  push:
+    paths:
+      - '.github/workflows/clean-terrain-v090.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove follower geometry and add calm atmosphere
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          p=Path('index.html')
+          s=p.read_text()
+          old="""function world(x,y){return{x:x-player.x+W/2,y:y-player.y+H/2}}function terrain(){ctx.fillStyle='#09111f';ctx.fillRect(0,0,W,H);const ox=(((-player.x+W/2)%GRID)+GRID)%GRID,oy=(((-player.y+H/2)%GRID)+GRID)%GRID;ctx.strokeStyle='#1b294666';for(let x=ox;x<W;x+=GRID){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}for(let y=oy;y<H;y+=GRID){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}for(let i=0;i<28;i++){const px=(hash(i,3)*W+((player.x*.08)%W)+W)%W,py=(hash(i,8)*H+((player.y*.08)%H)+H)%H,t=i%4;if(t===0){ctx.strokeStyle='#24314f';ctx.beginPath();ctx.arc(px,py,8,0,7);ctx.stroke()}else if(t===1){ctx.fillStyle='#173d35';ctx.beginPath();ctx.arc(px,py,5+(i%3)*3,0,7);ctx.fill()}else if(t===2){ctx.fillStyle='#33205a';ctx.beginPath();ctx.moveTo(px,py-10);ctx.lineTo(px+7,py+7);ctx.lineTo(px-7,py+7);ctx.fill()}else{ctx.fillStyle='#111827';ctx.fillRect(px-8,py-2,16,4)}}}"""
+          new="""function world(x,y){return{x:x-player.x+W/2,y:y-player.y+H/2}}function terrain(){ctx.fillStyle='#08111e';ctx.fillRect(0,0,W,H);const ox=(((-player.x+W/2)%GRID)+GRID)%GRID,oy=(((-player.y+H/2)%GRID)+GRID)%GRID;ctx.lineWidth=1;ctx.strokeStyle='rgba(30,48,78,.34)';for(let x=ox;x<W;x+=GRID){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}for(let y=oy;y<H;y+=GRID){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}const now=performance.now()/1000;ctx.save();ctx.globalCompositeOperation='screen';for(let i=0;i<7;i++){const px=hash(i,31)*W,py=hash(i,47)*H,r=80+hash(i,59)*150,drift=Math.sin(now*.08+i)*8;const g=ctx.createRadialGradient(px+drift,py,0,px+drift,py,r);g.addColorStop(0,'rgba(50,70,105,.035)');g.addColorStop(1,'rgba(7,13,24,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(px+drift,py,r,0,Math.PI*2);ctx.fill()}for(let i=0;i<18;i++){const px=(hash(i,71)*W+now*(2+hash(i,73)*3))%W,py=(hash(i,79)*H+Math.sin(now*.12+i)*3+H)%H;ctx.fillStyle='rgba(249,115,22,'+(0.08+hash(i,83)*0.12)+')';ctx.beginPath();ctx.arc(px,py,.45+hash(i,89)*.8,0,Math.PI*2);ctx.fill()}ctx.restore()}"""
+          if old not in s:
+              raise SystemExit('terrain function not found; aborting safely')
+          s=s.replace(old,new,1)
+          s=s.replace('VERSÃO v0.8.4 · CEIFADOR ANIMADO','VERSÃO v0.9.0 · CENÁRIO LIMPO')
+          p.write_text(s)
+          v={
+            'version':'0.9.0','label':'v0.9.0','releasedAt':'2026-08-07T15:52:00-03:00',
+            'build':'clean-terrain-motion-comfort',
+            'notes':['Remove triângulos, círculos e barras decorativas que seguiam a câmera','Mantém grid escuro mais suave','Adiciona névoa sutil e brasas lentas independentes da câmera','Reduz desconforto visual e enjoo']
+          }
+          Path('version.json').write_text(json.dumps(v,ensure_ascii=False,indent=2)+'\n')
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html version.json
+          git commit -m "Clean terrain visuals and remove camera-following shapes v0.9.0" || exit 0
+          git push
