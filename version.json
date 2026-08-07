@@ -1,13 +1,11 @@
 {
-  "version": "0.8.1",
-  "label": "v0.8.1",
+  "version": "0.8.3",
+  "label": "v0.8.3",
   "releasedAt": "2026-08-07T13:05:00Z",
-  "build": "espectro-family-1-of-6",
+  "build": "enemy-sprite-scale-fix",
   "notes": [
-    "Espectro agora usa skin própria premium",
-    "Flutuação animada durante perseguição",
-    "Elite e Corrompido preservam suas auras e tratamento visual",
-    "Fallback Canvas impede inimigo invisível se o asset falhar",
-    "Primeira das seis famílias convertida para skin dedicada"
+    "Espectro reduzido para escala proporcional ao jogador",
+    "Ceifador reduzido para escala proporcional ao jogador",
+    "Apenas escala visual alterada; atributos e hitboxes preservados"
   ]
 }
