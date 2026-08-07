@@ -1,13 +1,14 @@
 {
-  "version": "0.8.8",
-  "label": "v0.8.8",
-  "releasedAt": "2026-08-07T14:45:00-03:00",
-  "build": "start-button-runtime-patch-fix",
+  "version": "0.8.9",
+  "label": "v0.8.9",
+  "releasedAt": "2026-08-07T14:50:00-03:00",
+  "build": "mob-traffic-presets-admin",
   "notes": [
-    "Corrige regressão no botão COMEÇAR",
-    "Mantém modo HORDAS ON e SÓ MOB DO CHAT",
-    "Mantém mobs com @ do espectador",
-    "Mantém escudo por likes e marcos globais",
-    "Estabiliza os patches de runtime do jogo"
+    "Adiciona presets simples de proteção para mobs do chat",
+    "Poucos espectadores: 0,4s por usuário e até 20 mobs a cada 10s",
+    "Médio espectadores: 1,5s por usuário e até 15 mobs a cada 10s",
+    "Muitos espectadores: 3s por usuário e até 10 mobs a cada 10s",
+    "Liberação máxima: sem trava por usuário, até 25 mobs a cada 10s e hordas desligadas automaticamente",
+    "Adiciona ajustes avançados editáveis no painel Admin"
   ]
 }
