@@ -1,11 +1,12 @@
 {
-  "version": "0.8.3",
-  "label": "v0.8.3",
-  "releasedAt": "2026-08-07T13:05:00Z",
-  "build": "enemy-sprite-scale-fix",
+  "version": "0.8.4",
+  "label": "v0.8.4",
+  "releasedAt": "2026-08-07T15:03:00Z",
+  "build": "reaper-motion-animation",
   "notes": [
-    "Espectro reduzido para escala proporcional ao jogador",
-    "Ceifador reduzido para escala proporcional ao jogador",
-    "Apenas escala visual alterada; atributos e hitboxes preservados"
+    "Ceifador agora flutua e balança durante o movimento",
+    "Capa ganha compressão e expansão sutil",
+    "Rastro de energia acompanha o Ceifador",
+    "Atributos e hitbox preservados"
   ]
 }
