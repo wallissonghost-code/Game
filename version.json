@@ -1,13 +1,13 @@
 {
-  "version": "0.6.1",
-  "label": "v0.6.1",
-  "releasedAt": "2026-08-07T09:31:00Z",
-  "build": "auto-premium-flash-boss10",
+  "version": "0.6.2",
+  "label": "v0.6.2",
+  "releasedAt": "2026-08-07T10:22:00Z",
+  "build": "smart-auto-premium-freeze-shield",
   "notes": [
-    "Boss automático a cada 10 levels",
-    "Modo automático controlável pelo painel admin",
-    "Flash de luz em feixe reto",
-    "Seleção de skills redesenhada com descrições detalhadas",
-    "Skin premium do soldado restaurada"
+    "Modo automático com desvio inteligente e distância segura dos mobs",
+    "Congelamento premium com partículas, vinheta de gelo e timer discreto",
+    "Escudo de invencibilidade premium com energia pulsante e contagem regressiva",
+    "Skin premium do soldado preservada",
+    "Painel administrativo sincronizado com os novos efeitos"
   ]
 }
