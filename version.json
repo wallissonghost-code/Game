@@ -1,12 +1,12 @@
 {
-  "version": "0.9.2",
-  "label": "v0.9.2",
-  "releasedAt": "2026-08-07T16:17:00-03:00",
-  "build": "compact-version-level-progress",
+  "version": "0.9.3",
+  "label": "v0.9.3",
+  "releasedAt": "2026-08-07T16:25:00-03:00",
+  "build": "horde-progression-live-extras",
   "notes": [
-    "Badge de versão compacto",
-    "Percentual visível para próximo level",
-    "QUASE LÁ acima de 85%",
-    "Mantém projéteis e cenário limpo"
+    "Horda separada do level",
+    "Horda 1 começa com 15 mobs e cresce de 5 em 5 até 60",
+    "Mobs da LIVE não contam para concluir a horda",
+    "Admin mostra horda, progresso e extras da LIVE"
   ]
 }
