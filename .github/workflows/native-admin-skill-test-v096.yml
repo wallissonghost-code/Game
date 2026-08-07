@@ -1,0 +1,24 @@
+name: Native admin skill test v0.9.6
+on:
+  push:
+    paths:
+      - '.github/workflows/native-admin-skill-test-v096.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Make skill test native in admin
+        run: python scripts/make-skill-test-native-v096.py
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add painel.html cloud/connector-server.mjs version.json
+          git diff --cached --quiet || git commit -m "feat: native admin skill test v0.9.6"
+          git push
