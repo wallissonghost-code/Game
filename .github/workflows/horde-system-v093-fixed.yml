@@ -1,0 +1,25 @@
+name: Horde progression fixed v0.9.3
+on:
+  push:
+    paths:
+      - 'scripts/patch_horde_v093.py'
+      - '.github/workflows/horde-system-v093-fixed.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Apply horde patch
+        run: python scripts/patch_horde_v093.py
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cloud/connector-server.mjs version.json
+          git diff --cached --quiet || git commit -m "feat: horde progression and admin telemetry v0.9.3"
+          git push
