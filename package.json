@@ -6,7 +6,7 @@
     "tiktok": "node scripts/tiktok-bridge.mjs"
   },
   "dependencies": {
-    "tiktok-live-events": "^1.0.0",
+    "tiktok-live-events": "latest",
     "ws": "^8.18.0"
   }
 }
