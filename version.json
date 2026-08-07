@@ -1,13 +1,12 @@
 {
   "version": "0.5.2",
   "label": "v0.5.2",
-  "releasedAt": "2026-08-06T23:55:00Z",
-  "build": "premium-soldier-asset-fixed",
+  "releasedAt": "2026-08-07T04:23:00Z",
+  "build": "admin-effects-visual-feedback",
   "notes": [
-    "Arquivo PNG da skin premium adicionado corretamente na branch main",
-    "Caminho local assets/soldier-premium-01.png agora existe",
-    "Correção do personagem invisível",
-    "Painel remoto e comandos administrativos mantidos",
-    "Skin oficial: soldier-premium-01"
+    "Painel: cura +1 e dano -2",
+    "Congelamento com efeito de gelo, floco e contador nos mobs",
+    "Invencibilidade com escudo e aviso piscante no fim",
+    "Limpar Arena e Spawn Boss mantidos"
   ]
 }
