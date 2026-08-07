@@ -1,14 +1,13 @@
 {
-  "version": "0.8.7",
-  "label": "v0.8.7",
+  "version": "0.8.8",
+  "label": "v0.8.8",
   "releasedAt": "2026-08-07T14:45:00-03:00",
-  "build": "comment-only-mob-test-mode",
+  "build": "start-button-runtime-patch-fix",
   "notes": [
-    "Jogo e painel usam a mesma versão oficial v0.8.7",
-    "Admin ganhou alternância entre Hordas ON e Só Mob do Chat",
-    "Modo Só Mob do Chat desativa o spawn automático de hordas",
-    "Comentário mob continua gerando inimigo com o @ do espectador",
-    "Proteção anti-spam limita 1 mob por usuário a cada 2,5s e 20 mobs de comentário por 10s",
-    "Hordas podem ser religadas mantendo os mobs dos comentários ativos"
+    "Corrige regressão no botão COMEÇAR",
+    "Mantém modo HORDAS ON e SÓ MOB DO CHAT",
+    "Mantém mobs com @ do espectador",
+    "Mantém escudo por likes e marcos globais",
+    "Estabiliza os patches de runtime do jogo"
   ]
 }
