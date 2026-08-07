@@ -1,13 +1,14 @@
 {
-  "version": "0.8.6",
-  "label": "v0.8.6",
-  "releasedAt": "2026-08-07T14:38:00-03:00",
-  "build": "live-like-milestones-named-mobs",
+  "version": "0.8.7",
+  "label": "v0.8.7",
+  "releasedAt": "2026-08-07T14:45:00-03:00",
+  "build": "comment-only-mob-test-mode",
   "notes": [
-    "Jogo e painel usam a mesma versão oficial v0.8.6",
-    "Auto inteligente seleciona skills automaticamente",
-    "Curtidas usam escudo de 3s com recarga de 10s",
-    "Marcos globais de 100 likes destacam o @ do usuário no escudo",
-    "Comentário mob gera inimigo com o @ do espectador"
+    "Jogo e painel usam a mesma versão oficial v0.8.7",
+    "Admin ganhou alternância entre Hordas ON e Só Mob do Chat",
+    "Modo Só Mob do Chat desativa o spawn automático de hordas",
+    "Comentário mob continua gerando inimigo com o @ do espectador",
+    "Proteção anti-spam limita 1 mob por usuário a cada 2,5s e 20 mobs de comentário por 10s",
+    "Hordas podem ser religadas mantendo os mobs dos comentários ativos"
   ]
 }
