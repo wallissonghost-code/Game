@@ -1,12 +1,12 @@
 {
-  "version": "0.9.3",
-  "label": "v0.9.3",
-  "releasedAt": "2026-08-07T16:25:00-03:00",
-  "build": "horde-progression-live-extras",
+  "version": "0.9.4",
+  "label": "v0.9.4",
+  "releasedAt": "2026-08-07T16:40:00-03:00",
+  "build": "arc-voltaic-pact-abyss",
   "notes": [
-    "Horda separada do level",
-    "Horda 1 começa com 15 mobs e cresce de 5 em 5 até 60",
-    "Mobs da LIVE não contam para concluir a horda",
-    "Admin mostra horda, progresso e extras da LIVE"
+    "Arco Voltaico: cadeia de até 4 alvos a cada 7s",
+    "Pacto do Abismo: raridade Secreta e revive único",
+    "Pacto volta com 50% da vida e 2s de invencibilidade",
+    "Efeitos visuais leves em Canvas"
   ]
 }
