@@ -1,0 +1,71 @@
+name: Apply FPS monitor v0.9.0
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fps-monitor-v090.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Patch game and admin FPS monitor
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          let game=fs.readFileSync('index.html','utf8');
+          let admin=fs.readFileSync('painel.html','utf8');
+
+          const once=(src,a,b,label)=>{
+            if(src.includes(b)) return src;
+            if(!src.includes(a)) throw new Error('Pattern not found: '+label);
+            return src.replace(a,b);
+          };
+
+          // GAME: visual FPS badge + real requestAnimationFrame measurement.
+          game=once(game,'</style>','.fpsBadge{position:fixed;z-index:8;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));padding:6px 9px;border:1px solid #334155;border-radius:10px;background:#050914d9;color:#86efac;font:900 10px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;pointer-events:none}.fpsBadge.warn{color:#fde68a}.fpsBadge.bad{color:#fca5a5}.fpsBadge.hide{display:none}</style>','game css');
+          game=once(game,'<div class="ghost" id="connectionMini">PAINEL: DESCONECTADO</div>','<div class="ghost" id="connectionMini">PAINEL: DESCONECTADO</div><div class="fpsBadge" id="fpsBadge">FPS —</div>','game badge');
+          game=once(game,"toastText='',toastUntil=0;","toastText='',toastUntil=0,fpsValue=0,fpsFrames=0,fpsClock=performance.now(),fpsVisible=true;",'game fps vars');
+          game=once(game,"if(c==='ping')broadcast();","if(c==='fps'){fpsVisible=!!d.value;const el=$('fpsBadge');if(el)el.classList.toggle('hide',!fpsVisible)}if(c==='ping')broadcast();",'game fps command');
+          game=once(game,"room,ts:Date.now()}","room,fps:Math.round(fpsValue),fpsVisible,ts:Date.now()}",'game state fps');
+          game=once(game,"function loop(t){if(!running)return;const dt=Math.min(.033,(t-last)/1000);last=t;update(dt);draw();raf=requestAnimationFrame(loop)}","function loop(t){if(!running)return;fpsFrames++;if(t-fpsClock>=500){fpsValue=fpsFrames*1000/(t-fpsClock);fpsFrames=0;fpsClock=t;const el=$('fpsBadge');if(el){const n=Math.round(fpsValue);el.textContent='FPS '+n;el.classList.toggle('warn',n>=30&&n<45);el.classList.toggle('bad',n<30)}}const dt=Math.min(.033,(t-last)/1000);last=t;update(dt);draw();raf=requestAnimationFrame(loop)}",'game loop fps');
+
+          // ADMIN: always show the REAL FPS received from the game over PeerJS.
+          admin=once(admin,'<div><span>AUTO</span><b id="autoState">OFF</b></div></div>','<div><span>AUTO</span><b id="autoState">OFF</b></div><div><span>FPS JOGO</span><b id="fps">—</b></div></div>','admin fps metric');
+          admin=once(admin,'<button data-cmd="pause">Ⅱ PAUSAR</button><button data-cmd="resume">▶ CONTINUAR</button>','<button data-cmd="pause">Ⅱ PAUSAR</button><button data-cmd="resume">▶ CONTINUAR</button><button class="good" data-cmd="fps" data-value="true">📈 MOSTRAR FPS<small>exibe no canto do jogo</small></button><button class="blue" data-cmd="fps" data-value="false">🙈 OCULTAR FPS<small>Admin continua monitorando</small></button>','admin fps buttons');
+          admin=admin.replace(/if\(d\.type==='state'\)\{/g,"if(d.type==='state'){if($('fps')){const f=Number(d.fps||0);$('fps').textContent=f?Math.round(f):'—';$('fps').style.color=f>=60?'#86efac':f>=45?'#bbf7d0':f>=30?'#fde68a':'#fca5a5';net.textContent=(f>=60?'FPS ótimo':f>=45?'FPS bom':f>=30?'FPS pesado':'FPS baixo / travando')+(f?' · '+Math.round(f)+' FPS':'')+' · '+(d.mobs??0)+' mobs'}");
+          if(!admin.includes("$('fps').textContent")) throw new Error('Admin state handler was not patched');
+
+          fs.writeFileSync('index.html',game);
+          fs.writeFileSync('painel.html',admin);
+          fs.writeFileSync('version.json',JSON.stringify({
+            version:'0.9.0',label:'v0.9.0',releasedAt:new Date().toISOString(),build:'real-fps-monitor',notes:[
+              'FPS real medido no loop do jogo',
+              'FPS enviado ao painel Admin via PeerJS',
+              'Botões Mostrar FPS e Ocultar FPS no Admin',
+              'Ocultar no jogo não interrompe o monitoramento do Admin',
+              'Indicador de desempenho por faixa de FPS'
+            ]
+          },null,2)+'\n');
+          NODE
+      - name: Commit generated changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html painel.html version.json
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "Add real game FPS monitoring v0.9.0"
+            git push
+          fi
