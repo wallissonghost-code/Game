@@ -1,16 +1,14 @@
 {
-  "version": "0.7.0",
-  "label": "v0.7.0",
-  "releasedAt": "2026-08-07T11:08:00Z",
-  "build": "skill-levels-rarities-stable-admin",
+  "version": "0.8.0",
+  "label": "v0.8.0",
+  "releasedAt": "2026-08-07T11:22:00Z",
+  "build": "premium-enemy-families-elites-corrupted-bosses",
   "notes": [
-    "Skills agora evoluem do Lv1 ao Lv5",
-    "Repetir a mesma skill aumenta o nível e mostra o próximo ganho",
-    "Skills no Lv5 saem do sorteio",
-    "Raridades Comum, Rara, Épica e Lendária com pesos diferentes",
-    "Dobro de XP rebalanceado para bônus progressivo de +20% por nível",
-    "Sanguinário escala chance e cura conforme o nível",
-    "Painel admin com reconexão única, geração de conexão e heartbeat",
-    "Correção da oscilação causada por múltiplos eventos de reconexão concorrentes"
+    "Seis famílias visuais de inimigos: Espectro, Ceifador, Infectado, Criatura das Sombras, Observador e Brutamonte",
+    "Inimigos Elite a partir de níveis mais altos com aura, atributos e recompensa ampliados",
+    "Inimigos Corrompidos em níveis avançados com visual vermelho, mais vida, dano, velocidade e XP",
+    "Colosso Carmesim e Senhor do Vazio redesenhados com identidade visual própria",
+    "Criatura das Sombras ganhou movimento em zigue-zague",
+    "Painel admin atualizado para spawnar todas as novas famílias"
   ]
 }
