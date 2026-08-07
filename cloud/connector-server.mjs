@@ -25,17 +25,30 @@ const MIME = {
   '.ico': 'image/x-icon'
 };
 
+function patchAdminHtml(html) {
+  return html
+    .replace('PRESET: 1 ROSA → ESPECTRO', 'PRESET: 1 CURTIDA → ESCUDO')
+    .replace('value="Rosa" placeholder="Presente"', 'value="Curtida" placeholder="Evento"')
+    .replace("$('presetRose').onclick=()=>{rules.push({id:Date.now()+'-rose',gift:'Rosa',count:1,action:'spawn',mob:'wraith',value:1,cooldown:2});saveRules();$('liveStatus').textContent='Preset criado: 1 Rosa/Rose → 1 Espectro.'};", "$('presetRose').onclick=()=>{rules.push({id:Date.now()+'-like',gift:'Curtida',count:1,action:'invincible',mob:'wraith',value:2,cooldown:0});saveRules();$('liveStatus').textContent='Preset criado: 1 Curtida → Escudo por 2s.';};")
+    .replace("loadRules();cloudState('Cloud desconectado.');", "loadRules();if(!rules.some(r=>norm(r.gift)==='curtida')){rules.push({id:'default-like-shield',gift:'Curtida',count:1,action:'invincible',mob:'wraith',value:2,cooldown:0});saveRules()}cloudState('Cloud desconectado.');");
+}
+
 function serveFile(res, file) {
   fs.readFile(file, (err, data) => {
     if (err) {
       res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
       return res.end('Not found');
     }
+    const ext = path.extname(file).toLowerCase();
+    let body = data;
+    if (ext === '.html' && path.basename(file) === 'painel.html') {
+      body = Buffer.from(patchAdminHtml(data.toString('utf8')), 'utf8');
+    }
     res.writeHead(200, {
-      'content-type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream',
+      'content-type': MIME[ext] || 'application/octet-stream',
       'cache-control': 'no-store'
     });
-    res.end(data);
+    res.end(body);
   });
 }
 
@@ -102,6 +115,13 @@ async function connectLive(ws, state, username) {
     const gift = normalizeGift(data);
     if (gift.giftType === 1 && gift.repeatEnd === false) return;
     safeSend(ws, gift);
+  });
+
+  live.on(WebcastEvent.LIKE, (data) => {
+    const user = data.user?.uniqueId || data.uniqueId || data.nickname || 'viewer';
+    const count = Math.max(1, Number(data.likeCount || data.count || 1) || 1);
+    // Reaproveita o mesmo motor de regras do Admin tratando a curtida como evento configurável.
+    safeSend(ws, { type: 'gift', user, gift: 'Curtida', count, giftId: 'tiktok-like', repeatEnd: true, giftType: 0 });
   });
 
   live.on(WebcastEvent.CHAT, (data) => {
