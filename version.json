@@ -1,12 +1,12 @@
 {
-  "version": "0.9.1",
-  "label": "v0.9.1",
-  "releasedAt": "2026-08-07T16:06:00-03:00",
-  "build": "directional-projectiles-clean-terrain",
+  "version": "0.9.2",
+  "label": "v0.9.2",
+  "releasedAt": "2026-08-07T16:17:00-03:00",
+  "build": "compact-version-level-progress",
   "notes": [
-    "Troca bolinha azul por projétil direcional",
-    "Projétil com corpo, ponta luminosa e rastro curto",
-    "Mantém cenário limpo sem formas geométricas seguidoras",
-    "Renderização leve em canvas para preservar FPS"
+    "Badge de versão compacto",
+    "Percentual visível para próximo level",
+    "QUASE LÁ acima de 85%",
+    "Mantém projéteis e cenário limpo"
   ]
 }
