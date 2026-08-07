@@ -3,10 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "tiktok": "node scripts/tiktok-bridge.mjs"
+    "tiktok": "node scripts/tiktok-bridge.mjs",
+    "cloud": "node cloud/connector-server.mjs"
   },
   "dependencies": {
-    "tiktok-live-events": "latest",
+    "tiktok-live-connector": "^2.4.3",
     "ws": "^8.18.0"
   }
 }
