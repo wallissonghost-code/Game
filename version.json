@@ -1,12 +1,13 @@
 {
-  "version": "0.9.4",
-  "label": "v0.9.4",
-  "releasedAt": "2026-08-07T16:40:00-03:00",
-  "build": "arc-voltaic-pact-abyss",
+  "version": "0.9.5",
+  "label": "v0.9.5",
+  "releasedAt": "2026-08-07T17:10:00-03:00",
+  "build": "admin-skill-test-console",
   "notes": [
-    "Arco Voltaico: cadeia de até 4 alvos a cada 7s",
-    "Pacto do Abismo: raridade Secreta e revive único",
-    "Pacto volta com 50% da vida e 2s de invencibilidade",
-    "Efeitos visuais leves em Canvas"
+    "Admin ganhou Teste de Habilidades",
+    "Seleciona skill e LV1-LV5",
+    "Ativar todas ou todas no máximo",
+    "Pacto do Abismo limitado a LV1",
+    "Painel mostra skills ativas em tempo real"
   ]
 }
