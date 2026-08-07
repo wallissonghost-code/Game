@@ -1,0 +1,35 @@
+name: Integrate Ceifador
+on:
+  push:
+    paths:
+      - 'assets/enemies/ceifador.svg'
+      - '.github/workflows/integrate-ceifador.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch game
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          s=s.replace('Caos Live v0.8.1','Caos Live v0.8.2').replace("const VERSION='0.8.1'","const VERSION='0.8.2'").replace('VERSÃO v0.8.1 · ESPECTRO 1/6','VERSÃO v0.8.2 · CEIFADOR 2/6')
+          old="wraithSprite.src='./assets/enemies/espectro.svg?v=081';"
+          new=old+"\nconst reaperSprite=new Image();let reaperReady=false;reaperSprite.onload=()=>reaperReady=true;reaperSprite.onerror=()=>reaperReady=false;reaperSprite.src='./assets/enemies/ceifador.svg?v=082';"
+          if 'const reaperSprite=new Image()' not in s: s=s.replace(old,new)
+          old2="else if(e.type==='wraith')drawWraith(e);else if(e.type==='reaper')drawReaper(e);"
+          new2="else if(e.type==='wraith')drawWraith(e);else if(e.type==='reaper'&&reaperReady){const bob=Math.sin(e.t*3+e.seed)*1.5,sz=e.r*4.7;ctx.save();ctx.globalAlpha=.98;if(e.tier===2)ctx.filter='saturate(1.5) hue-rotate(300deg) brightness(1.05)';else if(e.tier===1)ctx.filter='saturate(1.3) brightness(1.15)';ctx.drawImage(reaperSprite,-sz/2,-sz*.57+bob,sz,sz);ctx.restore()}else if(e.type==='reaper')drawReaper(e);"
+          if old2 not in s and "e.type==='reaper'&&reaperReady" not in s: raise SystemExit('renderer marker not found')
+          s=s.replace(old2,new2)
+          p.write_text(s)
+          PY
+      - name: Commit
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          git diff --cached --quiet || (git commit -m 'feat: integrate Ceifador 2/6 v0.8.2' && git push)
