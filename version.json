@@ -1,13 +1,12 @@
 {
-  "version": "0.9.5",
-  "label": "v0.9.5",
-  "releasedAt": "2026-08-07T17:10:00-03:00",
-  "build": "admin-skill-test-console",
+  "version": "0.9.6",
+  "label": "v0.9.6",
+  "releasedAt": "2026-08-07T19:15:00-03:00",
+  "build": "native-admin-skill-test",
   "notes": [
-    "Admin ganhou Teste de Habilidades",
-    "Seleciona skill e LV1-LV5",
-    "Ativar todas ou todas no máximo",
-    "Pacto do Abismo limitado a LV1",
-    "Painel mostra skills ativas em tempo real"
+    "Teste de Habilidades agora é nativo no painel Admin",
+    "Não depende mais da injeção dinâmica para aparecer",
+    "Mantém seleção de skill, LV1-LV5, todas, máximo e reset",
+    "Pacto do Abismo continua limitado ao LV1"
   ]
 }
