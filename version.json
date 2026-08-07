@@ -1,12 +1,13 @@
 {
-  "version": "0.8.5",
-  "label": "v0.8.5",
-  "releasedAt": "2026-08-07T14:30:00-03:00",
-  "build": "tiktok-like-shield-cloud",
+  "version": "0.8.6",
+  "label": "v0.8.6",
+  "releasedAt": "2026-08-07T14:38:00-03:00",
+  "build": "live-like-milestones-named-mobs",
   "notes": [
-    "Jogo e painel agora usam a mesma versão oficial",
-    "Caos Cloud integrado ao painel mobile",
-    "Curtidas do TikTok podem acionar regras do jogo",
-    "Preset de teste: 1 curtida ativa escudo/invencibilidade"
+    "Jogo e painel usam a mesma versão oficial v0.8.6",
+    "Auto inteligente seleciona skills automaticamente",
+    "Curtidas usam escudo de 3s com recarga de 10s",
+    "Marcos globais de 100 likes destacam o @ do usuário no escudo",
+    "Comentário mob gera inimigo com o @ do espectador"
   ]
 }
