@@ -1,14 +1,13 @@
 {
-  "version": "0.8.0",
-  "label": "v0.8.0",
-  "releasedAt": "2026-08-07T11:22:00Z",
-  "build": "premium-enemy-families-elites-corrupted-bosses",
+  "version": "0.8.1",
+  "label": "v0.8.1",
+  "releasedAt": "2026-08-07T13:05:00Z",
+  "build": "espectro-family-1-of-6",
   "notes": [
-    "Seis famílias visuais de inimigos: Espectro, Ceifador, Infectado, Criatura das Sombras, Observador e Brutamonte",
-    "Inimigos Elite a partir de níveis mais altos com aura, atributos e recompensa ampliados",
-    "Inimigos Corrompidos em níveis avançados com visual vermelho, mais vida, dano, velocidade e XP",
-    "Colosso Carmesim e Senhor do Vazio redesenhados com identidade visual própria",
-    "Criatura das Sombras ganhou movimento em zigue-zague",
-    "Painel admin atualizado para spawnar todas as novas famílias"
+    "Espectro agora usa skin própria premium",
+    "Flutuação animada durante perseguição",
+    "Elite e Corrompido preservam suas auras e tratamento visual",
+    "Fallback Canvas impede inimigo invisível se o asset falhar",
+    "Primeira das seis famílias convertida para skin dedicada"
   ]
 }
