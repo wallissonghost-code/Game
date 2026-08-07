@@ -1,12 +1,11 @@
 {
-  "version": "0.9.6",
-  "label": "v0.9.6",
-  "releasedAt": "2026-08-07T19:15:00-03:00",
-  "build": "native-admin-skill-test",
+  "version": "0.9.7",
+  "label": "v0.9.7",
+  "releasedAt": "2026-08-07T19:22:00-03:00",
+  "build": "admin-route-hard-refresh",
   "notes": [
-    "Teste de Habilidades agora é nativo no painel Admin",
-    "Não depende mais da injeção dinâmica para aparecer",
-    "Mantém seleção de skill, LV1-LV5, todas, máximo e reset",
-    "Pacto do Abismo continua limitado ao LV1"
+    "Admin /admin e /admin-latest servem o painel.html atual",
+    "Rota /painel.html alinhada ao mesmo Admin",
+    "Mantém Teste de Habilidades nativo"
   ]
 }
