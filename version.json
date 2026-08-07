@@ -1,12 +1,12 @@
 {
-  "version": "0.9.0",
-  "label": "v0.9.0",
-  "releasedAt": "2026-08-07T15:52:00-03:00",
-  "build": "clean-terrain-motion-comfort",
+  "version": "0.9.1",
+  "label": "v0.9.1",
+  "releasedAt": "2026-08-07T16:06:00-03:00",
+  "build": "directional-projectiles-clean-terrain",
   "notes": [
-    "Remove triângulos, círculos e barras decorativas que seguiam a câmera",
-    "Mantém grid escuro mais suave",
-    "Adiciona névoa sutil e brasas lentas independentes da câmera",
-    "Reduz desconforto visual e enjoo"
+    "Troca bolinha azul por projétil direcional",
+    "Projétil com corpo, ponta luminosa e rastro curto",
+    "Mantém cenário limpo sem formas geométricas seguidoras",
+    "Renderização leve em canvas para preservar FPS"
   ]
 }
