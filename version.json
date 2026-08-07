@@ -1,14 +1,12 @@
 {
-  "version": "0.8.9",
-  "label": "v0.8.9",
-  "releasedAt": "2026-08-07T14:50:00-03:00",
-  "build": "mob-traffic-presets-admin",
+  "version": "0.9.0",
+  "label": "v0.9.0",
+  "releasedAt": "2026-08-07T15:52:00-03:00",
+  "build": "clean-terrain-motion-comfort",
   "notes": [
-    "Adiciona presets simples de proteção para mobs do chat",
-    "Poucos espectadores: 0,4s por usuário e até 20 mobs a cada 10s",
-    "Médio espectadores: 1,5s por usuário e até 15 mobs a cada 10s",
-    "Muitos espectadores: 3s por usuário e até 10 mobs a cada 10s",
-    "Liberação máxima: sem trava por usuário, até 25 mobs a cada 10s e hordas desligadas automaticamente",
-    "Adiciona ajustes avançados editáveis no painel Admin"
+    "Remove triângulos, círculos e barras decorativas que seguiam a câmera",
+    "Mantém grid escuro mais suave",
+    "Adiciona névoa sutil e brasas lentas independentes da câmera",
+    "Reduz desconforto visual e enjoo"
   ]
 }
