@@ -1,12 +1,13 @@
 {
-  "version": "0.5.2",
-  "label": "v0.5.2",
-  "releasedAt": "2026-08-07T04:23:00Z",
-  "build": "admin-effects-visual-feedback",
+  "version": "0.6.0",
+  "label": "v0.6.0",
+  "releasedAt": "2026-08-07T04:40:00Z",
+  "build": "progression-bosses-skills-environment",
   "notes": [
-    "Painel: cura +1 e dano -2",
-    "Congelamento com efeito de gelo, floco e contador nos mobs",
-    "Invencibilidade com escudo e aviso piscante no fim",
-    "Limpar Arena e Spawn Boss mantidos"
+    "Mais mobs por onda e limite ampliado",
+    "Cenário e gráficos dos inimigos melhorados",
+    "Dois bosses com 100 de vida",
+    "Sistema de XP e níveis com dificuldade crescente",
+    "Escolha de skill a cada novo nível"
   ]
 }
