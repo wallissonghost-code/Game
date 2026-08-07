@@ -1,0 +1,12 @@
+{
+  "name": "caos-live",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "tiktok": "node scripts/tiktok-bridge.mjs"
+  },
+  "dependencies": {
+    "tiktok-live-events": "^1.0.0",
+    "ws": "^8.18.0"
+  }
+}
