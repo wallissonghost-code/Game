@@ -25,7 +25,9 @@ if not exist node_modules (
 )
 echo.
 echo Iniciando bridge local...
+echo O painel abrira automaticamente no navegador.
 echo Deixe esta janela aberta durante a LIVE.
 echo.
+start "" cmd /c "timeout /t 3 /nobreak >nul & start http://127.0.0.1:8787/painel-live.html"
 call npm run tiktok
 pause
