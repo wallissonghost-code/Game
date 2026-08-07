@@ -1,18 +1,63 @@
 import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 import { TikTokLiveConnection, WebcastEvent } from 'tiktok-live-connector';
 
 const PORT = Number(process.env.PORT || 8787);
 const ACCESS_KEY = String(process.env.CAOS_CONNECTOR_KEY || '').trim();
 const MAX_CLIENTS = Math.max(1, Number(process.env.CAOS_MAX_CLIENTS || 25));
+const __filename = fileURLToPath(import.meta.url);
+const ROOT = path.resolve(path.dirname(__filename), '..');
+
+const MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.ico': 'image/x-icon'
+};
+
+function serveFile(res, file) {
+  fs.readFile(file, (err, data) => {
+    if (err) {
+      res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
+      return res.end('Not found');
+    }
+    res.writeHead(200, {
+      'content-type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream',
+      'cache-control': 'no-store'
+    });
+    res.end(data);
+  });
+}
 
 const server = http.createServer((req, res) => {
-  if (req.url === '/health') {
+  const pathname = decodeURIComponent((req.url || '/').split('?')[0]);
+
+  if (pathname === '/health') {
     res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
     return res.end(JSON.stringify({ ok: true, service: 'caos-cloud-connector', clients: wss.clients.size }));
   }
-  res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
-  res.end('CAOS CLOUD CONNECTOR ONLINE');
+
+  if (pathname === '/') return serveFile(res, path.join(ROOT, 'painel.html'));
+  if (pathname === '/admin') return serveFile(res, path.join(ROOT, 'painel.html'));
+  if (pathname === '/jogo') return serveFile(res, path.join(ROOT, 'index.html'));
+
+  const relative = pathname.replace(/^\/+/, '');
+  const file = path.resolve(ROOT, relative);
+  if (!file.startsWith(ROOT)) {
+    res.writeHead(403, { 'content-type': 'text/plain; charset=utf-8' });
+    return res.end('Forbidden');
+  }
+  serveFile(res, file);
 });
 
 const wss = new WebSocketServer({ server });
@@ -119,5 +164,7 @@ wss.on('connection', (ws) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`CAOS CLOUD CONNECTOR online :${PORT}`);
+  console.log(`Admin: /admin`);
+  console.log(`Jogo: /jogo`);
   console.log(`Health: /health`);
 });
