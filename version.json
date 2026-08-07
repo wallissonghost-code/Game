@@ -1,12 +1,12 @@
 {
-  "version": "0.8.4",
-  "label": "v0.8.4",
-  "releasedAt": "2026-08-07T15:03:00Z",
-  "build": "reaper-motion-animation",
+  "version": "0.8.5",
+  "label": "v0.8.5",
+  "releasedAt": "2026-08-07T14:30:00-03:00",
+  "build": "tiktok-like-shield-cloud",
   "notes": [
-    "Ceifador agora flutua e balança durante o movimento",
-    "Capa ganha compressão e expansão sutil",
-    "Rastro de energia acompanha o Ceifador",
-    "Atributos e hitbox preservados"
+    "Jogo e painel agora usam a mesma versão oficial",
+    "Caos Cloud integrado ao painel mobile",
+    "Curtidas do TikTok podem acionar regras do jogo",
+    "Preset de teste: 1 curtida ativa escudo/invencibilidade"
   ]
 }
