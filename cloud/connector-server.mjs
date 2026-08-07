@@ -33,7 +33,9 @@ function patchSharedVersion(html) {
 }
 
 function patchAdminHtml(html) {
+  const v = currentVersion();
   return patchSharedVersion(html)
+    .replace('<header class="top"><h1>CAOS <b>ADMIN</b></h1><a href="index.html">ABRIR JOGO</a></header>', `<header class="top"><div><h1>CAOS <b>ADMIN</b></h1><div style="display:inline-block;margin-top:6px;padding:4px 8px;border:1px solid #343b63;border-radius:999px;background:#0c1020;color:#aeb8df;font-size:10px;font-weight:900">VERSÃO v${v}</div></div><a href="index.html">ABRIR JOGO</a></header>`)
     .replace('PRESET: 1 ROSA → ESPECTRO', 'PRESET: 1 CURTIDA → ESCUDO')
     .replace('value="Rosa" placeholder="Presente"', 'value="Curtida" placeholder="Evento"')
     .replace("$('presetRose').onclick=()=>{rules.push({id:Date.now()+'-rose',gift:'Rosa',count:1,action:'spawn',mob:'wraith',value:1,cooldown:2});saveRules();$('liveStatus').textContent='Preset criado: 1 Rosa/Rose → 1 Espectro.'};", "$('presetRose').onclick=()=>{rules.push({id:Date.now()+'-like',gift:'Curtida',count:1,action:'invincible',mob:'wraith',value:2,cooldown:0});saveRules();$('liveStatus').textContent='Preset criado: 1 Curtida → Escudo por 2s.';};")
