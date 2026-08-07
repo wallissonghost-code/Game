@@ -56,12 +56,12 @@ function patchGameHtml(html){
  rep("shotTimer-=dt;if(shotTimer<=0){shoot();shotTimer=player.fireRate}", "castArc();shotTimer-=dt;if(shotTimer<=0){shoot();shotTimer=player.fireRate}");
  rep("if(player.life<=0){running=false;$('finalText').textContent='Level '+level+' · '+score+' pontos';$('over').classList.add('show')}", "if(player.life<=0){if(!tryPact()){running=false;$('finalText').textContent='Level '+level+' · '+score+' pontos';$('over').classList.add('show')}}");
  rep("drawMed();drawPlayer();drawShield();drawFreeze();", "drawMed();drawArcFx();drawPlayer();drawShield();drawFreeze();");
+
+  // v0.9.5 — comandos de teste de habilidades pelo Admin
+  rep("if(c==='ping')broadcast();if(c==='restart')reset();ui();broadcast()", "if(c==='skilltest'){const id=String(d.skill||''),lv=Math.max(0,Math.min(id==='pact'?1:5,+d.level||1)),sk=skills.find(x=>x.id===id);if(sk){skillLv[id]=lv;if(id==='pact'){pactReady=lv>0}else if(lv>0)sk.apply(lv);else if(id==='arc'){arcNextAt=0}toast('🧪 '+sk.n.toUpperCase()+' · LV '+lv)}}if(c==='skilltestall'){for(const sk of skills){const lv=sk.id==='pact'?1:Math.max(1,Math.min(5,+d.level||5));skillLv[sk.id]=lv;if(sk.id==='pact')pactReady=true;else sk.apply(lv)}toast('🧪 TODAS AS HABILIDADES ATIVADAS')}if(c==='skillreset'){for(const k in skillLv)skillLv[k]=0;Object.assign(player,{speed:255,fireRate:.28,xpMult:1,regen:0,flashDamage:0,bloodChance:0,bloodHeal:0});pactReady=false;arcNextAt=0;toast('🧪 HABILIDADES RESETADAS')}if(c==='ping')broadcast();if(c==='restart')reset();ui();broadcast()");
  return out;
 }
 
-
- // v0.9.5 — comandos de teste de habilidades pelo Admin
- rep("if(c==='ping')broadcast();if(c==='restart')reset();ui();broadcast()", "if(c==='skilltest'){const id=String(d.skill||''),lv=Math.max(0,Math.min(id==='pact'?1:5,+d.level||1)),sk=skills.find(x=>x.id===id);if(sk){skillLv[id]=lv;if(id==='pact'){pactReady=lv>0}else if(lv>0)sk.apply(lv);else if(id==='arc'){arcNextAt=0}toast('🧪 '+sk.n.toUpperCase()+' · LV '+lv)}}if(c==='skilltestall'){for(const sk of skills){const lv=sk.id==='pact'?1:Math.max(1,Math.min(5,+d.level||5));skillLv[sk.id]=lv;if(sk.id==='pact')pactReady=true;else sk.apply(lv)}toast('🧪 TODAS AS HABILIDADES ATIVADAS')}if(c==='skillreset'){for(const k in skillLv)skillLv[k]=0;Object.assign(player,{speed:255,fireRate:.28,xpMult:1,regen:0,flashDamage:0,bloodChance:0,bloodHeal:0});pactReady=false;arcNextAt=0;toast('🧪 HABILIDADES RESETADAS')}if(c==='ping')broadcast();if(c==='restart')reset();ui();broadcast()");
 
 function patchAdminHtml(html){const v=currentVersion();let out=patchSharedVersion(html);const rep=(a,b)=>{if(out.includes(a))out=out.replace(a,b)};
  // v0.9.6 — Teste de Habilidades agora é nativo no painel.html

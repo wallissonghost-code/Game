@@ -1,11 +1,11 @@
 {
-  "version": "0.9.7",
-  "label": "v0.9.7",
-  "releasedAt": "2026-08-07T19:22:00-03:00",
-  "build": "admin-route-hard-refresh",
+  "version": "0.9.8",
+  "label": "v0.9.8",
+  "releasedAt": "2026-08-07T19:35:00-03:00",
+  "build": "fix-skill-command-scope",
   "notes": [
-    "Admin /admin e /admin-latest servem o painel.html atual",
-    "Rota /painel.html alinhada ao mesmo Admin",
-    "Mantém Teste de Habilidades nativo"
+    "Corrige crash do connector-server na inicialização",
+    "Comandos de teste de habilidades voltam para dentro de patchGameHtml",
+    "Validação de sintaxe adicionada antes do commit"
   ]
 }
