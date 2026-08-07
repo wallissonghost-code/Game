@@ -1,0 +1,39 @@
+from pathlib import Path
+import json
+
+p=Path('cloud/connector-server.mjs')
+s=p.read_text()
+marker=" if(out.includes(oldChoose))out=out.replace(oldChoose,newChoose);\n return out;\n}"
+if marker not in s:
+    raise SystemExit('game patch marker not found')
+block=r''' if(out.includes(oldChoose))out=out.replace(oldChoose,newChoose);
+ // v0.9.3 — horda separada do level; extras da LIVE nao contam na meta
+ rep('<div><span>LV</span><strong id="level">1</strong></div>','<div><span>LV</span><strong id="level">1</strong></div><div><span>HORDA</span><strong id="horde">1</strong></div>');
+ rep("toastText='',toastUntil=0,shieldOwner='',shieldOwnerUntil=0,hordeEnabled=true;const skillLv=","toastText='',toastUntil=0,shieldOwner='',shieldOwnerUntil=0,hordeEnabled=true,hordeNumber=1,hordeTarget=15,hordeKilled=0,hordeSpawned=0,hordeWaitUntil=0;const skillLv=");
+ rep("nextMedDropAt=performance.now()+180000;shieldOwner='';shieldOwnerUntil=0;hordeEnabled=true;document.querySelectorAll","nextMedDropAt=performance.now()+180000;shieldOwner='';shieldOwnerUntil=0;hordeEnabled=true;hordeNumber=1;hordeTarget=15;hordeKilled=0;hordeSpawned=0;hordeWaitUntil=0;document.querySelectorAll");
+ rep("function makeEnemy(type,near=false,viewerName=''){if(enemies.length>=MAX_ENEMIES)return;","function makeEnemy(type,near=false,viewerName='',source='extra'){if(enemies.length>=MAX_ENEMIES)return;");
+ rep("viewerName:String(viewerName||'').slice(0,26)})}function spawn(type,viewerName=''){if(type)return makeEnemy(type,true,viewerName);const pool=['wraith','reaper','infected','crawler','eye','brute'];makeEnemy(pool[Math.floor(Math.random()*pool.length)],true,viewerName)}","viewerName:String(viewerName||'').slice(0,26),source:String(source||'extra'),hordeCounted:false})}function spawn(type,viewerName=''){if(type)return makeEnemy(type,true,viewerName,viewerName?'live':'extra');const pool=['wraith','reaper','infected','crawler','eye','brute'];makeEnemy(pool[Math.floor(Math.random()*pool.length)],true,viewerName,viewerName?'live':'extra')}function spawnHordeEnemy(){const pool=['wraith','reaper','infected','crawler','eye','brute'],type=pool[Math.floor(Math.random()*pool.length)];makeEnemy(type,false,'','horde')}");
+ rep("function onKill(e){killCount++;","function hordeSize(n){return Math.min(60,10+n*5)}function markHordeResolved(e){if(!e||e.source!=='horde'||e.hordeCounted)return;e.hordeCounted=true;hordeKilled++;if(hordeKilled>=hordeTarget){hordeNumber++;hordeTarget=hordeSize(hordeNumber);hordeKilled=0;hordeSpawned=0;hordeWaitUntil=performance.now()+1800;spawnTimer=.1;toast('🌊 HORDA '+hordeNumber+' EM 2s')}}function onKill(e){markHordeResolved(e);killCount++;");
+ rep("e.dead=true;if(player.inv<=0&&performance.now()>invincibleUntil)","e.dead=true;markHordeResolved(e);if(player.inv<=0&&performance.now()>invincibleUntil)");
+ rep("if(hordeEnabled){spawnTimer-=dt;if(spawnTimer<=0){spawnWave();spawnTimer=Math.max(.11,.52-level*.012)}}else{spawnTimer=.1}","if(hordeEnabled){if(performance.now()>=hordeWaitUntil&&hordeSpawned<hordeTarget){spawnTimer-=dt;if(spawnTimer<=0){if(enemies.length<MAX_ENEMIES){spawnHordeEnemy();hordeSpawned++}spawnTimer=.12}}}else{spawnTimer=.1}");
+ rep("$('level').textContent=level;$('xp').textContent","$('level').textContent=level;if($('horde'))$('horde').textContent=hordeNumber;$('xp').textContent");
+ rep("autoMode,hordeEnabled,skillLv:{...skillLv},room,ts:Date.now()","autoMode,hordeEnabled,horde:hordeNumber,hordeTarget,hordeKilled,hordeSpawned,hordeBaseAlive:enemies.filter(e=>e.source==='horde').length,liveExtraMobs:enemies.filter(e=>e.source!=='horde').length,skillLv:{...skillLv},room,ts:Date.now()");
+ return out;
+}'''
+s=s.replace(marker,block,1)
+
+admin_marker="function patchAdminHtml(html){const v=currentVersion();let out=patchSharedVersion(html);const rep=(a,b)=>{if(out.includes(a))out=out.replace(a,b)};"
+if admin_marker not in s:
+    raise SystemExit('admin marker not found')
+s=s.replace(admin_marker,admin_marker+r'''
+ // v0.9.3 — telemetria de horda no painel
+ rep('<div><span>MOBS</span><b id="mobs">—</b></div><div><span>ESTADO</span>','<div><span>MOBS</span><b id="mobs">—</b></div><div><span>HORDA</span><b id="hordeState">—</b></div><div><span>PROGRESSO</span><b id="hordeProgress">—</b></div><div><span>EXTRAS LIVE</span><b id="liveExtras">—</b></div><div><span>ESTADO</span>');
+ rep("$('mobs').textContent=d.mobs;$('gameState').textContent","$('mobs').textContent=d.mobs;if($('hordeState'))$('hordeState').textContent=d.horde||1;if($('hordeProgress'))$('hordeProgress').textContent=(d.hordeKilled||0)+'/'+(d.hordeTarget||15);if($('liveExtras'))$('liveExtras').textContent=d.liveExtraMobs||0;$('gameState').textContent");
+''',1)
+p.write_text(s)
+
+v={
+  'version':'0.9.3','label':'v0.9.3','releasedAt':'2026-08-07T16:25:00-03:00','build':'horde-progression-live-extras',
+  'notes':['Horda separada do level','Horda 1 começa com 15 mobs e cresce de 5 em 5 até 60','Mobs da LIVE não contam para concluir a horda','Admin mostra horda, progresso e extras da LIVE']
+}
+Path('version.json').write_text(json.dumps(v,ensure_ascii=False,indent=2)+'\n')
