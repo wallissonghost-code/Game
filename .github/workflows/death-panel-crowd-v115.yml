@@ -1,0 +1,75 @@
+name: Death Panel + Crowd Control v0.11.5
+on:
+  push:
+    paths:
+      - '.github/workflows/death-panel-crowd-v115.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch death panel and crowd behavior
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,re
+          p=Path('index.html'); s=p.read_text(); original=s
+          s=s.replace('<title>Caos Live v0.11.4</title>','<title>Caos Live v0.11.5</title>')
+          s=s.replace('<div class="version">v0.11.4 · MORTE + MIRA</div>','<div class="version">v0.11.5 · PAINEL DE MORTE</div>')
+          s=s.replace("const VERSION='0.11.4'","const VERSION='0.11.5'")
+
+          # Death panel: persistent until X
+          s=s.replace('.deathBox{width:min(430px,100%);padding:16px 18px;', '.deathBox{position:relative;width:min(430px,100%);padding:18px 18px 16px;',1)
+          css_add=""".deathClose{position:absolute;right:10px;top:10px;width:34px;height:34px;border:1px solid #4b2230;border-radius:10px;background:#1a0d14;color:#fecaca;font-size:18px;font-weight:900;pointer-events:auto}.deathClose:active{transform:scale(.96)}"""
+          s=s.replace('</style>',css_add+'</style>',1)
+          old='<section id="deathCam" class="deathCam"><div class="deathBox"><div class="killed">VOCÊ FOI ELIMINADO POR</div>'
+          new='<section id="deathCam" class="deathCam"><div class="deathBox"><button id="deathClose" class="deathClose" aria-label="Fechar">×</button><div class="killed">VOCÊ FOI ELIMINADO POR</div>'
+          if old not in s: raise SystemExit('death panel markup marker missing')
+          s=s.replace(old,new,1)
+
+          # Make death state persistent instead of auto closing after delay.
+          s=s.replace("deathState={killer:e,at:now,showOverAt:now+5000};", "deathState={killer:e,at:now};",1)
+          pat=r"function update\(dt\)\{if\(paused\|\|choosing\)return;if\(deathState\)\{.*?return;\}"
+          repl="function update(dt){if(paused||choosing)return;if(deathState)return;"
+          s2,n=re.subn(pat,repl,s,count=1,flags=re.S)
+          if n!=1: raise SystemExit('death update marker missing')
+          s=s2
+
+          # X closes death panel and reveals final summary/restart overlay.
+          bind="""const deathClose=$('deathClose');if(deathClose)deathClose.onclick=()=>{if(!deathState)return;const now=performance.now();$('deathCam').classList.remove('show');$('finalText').textContent='Level '+level+' · '+score+' pontos · '+killCount+' abates · '+fmtRunTime(now-runStartedAt);$('over').classList.add('show');running=false;broadcast()};"""
+          marker="$('startBtn').onclick=reset;"
+          if marker not in s: raise SystemExit('button bind marker missing')
+          s=s.replace(marker,bind+marker,1)
+
+          # Crowd behavior: distribute mobs around player using deterministic personal orbit slots.
+          move_old="if(!frozen){const a=Math.atan2(player.y-e.y,player.x-e.x);let weave=0;if(e.type==='crawler')weave=Math.sin(e.t*7+e.seed)*.6;e.x+=Math.cos(a+weave)*e.speed*enemySpeed*(1+level*.015)*dt;e.y+=Math.sin(a+weave)*e.speed*enemySpeed*(1+level*.015)*dt}"
+          move_new="""if(!frozen){const dxp=player.x-e.x,dyp=player.y-e.y,distp=Math.hypot(dxp,dyp)||1,baseA=Math.atan2(dyp,dxp);let steer=baseA;if(e.type==='crawler')steer+=Math.sin(e.t*7+e.seed)*.6;const crowdRadius=player.r+e.r+26;const approachRadius=crowdRadius+74;if(distp<approachRadius){const slot=((e.seed*1.618)%1)*Math.PI*2,tx=player.x+Math.cos(slot)*crowdRadius,ty=player.y+Math.sin(slot)*crowdRadius;steer=Math.atan2(ty-e.y,tx-e.x);if(distp<crowdRadius*.78){const away=Math.atan2(e.y-player.y,e.x-player.x);steer=away;}}const speedMul=distp<crowdRadius*1.15?.72:1;e.x+=Math.cos(steer)*e.speed*enemySpeed*(1+level*.015)*dt*speedMul;e.y+=Math.sin(steer)*e.speed*enemySpeed*(1+level*.015)*dt*speedMul}"""
+          if move_old not in s: raise SystemExit('enemy move marker missing')
+          s=s.replace(move_old,move_new,1)
+
+          p.write_text(s)
+          ap=Path('painel.html')
+          if ap.exists():
+            a=ap.read_text().replace('Caos Admin v0.11.4','Caos Admin v0.11.5').replace('PAINEL v0.11.4','PAINEL v0.11.5')
+            ap.write_text(a)
+          Path('version.json').write_text(json.dumps({
+            'version':'0.11.5','label':'v0.11.5','releasedAt':'2026-08-08T16:35:00Z','build':'death-panel-crowd-control',
+            'notes':[
+              'Painel de morte permanece aberto até o jogador tocar no X',
+              'Fechar o painel mostra o resumo final e botão para jogar novamente',
+              'Mobs usam posições de aproximação distribuídas ao redor do player',
+              'Mobs muito próximos recuam em vez de formar pilhas no mesmo ponto',
+              'Redução de sobreposição visual e de colisões concentradas perto do player'
+            ]
+          },ensure_ascii=False,indent=2)+'\n')
+          if s==original: raise SystemExit('no changes')
+          PY
+      - name: Commit v0.11.5
+        run: |
+          git config user.name "wallissonghost-code"
+          git config user.email "wallissonghost@gmail.com"
+          git add index.html painel.html version.json
+          git commit -m "feat: persistent death panel and mob crowd control v0.11.5" || exit 0
+          git push
