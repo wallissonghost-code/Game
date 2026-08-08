@@ -1,0 +1,57 @@
+name: Equip modular rifle
+
+on:
+  push:
+    paths:
+      - '.github/workflows/equip-modular-rifle.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  equip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch modular weapon renderer
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          marker = "const weaponSprite=new Image();let weaponReady=false;"
+
+          if marker not in s:
+              anchor = "const soldierSprite=new Image();let soldierReady=false;soldierSprite.onload=()=>soldierReady=true;soldierSprite.src='./assets/soldier-premium-01.png?v=083';"
+              insert = anchor + "\nconst weaponSprite=new Image();let weaponReady=false;weaponSprite.onload=()=>weaponReady=true;weaponSprite.onerror=()=>weaponReady=false;weaponSprite.src='./assets/weapons/assault-rifle-01.png?v=modular101';"
+              if anchor not in s:
+                  raise SystemExit('soldier sprite anchor not found')
+              s = s.replace(anchor, insert, 1)
+
+              new_draw = """function drawPlayer(){ctx.save();ctx.translate(W/2,H/2);ctx.fillStyle='#0008';ctx.beginPath();ctx.ellipse(0,25,24,8,0,0,7);ctx.fill();if(soldierReady&&soldierSprite.naturalWidth>=192){const fs=48,size=72,row=player.moving?1:0,frame=player.moving?Math.floor(player.walk)%4:0,flip=Math.cos(player.aim)<0;ctx.save();if(flip)ctx.scale(-1,1);ctx.imageSmoothingEnabled=false;ctx.drawImage(soldierSprite,frame*fs,row*fs,fs,fs,-size/2,-size/2-5,size,size);ctx.restore();if(weaponReady){const bob=player.moving?Math.sin(player.walk*Math.PI*.5)*1.2:0,recoil=player.shotFlash>0?-2:0;ctx.save();ctx.translate(0,-2+bob);ctx.rotate(player.aim||0);ctx.imageSmoothingEnabled=true;ctx.drawImage(weaponSprite,-8+recoil,-7,48,14);ctx.restore()}}else{ctx.fillStyle='#3f4a2e';ctx.fillRect(-15,-10,30,32);ctx.fillStyle='#c7996b';ctx.beginPath();ctx.arc(0,-18,11,0,7);ctx.fill()}ctx.restore()}function drawShield"""
+
+              pat = r"function drawPlayer\(\)\{.*?\}function drawShield"
+              s2, n = re.subn(pat, new_draw, s, count=1, flags=re.S)
+              if n != 1:
+                  raise SystemExit(f'drawPlayer replacement failed: {n}')
+              s = s2
+              p.write_text(s, encoding='utf-8')
+              print('Modular rifle renderer installed')
+          else:
+              print('Already installed')
+      - name: Commit game update
+        run: |
+          if git diff --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "feat: render assault rifle as modular player layer"
+          git push
