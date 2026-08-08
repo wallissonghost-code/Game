@@ -1,11 +1,13 @@
 {
-  "version": "0.11.6",
-  "label": "v0.11.6",
-  "releasedAt": "2026-08-08T16:36:00Z",
-  "build": "version-sync",
+  "version": "0.11.7",
+  "label": "v0.11.7",
+  "releasedAt": "2026-08-08T16:45:00Z",
+  "build": "combat-range-auto-focus",
   "notes": [
-    "Versão visível do jogo sincronizada com o build atual",
-    "Versão do painel movida para o cabeçalho superior",
-    "Links internos com cache-buster v116"
+    "Mobs atacam dentro de uma zona de alcance ao redor do player, sem precisar colidir com o corpo",
+    "Bosses possuem alcance de ataque maior e cooldown levemente maior",
+    "Auto Inteligente trava o foco no mesmo alvo por cerca de 2,2 segundos",
+    "O alvo só troca antes do tempo se morrer ou sair muito longe",
+    "Redução de jitter da mira/câmera causado por troca de alvo a cada frame"
   ]
 }
