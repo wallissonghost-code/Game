@@ -1,0 +1,104 @@
+name: Auto Flee Armor Panel v0.12.1
+on:
+  push:
+    paths:
+      - '.github/workflows/auto-flee-armor-panel-v121.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch v0.12.1
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,json
+          p=Path('index.html'); s=p.read_text()
+          s=s.replace('Caos Live v0.12.0','Caos Live v0.12.1').replace('v0.12.0 · REGEN + ARMADURA','v0.12.1 · AUTO FUGA').replace("const VERSION='0.12.0'","const VERSION='0.12.1'")
+          # add smoothed aim state
+          s=s.replace('regenStage=0;const skillLv=', 'regenStage=0,aimTarget=0;const skillLv=',1)
+
+          # armor is 4 levels only
+          s=s.replace("function chooseSkill(){const pool=skills.filter(s=>s.id==='phoenix'?(!phoenixConsumed&&skillLv[s.id]<1):skillLv[s.id]<5);", "function chooseSkill(){const pool=skills.filter(s=>s.id==='phoenix'?(!phoenixConsumed&&skillLv[s.id]<1):s.id==='armor'?skillLv[s.id]<4:skillLv[s.id]<5);",1)
+          s=s.replace("const cur=skillLv[s.id],next=s.id==='phoenix'?1:Math.min(5,cur+1);", "const cur=skillLv[s.id],next=s.id==='phoenix'?1:s.id==='armor'?Math.min(4,cur+1):Math.min(5,cur+1);",1)
+          s=s.replace("lv=id==='phoenix'?(+lv>0?1:0):Math.max(0,Math.min(5,+lv||0));", "lv=id==='phoenix'?(+lv>0?1:0):id==='armor'?Math.max(0,Math.min(4,+lv||0)):Math.max(0,Math.min(5,+lv||0));",1)
+          s=s.replace("const id=String(d.skill||''),lv=id==='phoenix'?1:Math.max(0,Math.min(5,+d.level||1));", "const id=String(d.skill||''),lv=id==='phoenix'?1:id==='armor'?Math.max(1,Math.min(4,+d.level||1)):Math.max(0,Math.min(5,+d.level||1));",1)
+          # all/max must not push armor to 5
+          s=s.replace("for(const sk of skills)adminSkillApply(sk.id,lv);toast('🧪 TODAS · LV '+lv)", "for(const sk of skills)adminSkillApply(sk.id,sk.id==='armor'?Math.min(4,lv):lv);toast('🧪 TODAS · LV '+lv)",1)
+          s=s.replace("for(const sk of skills)adminSkillApply(sk.id,5);toast('🧪 TODAS NO MÁXIMO')", "for(const sk of skills)adminSkillApply(sk.id,sk.id==='armor'?4:5);toast('🧪 TODAS NO MÁXIMO')",1)
+
+          # visible target helpers: target only inside actual viewport with margin
+          old="function nearest(){let t=null,b=1e18;for(const e of enemies){if(e.dead)continue;const dx=e.x-player.x,dy=e.y-player.y,q=dx*dx+dy*dy;if(q<b){b=q;t=e}}return t}function focusedTarget()"
+          new="function nearest(){let t=null,b=1e18;for(const e of enemies){if(e.dead)continue;const dx=e.x-player.x,dy=e.y-player.y,q=dx*dx+dy*dy;if(q<b){b=q;t=e}}return t}function targetVisible(e){if(!e||e.dead)return false;const dx=e.x-player.x,dy=e.y-player.y;return Math.abs(dx)<=W*.48&&Math.abs(dy)<=H*.48}function nearestVisible(){let t=null,b=1e18;for(const e of enemies){if(e.dead||!targetVisible(e))continue;const dx=e.x-player.x,dy=e.y-player.y,q=dx*dx+dy*dy;if(q<b){b=q;t=e}}return t}function focusedTarget()"
+          if old not in s: raise SystemExit('nearest marker missing')
+          s=s.replace(old,new,1)
+          # focus target uses visible targets only and drops target that left view
+          s=s.replace("if(autoTarget&&(!autoTarget.dead)&&enemies.includes(autoTarget)){const d=Math.hypot(autoTarget.x-player.x,autoTarget.y-player.y);if(d<680&&now<autoTargetUntil)return autoTarget}autoTarget=nearest();", "if(autoTarget&&(!autoTarget.dead)&&enemies.includes(autoTarget)&&targetVisible(autoTarget)){if(now<autoTargetUntil)return autoTarget}autoTarget=nearestVisible();",1)
+          # shooting manually/auto only targets visible mob
+          s=s.replace("function shoot(){const t=autoMode?focusedTarget():nearest();if(!t)return;", "function shoot(){const t=autoMode?focusedTarget():nearestVisible();if(!t)return;",1)
+
+          # replace autoVector with flee-only, smooth committed direction, no proactive wandering
+          pat=r"function autoVector\(dt\)\{.*?\}function update\(dt\)\{"
+          repl=r'''function autoVector(dt){
+            const now=performance.now();
+            let nearestMob=null,nearestDist=Infinity,vx=0,vy=0,threatCount=0,panic=false;
+            for(const e of enemies){
+              if(e.dead)continue;
+              const dx=player.x-e.x,dy=player.y-e.y,d=Math.hypot(dx,dy)||1;
+              if(d<nearestDist){nearestDist=d;nearestMob=e}
+              const flee=(e.max>=100?360:245)+e.r;
+              const critical=(e.max>=100?220:135)+e.r;
+              if(d<flee){
+                threatCount++;
+                const w=Math.pow(1-d/flee,1.35)*(e.max>=100?1.8:1);
+                vx+=dx/d*w;vy+=dy/d*w;
+              }
+              if(d<critical)panic=true;
+            }
+            if(!nearestMob||!threatCount){autoMoveX*=.72;autoMoveY*=.72;if(Math.hypot(autoMoveX,autoMoveY)<.06){autoMoveX=0;autoMoveY=0}return{x:0,y:0}}
+            if(Math.hypot(vx,vy)<.04){const dx=player.x-nearestMob.x,dy=player.y-nearestMob.y,d=nearestDist||1;vx=dx/d;vy=dy/d}
+            const n=Math.hypot(vx,vy)||1,desiredX=vx/n,desiredY=vy/n;
+            const blend=panic?.42:.16;
+            autoMoveX=autoMoveX*(1-blend)+desiredX*blend;
+            autoMoveY=autoMoveY*(1-blend)+desiredY*blend;
+            const sn=Math.hypot(autoMoveX,autoMoveY)||1;autoMoveX/=sn;autoMoveY/=sn;
+            return{x:autoMoveX,y:autoMoveY}
+          }function update(dt){'''
+          s2,n=re.subn(pat,repl,s,count=1,flags=re.S)
+          if n!=1: raise SystemExit('autoVector marker missing')
+          s=s2
+
+          # smooth aim and only aim when visible target exists. No weapon hunting offscreen.
+          oldaim="if(autoFire){const target=autoMode?focusedTarget():nearest();if(target)player.aim=Math.atan2(target.y-player.y,target.x-player.x)}else if(player.moving){player.aim=Math.atan2(dy,dx)}"
+          newaim="if(autoFire){const target=autoMode?focusedTarget():nearestVisible();if(target){const wanted=Math.atan2(target.y-player.y,target.x-player.x);let da=((wanted-player.aim+Math.PI*3)%(Math.PI*2))-Math.PI;player.aim+=da*Math.min(1,dt*7)}}else if(player.moving){const wanted=Math.atan2(dy,dx);let da=((wanted-player.aim+Math.PI*3)%(Math.PI*2))-Math.PI;player.aim+=da*Math.min(1,dt*5)}"
+          if oldaim not in s: raise SystemExit('aim marker missing')
+          s=s.replace(oldaim,newaim,1)
+          p.write_text(s)
+
+          q=Path('painel.html'); a=q.read_text()
+          a=a.replace('Caos Admin v0.12.0','Caos Admin v0.12.1').replace('v0.12.0</span>','v0.12.1</span>').replace('index.html?v=120','index.html?v=121')
+          # ensure Armor option is present in skill test select
+          if 'value="armor"' not in a:
+            anchors=['<option value="regen">Regeneração</option>','<option value="phoenix">Fênix</option>']
+            for anchor in anchors:
+              if anchor in a:
+                a=a.replace(anchor,anchor+'<option value="armor">Armadura</option>',1);break
+          q.write_text(a)
+          Path('version.json').write_text(json.dumps({'version':'0.12.1','label':'v0.12.1','releasedAt':'2026-08-08T17:25:00Z','build':'auto-flee-armor-admin','notes':['Armadura disponível no teste do painel e limitada ao LV4','Auto Inteligente só foge quando existe ameaça dentro do raio','Sem ameaça o personagem fica parado','Tiro automático só busca e dispara em mobs visíveis na tela','Mira suavizada para impedir giro brusco da arma e tremedeira do corpo']},ensure_ascii=False,indent=2)+'\n')
+          PY
+      - name: Validate
+        run: |
+          grep -q "v0.12.1" index.html
+          grep -q "nearestVisible" index.html
+          grep -q "value=\"armor\"" painel.html
+          grep -q "v0.12.1" painel.html
+          grep -q '"version": "0.12.1"' version.json
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html painel.html version.json
+          git commit -m "feat: v0.12.1 flee-only auto visible targeting armor admin" || exit 0
+          git push
