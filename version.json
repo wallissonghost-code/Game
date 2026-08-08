@@ -1,12 +1,13 @@
 {
-  "version": "0.12.2",
-  "label": "v0.12.2",
+  "version": "0.12.3",
+  "label": "v0.12.3",
   "releasedAt": "2026-08-08T17:40:00Z",
-  "build": "player-weapon-rig",
+  "build": "stable-player-rig",
   "notes": [
-    "Rifle preso ao corpo por pivot fixo",
-    "Arma nunca vira de ponta-cabeça",
-    "Braços e mãos desenhados segurando a arma",
-    "Recuo e bob reduzidos para evitar aparência flutuante"
+    "Rifle nunca inverte verticalmente",
+    "Braços presos a pontos fixos dos ombros",
+    "Mãos presas aos pontos de empunhadura do rifle",
+    "Sprite, braços e arma espelhados como um único rig",
+    "Recuo e balanço reduzidos para eliminar efeito de peça flutuante"
   ]
 }
