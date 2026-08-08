@@ -1,13 +1,12 @@
 {
-  "version": "0.12.1",
-  "label": "v0.12.1",
-  "releasedAt": "2026-08-08T17:25:00Z",
-  "build": "auto-flee-armor-admin",
+  "version": "0.12.2",
+  "label": "v0.12.2",
+  "releasedAt": "2026-08-08T17:40:00Z",
+  "build": "player-weapon-rig",
   "notes": [
-    "Armadura disponível no teste do painel e limitada ao LV4",
-    "Auto Inteligente só foge quando existe ameaça dentro do raio",
-    "Sem ameaça o personagem fica parado",
-    "Tiro automático só busca e dispara em mobs visíveis na tela",
-    "Mira suavizada para impedir giro brusco da arma e tremedeira do corpo"
+    "Rifle preso ao corpo por pivot fixo",
+    "Arma nunca vira de ponta-cabeça",
+    "Braços e mãos desenhados segurando a arma",
+    "Recuo e bob reduzidos para evitar aparência flutuante"
   ]
 }
