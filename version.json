@@ -1,13 +1,11 @@
 {
-  "version": "0.11.5",
-  "label": "v0.11.5",
-  "releasedAt": "2026-08-08T16:35:00Z",
-  "build": "death-panel-crowd-control",
+  "version": "0.11.6",
+  "label": "v0.11.6",
+  "releasedAt": "2026-08-08T16:36:00Z",
+  "build": "version-sync",
   "notes": [
-    "Painel de morte permanece aberto até o jogador tocar no X",
-    "Fechar o painel mostra o resumo final e botão para jogar novamente",
-    "Mobs usam posições de aproximação distribuídas ao redor do player",
-    "Mobs muito próximos recuam em vez de formar pilhas no mesmo ponto",
-    "Redução de sobreposição visual e de colisões concentradas perto do player"
+    "Versão visível do jogo sincronizada com o build atual",
+    "Versão do painel movida para o cabeçalho superior",
+    "Links internos com cache-buster v116"
   ]
 }
