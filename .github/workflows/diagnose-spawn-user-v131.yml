@@ -1,0 +1,39 @@
+name: Diagnose Spawn User v0.13.1
+'on':
+  push:
+    paths: ['.github/workflows/diagnose-spawn-user-v131.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect username flow
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          out=[]
+          for fn in ['painel.html','index.html']:
+            s=Path(fn).read_text()
+            out.append('\n==== '+fn+' ====\n')
+            for needle in ['commandFromRule','processGift','processComment','spawn','user','username','viewer','gift']:
+              start=0; n=0
+              while True:
+                i=s.find(needle,start)
+                if i<0: break
+                n+=1
+                out.append(f'-- {needle} #{n} @ {i} --\n'+s[max(0,i-450):i+900]+'\n')
+                start=i+len(needle)
+                if n>=8: break
+          Path('.github/debug-spawn-user.txt').write_text(''.join(out))
+          PY
+      - name: Commit diagnostic
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .github/debug-spawn-user.txt
+          git commit -m 'chore: capture spawn username flow' || exit 0
+          git pull --rebase origin main
+          git push
