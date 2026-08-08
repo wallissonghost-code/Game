@@ -14,7 +14,7 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import json,re
+          import json
           p=Path('index.html')
           s=p.read_text()
           original=s
@@ -27,11 +27,11 @@ jobs:
           if marker not in s: raise SystemExit('skill marker missing')
           s=s.replace(marker,inject,1)
 
-          pattern=r"function autoVector\(dt\)\{.*?\}function update\(dt\)\{"
-          repl="""function autoVector(dt){let nearestMob=null,nearestDist=Infinity;for(const e of enemies){if(e.dead)continue;const d=Math.hypot(player.x-e.x,player.y-e.y);if(d<nearestDist){nearestDist=d;nearestMob=e}}const threatRange=Math.max(300,Math.min(520,Math.max(W,H)*.58));if(!nearestMob||nearestDist>threatRange)return{x:0,y:0};let vx=0,vy=0;for(const e of enemies){if(e.dead)continue;const dx=player.x-e.x,dy=player.y-e.y,dist=Math.hypot(dx,dy)||1;const safe=(e.max>=100?235:145)+e.r;if(dist<safe){const force=Math.max(.15,(safe-dist)/safe)*(e.max>=100?5.2:3.1);vx+=dx/dist*force;vy+=dy/dist*force}}if(Math.abs(vx)<.001&&Math.abs(vy)<.001){const dx=player.x-nearestMob.x,dy=player.y-nearestMob.y,d=nearestDist||1;if(nearestDist<220){vx=dx/d;vy=dy/d}else return{x:0,y:0}}const n=Math.hypot(vx,vy)||1;return{x:vx/n,y:vy/n}}function update(dt){"""
-          s2,n=re.subn(pattern,repl,s,count=1,flags=re.S)
-          if n!=1: raise SystemExit('autoVector marker missing')
-          s=s2
+          start=s.find('function autoVector(dt){')
+          end=s.find('function update(dt){',start)
+          if start<0 or end<0: raise SystemExit('autoVector boundaries missing')
+          repl="""function autoVector(dt){let nearestMob=null,nearestDist=Infinity;for(const e of enemies){if(e.dead)continue;const d=Math.hypot(player.x-e.x,player.y-e.y);if(d<nearestDist){nearestDist=d;nearestMob=e}}const threatRange=Math.max(300,Math.min(520,Math.max(W,H)*.58));if(!nearestMob||nearestDist>threatRange)return{x:0,y:0};let vx=0,vy=0;for(const e of enemies){if(e.dead)continue;const dx=player.x-e.x,dy=player.y-e.y,dist=Math.hypot(dx,dy)||1;const safe=(e.max>=100?235:145)+e.r;if(dist<safe){const force=Math.max(.15,(safe-dist)/safe)*(e.max>=100?5.2:3.1);vx+=dx/dist*force;vy+=dy/dist*force}}if(Math.abs(vx)<.001&&Math.abs(vy)<.001){const dx=player.x-nearestMob.x,dy=player.y-nearestMob.y,d=nearestDist||1;if(nearestDist<220){vx=dx/d;vy=dy/d}else return{x:0,y:0}}const n=Math.hypot(vx,vy)||1;return{x:vx/n,y:vy/n}}"""
+          s=s[:start]+repl+s[end:]
 
           p.write_text(s)
           Path('version.json').write_text(json.dumps({
