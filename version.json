@@ -1,12 +1,13 @@
 {
-  "version": "0.11.8",
-  "label": "v0.11.8",
-  "releasedAt": "2026-08-08T16:45:00Z",
-  "build": "death-killer-focus",
+  "version": "0.11.9",
+  "label": "v0.11.9",
+  "releasedAt": "2026-08-08T16:58:00Z",
+  "build": "auto-smooth",
   "notes": [
-    "Na morte definitiva todos os outros mobs são removidos imediatamente",
-    "A câmera de morte mantém apenas o inimigo que aplicou o golpe final",
-    "Se a Fênix ativar, a arena não é limpa e os mobs continuam normalmente",
-    "Projéteis e efeitos temporários são limpos somente na morte definitiva"
+    "Auto para quando não há ameaça",
+    "Direção de fuga mantida por curtos intervalos",
+    "Mudanças de direção suavizadas",
+    "Reação imediata preservada em perigo crítico",
+    "Movimento independente do tiro automático"
   ]
 }
