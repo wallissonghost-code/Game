@@ -1,12 +1,13 @@
 {
-  "version": "0.12.0",
-  "label": "v0.12.0",
-  "releasedAt": "2026-08-08T17:20:00Z",
-  "build": "regen-armor-auto",
+  "version": "0.12.1",
+  "label": "v0.12.1",
+  "releasedAt": "2026-08-08T17:25:00Z",
+  "build": "auto-flee-armor-admin",
   "notes": [
-    "Regeneração progressiva por tempo sem dano",
-    "Armadura Bronze/Prata/Ouro/Diamante",
-    "Auto mantém recuo preventivo enquanto mobs se aproximam",
-    "Jogo e painel sincronizados em v0.12.0"
+    "Armadura disponível no teste do painel e limitada ao LV4",
+    "Auto Inteligente só foge quando existe ameaça dentro do raio",
+    "Sem ameaça o personagem fica parado",
+    "Tiro automático só busca e dispara em mobs visíveis na tela",
+    "Mira suavizada para impedir giro brusco da arma e tremedeira do corpo"
   ]
 }
