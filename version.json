@@ -1,14 +1,12 @@
 {
-  "version": "0.11.3",
-  "label": "v0.11.3",
-  "releasedAt": "2026-08-08T16:22:00Z",
-  "build": "combat-balance-deathcam",
+  "version": "0.11.4",
+  "label": "v0.11.4",
+  "releasedAt": "2026-08-08T16:25:00Z",
+  "build": "deathcam-autofire-fix",
   "notes": [
-    "Rifle: 2 de dano por projétil",
-    "Dano dos mobs rebalanceado: 2 a 5; bosses 7 a 8 antes de modificadores",
-    "Tiro Automático ON/OFF no painel",
-    "Câmera de morte com foco no assassino",
-    "Resumo: assassino, level, tempo, horda e abates",
-    "Mobs de Live carregam o @ do viewer para o kill feed"
+    "Câmera de morte permanece por 5 segundos antes do resumo final",
+    "Tiro Automático OFF também desativa busca e rastreamento automático de alvos",
+    "Arma acompanha apenas a direção de movimento quando o autofire está desligado",
+    "Ao desligar autofire, muzzle flash e temporizador do disparo são resetados"
   ]
 }
