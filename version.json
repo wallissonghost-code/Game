@@ -1,13 +1,13 @@
 {
-  "version": "0.12.3",
-  "label": "v0.12.3",
-  "releasedAt": "2026-08-08T17:40:00Z",
-  "build": "stable-player-rig",
+  "version": "0.12.4",
+  "label": "v0.12.4",
+  "releasedAt": "2026-08-08T17:39:00Z",
+  "build": "soldier-rig-2",
   "notes": [
-    "Rifle nunca inverte verticalmente",
-    "Braços presos a pontos fixos dos ombros",
-    "Mãos presas aos pontos de empunhadura do rifle",
-    "Sprite, braços e arma espelhados como um único rig",
-    "Recuo e balanço reduzidos para eliminar efeito de peça flutuante"
+    "Soldado redesenhado sem braços embutidos no sprite",
+    "Exatamente dois braços conectados aos ombros",
+    "Duas mãos fixas nos pontos de empunhadura",
+    "Rifle usa o mesmo pivô do corpo e nunca recebe flip vertical",
+    "Corpo e arma espelham juntos para esquerda/direita"
   ]
 }
