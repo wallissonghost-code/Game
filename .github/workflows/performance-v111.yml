@@ -34,12 +34,6 @@ jobs:
           if old not in s: raise SystemExit('resize marker missing')
           s=s.replace(old,new,1)
 
-          old="dead:false,t:Math.random()*8,seed:Math.random()*99})"
-          new="dead:false,t:Math.random()*8,seed:Math.random()*99,nextAttack:0,aiPhase:(Math.random()*3)|0})"
-          if old not in s: raise SystemExit('enemy fields marker missing')
-          s=s.replace(old,new,1)
-
-          # Spatial hash helpers for bullet/enemy collisions.
           marker="function autoVector(dt){"
           helper="const SPATIAL=96;function buildEnemyGrid(){const g=new Map();for(const e of enemies){if(e.dead)continue;const cx=Math.floor(e.x/SPATIAL),cy=Math.floor(e.y/SPATIAL),k=cx+','+cy;let a=g.get(k);if(!a)g.set(k,a=[]);a.push(e)}return g}function bulletHitsFromGrid(b,g){const cx=Math.floor(b.x/SPATIAL),cy=Math.floor(b.y/SPATIAL);for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const a=g.get((cx+ox)+','+(cy+oy));if(!a)continue;for(const e of a){if(e.dead)continue;const dx=b.x-e.x,dy=b.y-e.y,rr=b.r+e.r;if(dx*dx+dy*dy<rr*rr)return e}}return null}"
           if marker not in s: raise SystemExit('autoVector marker missing')
@@ -50,13 +44,11 @@ jobs:
           if old not in s: raise SystemExit('bullet collision marker missing')
           s=s.replace(old,new,1)
 
-          # Render only enemies that can actually be seen.
           old="for(const e of enemies)drawEnemy(e,world(e.x,e.y));drawMed();"
           new="for(const e of enemies){const p=world(e.x,e.y),m=e.r+70;if(p.x<-m||p.x>W+m||p.y<-m||p.y>H+m)continue;drawEnemy(e,p)}drawMed();"
           if old not in s: raise SystemExit('render culling marker missing')
           s=s.replace(old,new,1)
 
-          # Adaptive effect quality.
           old="ctx.shadowBlur=c.boss?24:e.tier===2?18:e.tier===1?12:7;"
           new="ctx.shadowBlur=perfMode>=2?(c.boss?8:0):perfMode===1?(c.boss?14:e.tier===2?7:e.tier===1?5:2):(c.boss?24:e.tier===2?18:e.tier===1?12:7);"
           if old not in s: raise SystemExit('shadow marker missing')
@@ -64,7 +56,6 @@ jobs:
           s=s.replace("for(let wi=0;wi<3;wi++){const wa=ph*.35+wi*2.1","for(let wi=0;wi<(perfMode>=2?0:perfMode===1?1:3);wi++){const wa=ph*.35+wi*2.1",1)
           s=s.replace("ctx.shadowBlur=0;tierAura(e);if(e.hp<e.max", "ctx.shadowBlur=0;if(perfMode<2||c.boss)tierAura(e);if(e.hp<e.max",1)
 
-          # Adaptive quality controller. 60 FPS target, with hysteresis to prevent oscillation.
           old="function loop(t){if(!running)return;const dt=Math.min(.033,(t-last)/1000);last=t;update(dt);draw();raf=requestAnimationFrame(loop)}"
           new="function tunePerformance(t){perfFrames++;if(t-perfWindowStart<1000)return;perfLastFps=Math.max(1,Math.round(perfFrames*1000/(t-perfWindowStart)));window.__caosFps=perfLastFps;perfFrames=0;perfWindowStart=t;let next=perfMode;if(perfLastFps<34)next=2;else if(perfLastFps<49)next=Math.max(1,perfMode);else if(perfLastFps>57)next=0;else if(perfLastFps>53&&perfMode===2)next=1;if(next!==perfMode){perfMode=next;const target=perfMode===2?.62:perfMode===1?.80:1;if(Math.abs(renderScale-target)>.01){renderScale=target;resize()}}}function loop(t){if(!running)return;frameSeq++;tunePerformance(t);const dt=Math.min(.033,(t-last)/1000);last=t;update(dt);draw();raf=requestAnimationFrame(loop)}"
           if old not in s: raise SystemExit('loop marker missing')
@@ -75,7 +66,7 @@ jobs:
 
           vp=Path('version.json')
           vp.write_text(json.dumps({
-            'version':'0.11.1','label':'v0.11.1','releasedAt':'2026-08-08T15:50:00Z','build':'adaptive-performance',
+            'version':'0.11.1','label':'v0.11.1','releasedAt':'2026-08-08T15:55:00Z','build':'adaptive-performance',
             'notes':[
               'Render culling: mobs fora da tela deixam de ser desenhados',
               'Colisão bala x mob usa grade espacial em vez de varrer todos os inimigos',
@@ -85,7 +76,6 @@ jobs:
             ]
           },ensure_ascii=False,indent=2)+'\n')
 
-          # Keep admin label aligned with the game version when possible.
           ap=Path('painel.html')
           if ap.exists():
             a=ap.read_text()
