@@ -1,13 +1,13 @@
 {
-  "version": "0.11.1",
-  "label": "v0.11.1",
-  "releasedAt": "2026-08-08T15:55:00Z",
-  "build": "adaptive-performance",
+  "version": "0.11.2",
+  "label": "v0.11.2",
+  "releasedAt": "2026-08-08T16:10:00Z",
+  "build": "smart-auto-player",
   "notes": [
-    "Render culling: mobs fora da tela deixam de ser desenhados",
-    "Colisão bala x mob usa grade espacial em vez de varrer todos os inimigos",
-    "Qualidade adaptativa reduz sombras e partículas quando o FPS cai",
-    "Resolução interna do Canvas reduz automaticamente sob carga e recupera ao estabilizar",
-    "Limite máximo de 230 mobs mantido"
+    "Modo Automático escolhe skills sozinho ao subir de level",
+    "Escolha automática usa prioridade contextual de sobrevivência e dano",
+    "Sem ameaça próxima o personagem fica parado",
+    "Com mobs próximos o personagem recua e mantém distância segura",
+    "Bosses recebem distância de segurança maior no modo automático"
   ]
 }
