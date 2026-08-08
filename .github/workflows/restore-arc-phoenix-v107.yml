@@ -1,0 +1,37 @@
+name: Restore Arc and Phoenix v0.10.7
+
+on:
+  push:
+    paths:
+      - 'tools/restore_arc_phoenix_v107.py'
+      - '.github/workflows/restore-arc-phoenix-v107.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply patch
+        run: python tools/restore_arc_phoenix_v107.py
+      - name: Validate markers
+        run: |
+          grep -q "Arco Voltaico" index.html
+          grep -q "Fênix" index.html
+          grep -q "value=\"arc\"" painel.html
+          grep -q "value=\"phoenix\"" painel.html
+          grep -q '"version": "0.10.7"' version.json
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html painel.html version.json
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: restore Arco Voltaico and Fenix v0.10.7"
+          git push
