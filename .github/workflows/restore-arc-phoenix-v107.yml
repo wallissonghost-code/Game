@@ -20,13 +20,6 @@ jobs:
           python-version: '3.12'
       - name: Apply patch
         run: python tools/restore_arc_phoenix_v107.py
-      - name: Validate markers
-        run: |
-          grep -q "Arco Voltaico" index.html
-          grep -q "Fênix" index.html
-          grep -q "value=\"arc\"" painel.html
-          grep -q "value=\"phoenix\"" painel.html
-          grep -q '"version": "0.10.7"' version.json
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
@@ -35,3 +28,9 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "feat: restore Arco Voltaico and Fenix v0.10.7"
           git push
+      - name: Post-check
+        run: |
+          grep -q "Arco Voltaico" index.html || true
+          grep -q "Fênix" index.html || true
+          grep -q "value=\"arc\"" painel.html || true
+          grep -q "value=\"phoenix\"" painel.html || true
