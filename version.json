@@ -1,12 +1,13 @@
 {
-  "version": "0.11.0",
-  "label": "v0.11.0",
-  "releasedAt": "2026-08-08T15:42:00Z",
-  "build": "fps-sync-mob-melee",
+  "version": "0.11.1",
+  "label": "v0.11.1",
+  "releasedAt": "2026-08-08T15:55:00Z",
+  "build": "adaptive-performance",
   "notes": [
-    "FPS real do jogo sincronizado e exibido no painel Admin",
-    "Mobs não morrem mais ao colidir com o player",
-    "Cada mob aplica dano corpo a corpo com cooldown individual de 0.9s",
-    "Pequeno recuo visual após o ataque para deixar o contato legível"
+    "Render culling: mobs fora da tela deixam de ser desenhados",
+    "Colisão bala x mob usa grade espacial em vez de varrer todos os inimigos",
+    "Qualidade adaptativa reduz sombras e partículas quando o FPS cai",
+    "Resolução interna do Canvas reduz automaticamente sob carga e recupera ao estabilizar",
+    "Limite máximo de 230 mobs mantido"
   ]
 }
