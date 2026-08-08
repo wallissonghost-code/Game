@@ -1,12 +1,11 @@
 {
-  "version": "0.10.3",
-  "label": "v0.10.3",
-  "releasedAt": "2026-08-07T21:19:00-03:00",
-  "build": "safe-telemetry-layer",
+  "version": "0.10.4",
+  "label": "v0.10.4",
+  "releasedAt": "2026-08-08T10:55:00-03:00",
+  "build": "weapon-skin-cache-sync",
   "notes": [
-    "FPS isolado do loop principal",
-    "Toggle Mostrar FPS no Admin",
-    "Status LIVE conectado/desconectado no jogo",
-    "Sem alterar Play, reset ou spawn"
+    "Skin pixel-art da arma atualizada",
+    "Cache da arma forçado para nova versão",
+    "Jogo e painel sincronizados em v0.10.4"
   ]
 }
