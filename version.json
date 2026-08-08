@@ -1,12 +1,11 @@
 {
-  "version": "0.10.7",
-  "label": "v0.10.7",
-  "releasedAt": "2026-08-08T15:15:00Z",
-  "build": "arc-phoenix-restored-final",
+  "version": "0.10.8",
+  "label": "v0.10.8",
+  "releasedAt": "2026-08-08T15:30:00Z",
+  "build": "phoenix-golden-shield",
   "notes": [
-    "Arco Voltaico: LV1 8s/2 alvos/2 dano; LV5 6s/4 alvos/6 dano",
-    "Fênix única LV1: revive 1x com 50% HP e 2s invencível",
-    "Fênix consumida não volta ao sorteio na mesma partida",
-    "Arco e Fênix disponíveis no Teste de Habilidades do Admin"
+    "Fênix recebe escudo visual exclusivo dourado/laranja",
+    "Anéis duplos giratórios e faíscas orbitais durante os 2s de renascimento",
+    "Escudo azul permanece exclusivo da invencibilidade comum"
   ]
 }
