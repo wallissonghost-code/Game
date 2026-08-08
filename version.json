@@ -1,13 +1,14 @@
 {
-  "version": "0.11.2",
-  "label": "v0.11.2",
-  "releasedAt": "2026-08-08T16:10:00Z",
-  "build": "smart-auto-player",
+  "version": "0.11.3",
+  "label": "v0.11.3",
+  "releasedAt": "2026-08-08T16:22:00Z",
+  "build": "combat-balance-deathcam",
   "notes": [
-    "Modo Automático escolhe skills sozinho ao subir de level",
-    "Escolha automática usa prioridade contextual de sobrevivência e dano",
-    "Sem ameaça próxima o personagem fica parado",
-    "Com mobs próximos o personagem recua e mantém distância segura",
-    "Bosses recebem distância de segurança maior no modo automático"
+    "Rifle: 2 de dano por projétil",
+    "Dano dos mobs rebalanceado: 2 a 5; bosses 7 a 8 antes de modificadores",
+    "Tiro Automático ON/OFF no painel",
+    "Câmera de morte com foco no assassino",
+    "Resumo: assassino, level, tempo, horda e abates",
+    "Mobs de Live carregam o @ do viewer para o kill feed"
   ]
 }
