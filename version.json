@@ -1,11 +1,12 @@
 {
-  "version": "0.9.8",
-  "label": "v0.9.8",
-  "releasedAt": "2026-08-07T19:35:00-03:00",
-  "build": "fix-skill-command-scope",
+  "version": "0.10.3",
+  "label": "v0.10.3",
+  "releasedAt": "2026-08-07T21:19:00-03:00",
+  "build": "safe-telemetry-layer",
   "notes": [
-    "Corrige crash do connector-server na inicialização",
-    "Comandos de teste de habilidades voltam para dentro de patchGameHtml",
-    "Validação de sintaxe adicionada antes do commit"
+    "FPS isolado do loop principal",
+    "Toggle Mostrar FPS no Admin",
+    "Status LIVE conectado/desconectado no jogo",
+    "Sem alterar Play, reset ou spawn"
   ]
 }
