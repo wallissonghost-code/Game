@@ -1,12 +1,12 @@
 {
-  "version": "0.10.5",
-  "label": "v0.10.5",
-  "releasedAt": "2026-08-08T11:08:00-03:00",
-  "build": "chunky-pixel-rifle",
+  "version": "0.10.6",
+  "label": "v0.10.6",
+  "releasedAt": "2026-08-08T14:50:00Z",
+  "build": "repair-admin-controls",
   "notes": [
-    "Nova skin pixel-art da arma com leitura melhor em escala pequena",
-    "Arma mais grossa e curta",
-    "Anchor e altura refinados",
-    "Jogo e painel sincronizados"
+    "Restaura toggle Mostrar FPS",
+    "Corrige Hordas Automáticas ON/OFF",
+    "Corrige Teste de Habilidades do Admin",
+    "Sincroniza hordeEnabled no estado do jogo"
   ]
 }
