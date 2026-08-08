@@ -1,13 +1,12 @@
 {
-  "version": "0.11.7",
-  "label": "v0.11.7",
+  "version": "0.11.8",
+  "label": "v0.11.8",
   "releasedAt": "2026-08-08T16:45:00Z",
-  "build": "combat-range-auto-focus",
+  "build": "death-killer-focus",
   "notes": [
-    "Mobs atacam dentro de uma zona de alcance ao redor do player, sem precisar colidir com o corpo",
-    "Bosses possuem alcance de ataque maior e cooldown levemente maior",
-    "Auto Inteligente trava o foco no mesmo alvo por cerca de 2,2 segundos",
-    "O alvo só troca antes do tempo se morrer ou sair muito longe",
-    "Redução de jitter da mira/câmera causado por troca de alvo a cada frame"
+    "Na morte definitiva todos os outros mobs são removidos imediatamente",
+    "A câmera de morte mantém apenas o inimigo que aplicou o golpe final",
+    "Se a Fênix ativar, a arena não é limpa e os mobs continuam normalmente",
+    "Projéteis e efeitos temporários são limpos somente na morte definitiva"
   ]
 }
