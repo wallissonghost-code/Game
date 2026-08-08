@@ -1,12 +1,12 @@
 {
-  "version": "0.10.6",
-  "label": "v0.10.6",
-  "releasedAt": "2026-08-08T14:50:00Z",
-  "build": "repair-admin-controls",
+  "version": "0.10.7",
+  "label": "v0.10.7",
+  "releasedAt": "2026-08-08T15:05:00Z",
+  "build": "arc-phoenix-restored",
   "notes": [
-    "Restaura toggle Mostrar FPS",
-    "Corrige Hordas Automáticas ON/OFF",
-    "Corrige Teste de Habilidades do Admin",
-    "Sincroniza hordeEnabled no estado do jogo"
+    "Restaura Arco Voltaico balanceado em 5 níveis",
+    "Restaura Fênix como skill única LV1",
+    "Fênix revive 1x com 50% HP e 2s de invencibilidade",
+    "Adiciona Arco e Fênix ao Teste de Habilidades do Admin"
   ]
 }
