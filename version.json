@@ -1,13 +1,13 @@
 {
-  "version": "0.12.4",
-  "label": "v0.12.4",
-  "releasedAt": "2026-08-08T17:39:00Z",
-  "build": "soldier-rig-2",
+  "version": "0.12.5",
+  "label": "v0.12.5",
+  "releasedAt": "2026-08-08T17:57:00Z",
+  "build": "soldier-8-direction-rig",
   "notes": [
-    "Soldado redesenhado sem braços embutidos no sprite",
-    "Exatamente dois braços conectados aos ombros",
-    "Duas mãos fixas nos pontos de empunhadura",
-    "Rifle usa o mesmo pivô do corpo e nunca recebe flip vertical",
-    "Corpo e arma espelham juntos para esquerda/direita"
+    "Soldado com 8 orientações reais baseadas na mira",
+    "Costas e mochila aparecem ao mirar para cima",
+    "Perfil e diagonais alteram a silhueta",
+    "Exatamente dois braços presos ao corpo",
+    "Rifle preso às mãos e sem flip vertical"
   ]
 }
