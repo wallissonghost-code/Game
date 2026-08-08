@@ -1,0 +1,39 @@
+from pathlib import Path
+import re
+p=Path('index.html')
+s=p.read_text()
+new='''function drawPlayer(){
+  ctx.save();ctx.translate(W/2,H/2);
+  ctx.fillStyle='#0009';ctx.beginPath();ctx.ellipse(0,25,23,7,0,0,Math.PI*2);ctx.fill();
+  const a=player.aim||0;
+  const frame=player.moving?Math.floor(player.walk)%4:0;
+  const row=player.moving?1:0;
+  const fs=48,size=72;
+  const bob=player.moving?Math.sin(player.walk*Math.PI*.5)*1.1:0;
+  ctx.save();ctx.translate(0,bob);ctx.rotate(a);
+  if(soldierReady&&soldierSprite.naturalWidth>=192){
+    ctx.save();ctx.imageSmoothingEnabled=false;ctx.rotate(Math.PI/2);
+    ctx.drawImage(soldierSprite,frame*fs,row*fs,fs,fs,-size/2,-size/2-5,size,size);ctx.restore();
+  }else{
+    ctx.fillStyle='#374151';ctx.beginPath();ctx.roundRect(-13,-19,26,38,8);ctx.fill();
+    ctx.fillStyle='#556b2f';ctx.beginPath();ctx.roundRect(-10,-15,20,26,6);ctx.fill();
+    ctx.fillStyle='#26361f';ctx.fillRect(-8,-8,16,16);
+    ctx.fillStyle='#c7996b';ctx.beginPath();ctx.arc(0,-18,10,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#3d4b27';ctx.beginPath();ctx.arc(0,-21,11,Math.PI,Math.PI*2);ctx.fill();
+  }
+  if(weaponReady){const recoil=player.shotFlash>0?-2:0;ctx.save();ctx.translate(11+recoil,-1);ctx.imageSmoothingEnabled=true;ctx.drawImage(weaponSprite,-7,-6,34,12);ctx.restore();}
+  ctx.restore();ctx.restore();
+}'''
+s,n=re.subn(r'function drawPlayer\(\)\{.*?\}function drawPhoenixShield',new+'function drawPhoenixShield',s,1,flags=re.S)
+if n!=1: raise SystemExit('drawPlayer block not found')
+s=s.replace('Caos Live v0.12.5','Caos Live v0.12.6')
+s=s.replace("const VERSION='0.12.5'","const VERSION='0.12.6'")
+s=s.replace('v0.12.5 · SOLDADO 8 DIREÇÕES','v0.12.6 · RIG ÚNICO PROFISSIONAL')
+p.write_text(s)
+pp=Path('painel.html')
+if pp.exists():
+    t=pp.read_text().replace('v0.12.5','v0.12.6').replace('0.12.5','0.12.6')
+    pp.write_text(t)
+v=Path('version.json')
+if v.exists():
+    v.write_text(re.sub(r'0\.12\.\d+','0.12.6',v.read_text()))
