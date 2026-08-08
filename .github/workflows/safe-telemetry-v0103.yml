@@ -1,0 +1,43 @@
+name: Safe Telemetry v0.10.3
+
+on:
+  push:
+    paths:
+      - 'scripts/add-safe-telemetry-v0103.mjs'
+      - '.github/workflows/safe-telemetry-v0103.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply isolated telemetry patch
+        run: node scripts/add-safe-telemetry-v0103.mjs
+      - name: Validate connector syntax
+        run: node --check cloud/connector-server.mjs
+      - name: Validate required markers
+        run: |
+          grep -q 'data-caos-telemetry-v0103' cloud/connector-server.mjs
+          grep -q 'data-caos-admin-telemetry-v0103' cloud/connector-server.mjs
+          grep -q 'live-status' cloud/connector-server.mjs
+          grep -q "command:'fps'" cloud/connector-server.mjs
+      - name: Commit generated changes
+        run: |
+          if git diff --quiet; then
+            echo 'No changes to commit'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add cloud/connector-server.mjs version.json
+          git commit -m 'feat: safe fps and live telemetry v0.10.3'
+          git push
