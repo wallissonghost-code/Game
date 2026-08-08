@@ -1,0 +1,73 @@
+name: Player Weapon Arms v0.12.2
+on:
+  push:
+    paths:
+      - '.github/workflows/player-weapon-arms-v122.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch player weapon attachment
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, json
+          p=Path('index.html'); s=p.read_text()
+          s=s.replace('Caos Live v0.12.1','Caos Live v0.12.2').replace('v0.12.1 · AUTO FUGA','v0.12.2 · ARMA + BRAÇOS').replace("const VERSION='0.12.1'","const VERSION='0.12.2'")
+          pat=r"function drawPlayer\(\)\{.*?\}function drawPhoenixShield\(\)\{"
+          repl=r'''function drawPlayer(){
+            ctx.save();ctx.translate(W/2,H/2);
+            ctx.fillStyle='#0008';ctx.beginPath();ctx.ellipse(0,25,24,8,0,0,7);ctx.fill();
+            const a=player.aim||0, left=Math.cos(a)<0;
+            if(soldierReady&&soldierSprite.naturalWidth>=192){
+              const fs=48,size=72,row=player.moving?1:0,frame=player.moving?Math.floor(player.walk)%4:0;
+              ctx.save();if(left)ctx.scale(-1,1);ctx.imageSmoothingEnabled=false;ctx.drawImage(soldierSprite,frame*fs,row*fs,fs,fs,-size/2,-size/2-5,size,size);ctx.restore();
+              if(weaponReady){
+                const bob=player.moving?Math.sin(player.walk*Math.PI*.5)*.8:0,recoil=player.shotFlash>0?-1.6:0;
+                // weapon rig: rotate as one assembly around chest pivot
+                ctx.save();ctx.translate(0,-1+bob);ctx.rotate(a);
+                // arms always remain attached to torso and weapon
+                ctx.lineCap='round';ctx.lineJoin='round';
+                ctx.strokeStyle='#8b6a45';ctx.lineWidth=6;
+                ctx.beginPath();ctx.moveTo(-6,-3);ctx.lineTo(5,0);ctx.lineTo(11,1);ctx.stroke();
+                ctx.beginPath();ctx.moveTo(-5,6);ctx.lineTo(4,5);ctx.lineTo(16,2);ctx.stroke();
+                // sleeves
+                ctx.strokeStyle='#3f4a2e';ctx.lineWidth=8;
+                ctx.beginPath();ctx.moveTo(-8,-4);ctx.lineTo(-2,-1);ctx.stroke();
+                ctx.beginPath();ctx.moveTo(-7,7);ctx.lineTo(-1,5);ctx.stroke();
+                // rifle anchored to hands; never vertically mirrored/upside-down
+                ctx.imageSmoothingEnabled=true;
+                const w=34,h=12,pivotX=7,pivotY=h/2;
+                ctx.drawImage(weaponSprite,-pivotX+recoil,-pivotY,w,h);
+                // hands over rifle grip/foregrip
+                ctx.fillStyle='#c7996b';
+                ctx.beginPath();ctx.arc(7,1,2.8,0,Math.PI*2);ctx.fill();
+                ctx.beginPath();ctx.arc(15,2,2.6,0,Math.PI*2);ctx.fill();
+                ctx.restore();
+              }
+            }else{
+              ctx.fillStyle='#3f4a2e';ctx.fillRect(-15,-10,30,32);ctx.fillStyle='#c7996b';ctx.beginPath();ctx.arc(0,-18,11,0,7);ctx.fill();
+            }
+            ctx.restore();
+          }function drawPhoenixShield(){'''
+          s2,n=re.subn(pat,repl,s,count=1,flags=re.S)
+          if n!=1: raise SystemExit('drawPlayer marker missing')
+          p.write_text(s2)
+          q=Path('painel.html'); a=q.read_text().replace('Caos Admin v0.12.1','Caos Admin v0.12.2').replace('v0.12.1</span>','v0.12.2</span>').replace('index.html?v=121','index.html?v=122'); q.write_text(a)
+          Path('version.json').write_text(json.dumps({'version':'0.12.2','label':'v0.12.2','releasedAt':'2026-08-08T17:40:00Z','build':'player-weapon-rig','notes':['Rifle preso ao corpo por pivot fixo','Arma nunca vira de ponta-cabeça','Braços e mãos desenhados segurando a arma','Recuo e bob reduzidos para evitar aparência flutuante']},ensure_ascii=False,indent=2)+'\n')
+          PY
+      - name: Validate
+        run: |
+          grep -q "v0.12.2" index.html
+          grep -q "weapon rig" index.html
+          grep -q "Braços" version.json
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html painel.html version.json
+          git commit -m "fix: attach rifle to player arms and prevent upside-down weapon v0.12.2" || exit 0
+          git push
