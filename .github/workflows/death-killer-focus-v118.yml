@@ -1,0 +1,58 @@
+name: Death Killer Focus v0.11.8
+on:
+  push:
+    paths:
+      - '.github/workflows/death-killer-focus-v118.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Keep only killer after final death
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,re
+          p=Path('index.html')
+          s=p.read_text()
+          original=s
+
+          s=s.replace('<title>Caos Live v0.11.7</title>','<title>Caos Live v0.11.8</title>')
+          s=s.replace('v0.11.7 · RANGE + FOCO','v0.11.8 · FOCO DA MORTE')
+          s=s.replace("const VERSION='0.11.7'","const VERSION='0.11.8'")
+
+          old="function beginDeath(e){if(deathState)return;const now=performance.now();deathState={killer:e,at:now};$('deathKiller').textContent=killerLabel(e);"
+          new="function beginDeath(e){if(deathState)return;const now=performance.now();enemies=enemies.filter(m=>m===e&&!m.dead);bullets=[];arcFx=[];medDrop=null;deathState={killer:e,at:now};$('deathKiller').textContent=killerLabel(e);"
+          if old not in s:
+            raise SystemExit('beginDeath marker missing')
+          s=s.replace(old,new,1)
+
+          p.write_text(s)
+
+          ap=Path('painel.html')
+          if ap.exists():
+            a=ap.read_text().replace('Caos Admin v0.11.7','Caos Admin v0.11.8').replace('PAINEL v0.11.7','PAINEL v0.11.8').replace('?v=117','?v=118')
+            ap.write_text(a)
+
+          Path('version.json').write_text(json.dumps({
+            'version':'0.11.8','label':'v0.11.8','releasedAt':'2026-08-08T16:45:00Z','build':'death-killer-focus',
+            'notes':[
+              'Na morte definitiva todos os outros mobs são removidos imediatamente',
+              'A câmera de morte mantém apenas o inimigo que aplicou o golpe final',
+              'Se a Fênix ativar, a arena não é limpa e os mobs continuam normalmente',
+              'Projéteis e efeitos temporários são limpos somente na morte definitiva'
+            ]
+          },ensure_ascii=False,indent=2)+'\n')
+
+          if s==original:
+            raise SystemExit('no changes')
+          PY
+      - name: Commit v0.11.8
+        run: |
+          git config user.name "wallissonghost-code"
+          git config user.email "wallissonghost@gmail.com"
+          git add index.html painel.html version.json
+          git commit -m "feat: keep only final killer on death v0.11.8" || exit 0
+          git push
