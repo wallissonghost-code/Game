@@ -1,13 +1,12 @@
 {
-  "version": "0.11.9",
-  "label": "v0.11.9",
-  "releasedAt": "2026-08-08T16:58:00Z",
-  "build": "auto-smooth",
+  "version": "0.12.0",
+  "label": "v0.12.0",
+  "releasedAt": "2026-08-08T17:20:00Z",
+  "build": "regen-armor-auto",
   "notes": [
-    "Auto para quando não há ameaça",
-    "Direção de fuga mantida por curtos intervalos",
-    "Mudanças de direção suavizadas",
-    "Reação imediata preservada em perigo crítico",
-    "Movimento independente do tiro automático"
+    "Regeneração progressiva por tempo sem dano",
+    "Armadura Bronze/Prata/Ouro/Diamante",
+    "Auto mantém recuo preventivo enquanto mobs se aproximam",
+    "Jogo e painel sincronizados em v0.12.0"
   ]
 }
