@@ -1,12 +1,13 @@
 {
-  "version": "0.11.4",
-  "label": "v0.11.4",
-  "releasedAt": "2026-08-08T16:25:00Z",
-  "build": "deathcam-autofire-fix",
+  "version": "0.11.5",
+  "label": "v0.11.5",
+  "releasedAt": "2026-08-08T16:35:00Z",
+  "build": "death-panel-crowd-control",
   "notes": [
-    "Câmera de morte permanece por 5 segundos antes do resumo final",
-    "Tiro Automático OFF também desativa busca e rastreamento automático de alvos",
-    "Arma acompanha apenas a direção de movimento quando o autofire está desligado",
-    "Ao desligar autofire, muzzle flash e temporizador do disparo são resetados"
+    "Painel de morte permanece aberto até o jogador tocar no X",
+    "Fechar o painel mostra o resumo final e botão para jogar novamente",
+    "Mobs usam posições de aproximação distribuídas ao redor do player",
+    "Mobs muito próximos recuam em vez de formar pilhas no mesmo ponto",
+    "Redução de sobreposição visual e de colisões concentradas perto do player"
   ]
 }
