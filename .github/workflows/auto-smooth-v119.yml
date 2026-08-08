@@ -1,0 +1,107 @@
+name: Auto Smooth v0.11.9
+on:
+  push:
+    paths:
+      - '.github/workflows/auto-smooth-v119.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch smooth human-like auto movement
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,json
+          p=Path('index.html'); s=p.read_text(); original=s
+
+          s=s.replace('<title>Caos Live v0.11.8</title>','<title>Caos Live v0.11.9</title>')
+          s=s.replace('<div class="version">v0.11.8 · FOCO DA MORTE</div>','<div class="version">v0.11.9 · AUTO SUAVE</div>')
+          s=s.replace("const VERSION='0.11.8'","const VERSION='0.11.9'")
+
+          old='deathState=null,autoTarget=null,autoTargetUntil=0;'
+          new='deathState=null,autoTarget=null,autoTargetUntil=0,autoMoveX=0,autoMoveY=0,autoDecisionUntil=0;'
+          if old not in s: raise SystemExit('auto state marker missing')
+          s=s.replace(old,new,1)
+
+          old_reset='deathState=null;$(\'deathCam\').classList.remove(\'show\');'
+          new_reset='deathState=null;autoMoveX=0;autoMoveY=0;autoDecisionUntil=0;$(\'deathCam\').classList.remove(\'show\');'
+          if old_reset not in s: raise SystemExit('reset marker missing')
+          s=s.replace(old_reset,new_reset,1)
+
+          pat=r"function autoVector\(dt\)\{.*?\}function update\(dt\)\{"
+          repl=r'''function autoVector(dt){
+            const now=performance.now();
+            let nearestMob=null,nearestDist=Infinity,immediate=false,hasThreat=false;
+            for(const e of enemies){
+              if(e.dead)continue;
+              const d=Math.hypot(player.x-e.x,player.y-e.y);
+              if(d<nearestDist){nearestDist=d;nearestMob=e}
+              const alert=(e.max>=100?330:250)+e.r;
+              const panic=(e.max>=100?205:118)+e.r;
+              if(d<alert)hasThreat=true;
+              if(d<panic)immediate=true;
+            }
+            if(!nearestMob||!hasThreat){autoMoveX=0;autoMoveY=0;autoDecisionUntil=0;return{x:0,y:0}}
+
+            if(immediate||now>=autoDecisionUntil||Math.hypot(autoMoveX,autoMoveY)<.08){
+              let vx=0,vy=0;
+              for(const e of enemies){
+                if(e.dead)continue;
+                const dx=player.x-e.x,dy=player.y-e.y,dist=Math.hypot(dx,dy)||1;
+                const influence=(e.max>=100?330:250)+e.r;
+                if(dist>=influence)continue;
+                const danger=(e.max>=100?1.7:1);
+                const w=Math.pow(1-dist/influence,1.45)*danger;
+                vx+=dx/dist*w;vy+=dy/dist*w;
+              }
+              if(Math.hypot(vx,vy)<.06){
+                const dx=player.x-nearestMob.x,dy=player.y-nearestMob.y,d=nearestDist||1;
+                vx=dx/d;vy=dy/d;
+              }
+              const n=Math.hypot(vx,vy)||1;
+              const desiredX=vx/n,desiredY=vy/n;
+              if(immediate||Math.hypot(autoMoveX,autoMoveY)<.08){
+                autoMoveX=desiredX;autoMoveY=desiredY;
+              }else{
+                autoMoveX=autoMoveX*.72+desiredX*.28;
+                autoMoveY=autoMoveY*.72+desiredY*.28;
+                const sn=Math.hypot(autoMoveX,autoMoveY)||1;autoMoveX/=sn;autoMoveY/=sn;
+              }
+              autoDecisionUntil=now+(immediate?260:720);
+            }
+
+            const safeDistance=(nearestMob.max>=100?285:205)+nearestMob.r;
+            if(!immediate&&nearestDist>safeDistance){autoMoveX=0;autoMoveY=0;autoDecisionUntil=now+250;return{x:0,y:0}}
+            return{x:autoMoveX,y:autoMoveY}
+          }function update(dt){'''
+          s2,n=re.subn(pat,repl,s,count=1,flags=re.S)
+          if n!=1: raise SystemExit('autoVector marker missing')
+          s=s2
+
+          p.write_text(s)
+          ap=Path('painel.html')
+          if ap.exists():
+            a=ap.read_text().replace('Caos Admin v0.11.8','Caos Admin v0.11.9').replace('v0.11.8','v0.11.9')
+            ap.write_text(a)
+          Path('version.json').write_text(json.dumps({
+            'version':'0.11.9','label':'v0.11.9','releasedAt':'2026-08-08T16:55:00Z','build':'auto-smooth',
+            'notes':[
+              'Modo automático para completamente quando não existe ameaça próxima',
+              'Direção de fuga fica comprometida por curtos intervalos em vez de recalcular a cada frame',
+              'Mudanças de direção são suavizadas para remover zigue-zague e tremedeira',
+              'Ameaça imediata ainda força reação rápida para preservar sobrevivência',
+              'Movimento automático permanece independente do Tiro Automático'
+            ]
+          },ensure_ascii=False,indent=2)+'\n')
+          if s==original: raise SystemExit('no changes')
+          PY
+      - name: Commit v0.11.9
+        run: |
+          git config user.name "wallissonghost-code"
+          git config user.email "wallissonghost@gmail.com"
+          git add index.html painel.html version.json
+          git commit -m "fix: smooth human-like auto movement v0.11.9" || exit 0
+          git push
