@@ -1,0 +1,92 @@
+name: Combat Balance + Death Cam v0.11.3b
+on:
+  push:
+    paths:
+      - '.github/workflows/combat-deathcam-v113b.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply robust combat patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          p=Path('index.html'); s=p.read_text(); original=s
+          # version
+          s=s.replace('<title>Caos Live v0.11.2</title>','<title>Caos Live v0.11.3</title>')
+          s=s.replace('<div class="version">v0.11.2 · AUTO INTELIGENTE</div>','<div class="version">v0.11.3 · COMBATE</div>')
+          s=s.replace("const VERSION='0.11.2'","const VERSION='0.11.3'")
+          # death CSS/UI
+          css=".deathCam{position:absolute;inset:0;z-index:11;display:none;align-items:flex-end;justify-content:center;padding:0 18px max(34px,env(safe-area-inset-bottom));pointer-events:none;background:radial-gradient(circle at 50% 45%,transparent 0 26%,rgba(100,0,12,.12) 48%,rgba(2,4,10,.82) 100%)}.deathCam.show{display:flex}.deathBox{width:min(430px,100%);padding:16px 18px;border:1px solid #7f1d1d;border-radius:20px;background:rgba(8,10,20,.92);box-shadow:0 0 36px rgba(239,68,68,.22);text-align:center;backdrop-filter:blur(8px)}.deathBox .killed{font-size:9px;letter-spacing:2px;color:#fca5a5;font-weight:900}.deathBox h2{margin:5px 0 12px;font-size:22px}.deathStats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.deathStats div{padding:8px 4px;border:1px solid #252b46;border-radius:11px;background:#0b1020}.deathStats small{display:block;font-size:6px;color:#7f8ab4}.deathStats b{font-size:11px}.deathHint{margin-top:9px;font-size:8px;color:#94a3b8}"
+          if '.deathCam{' not in s:s=s.replace('</style>',css+'</style>',1)
+          over='<section id="over" class="overlay"><div class="card"><h1>Fim de jogo</h1><p id="finalText"></p><button class="btn" id="restartBtn">JOGAR NOVAMENTE</button></div></section>'
+          death='<section id="deathCam" class="deathCam"><div class="deathBox"><div class="killed">VOCÊ FOI ELIMINADO POR</div><h2 id="deathKiller">—</h2><div class="deathStats"><div><small>LEVEL</small><b id="deathLevel">1</b></div><div><small>TEMPO</small><b id="deathTime">00:00</b></div><div><small>HORDA</small><b id="deathWave">0</b></div><div><small>ABATES</small><b id="deathKills">0</b></div></div><div class="deathHint">Câmera focada no golpe final</div></div></section>'
+          if 'id="deathCam"' not in s:
+            if over not in s:raise SystemExit('over missing')
+            s=s.replace(over,death+over,1)
+          # state and base dmg
+          old='phoenixShieldUntil=0,perfMode=0,perfFrames=0,perfWindowStart=performance.now(),perfLastFps=60,renderScale=1,frameSeq=0;const skillLv='
+          if old in s:s=s.replace(old,'phoenixShieldUntil=0,perfMode=0,perfFrames=0,perfWindowStart=performance.now(),perfLastFps=60,renderScale=1,frameSeq=0,autoFire=true,runStartedAt=0,waveCount=0,deathState=null;const skillLv=',1)
+          if 'bloodHeal:0,damage:2};const MAX_ENEMIES' not in s:s=s.replace('bloodHeal:0};const MAX_ENEMIES','bloodHeal:0,damage:2};const MAX_ENEMIES',1)
+          # damage table
+          reps={"h:3,d:8,x:7":"h:3,d:2,x:7","h:8,d:15,x:18":"h:8,d:4,x:18","h:5,d:10,x:10":"h:5,d:3,x:10","h:4,d:10,x:9":"h:4,d:2,x:9","h:5,d:9,x:11":"h:5,d:2,x:11","h:14,d:20,x:24":"h:14,d:5,x:24","h:100,d:28,x:150":"h:100,d:8,x:150","h:100,d:24,x:170":"h:100,d:7,x:170"}
+          for a,b in reps.items():s=s.replace(a,b,1)
+          # reset
+          s=s.replace('bloodChance:0,bloodHeal:0});for(const k in skillLv)','bloodChance:0,bloodHeal:0,damage:2});for(const k in skillLv)',1)
+          s=s.replace('phoenixShieldUntil=0;document.querySelectorAll',"phoenixShieldUntil=0;autoFire=true;runStartedAt=performance.now();waveCount=0;deathState=null;$('deathCam').classList.remove('show');document.querySelectorAll",1)
+          # waves
+          s=s.replace('function spawnWave(){const n=Math.min(11,3+Math.floor(level/2));for(let i=0;i<n;i++)spawn()}','function spawnWave(){waveCount++;const n=Math.min(11,3+Math.floor(level/2));for(let i=0;i<n;i++)spawn()}',1)
+          # gun damage
+          s=s.replace('if(e){b.dead=true;e.hp--;if(e.hp<=0){e.dead=true;onKill(e)}}','if(e){b.dead=true;e.hp-=player.damage;if(e.hp<=0){e.dead=true;onKill(e)}}',1)
+          # autofire command and loop
+          auto="if(c==='auto'){autoMode=!!d.value;pointer=null}"
+          if "if(c==='autofire')" not in s:s=s.replace(auto,auto+"if(c==='autofire'){autoFire=!!d.value;toast('🔫 TIRO AUTOMÁTICO '+(autoFire?'ON':'OFF'))}",1)
+          s=s.replace('castArc();shotTimer-=dt;if(shotTimer<=0){shoot();shotTimer=player.fireRate}',"castArc();shotTimer-=dt;if(autoFire&&shotTimer<=0){shoot();shotTimer=player.fireRate}else if(!autoFire){shotTimer=Math.min(shotTimer,.05)}",1)
+          # live spawn identity: normal admin spawn remains anonymous, live passes d.user
+          old="if(c==='spawn')for(let i=0;i<Math.min(100,+d.amount||25);i++)spawn(d.mob||null);"
+          new="if(c==='spawn')for(let i=0;i<Math.min(100,+d.amount||25);i++){const before=enemies.length;spawn(d.mob||null);if(enemies.length>before&&d.user)enemies[enemies.length-1].username=String(d.user).replace(/^@/,'')}"
+          s=s.replace(old,new,1)
+          # death helpers
+          helper="function fmtRunTime(ms){const total=Math.max(0,Math.floor(ms/1000)),m=Math.floor(total/60),ss=total%60;return String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0')}function killerLabel(e){if(!e)return 'CAOS';const live=e.username||e.viewer||e.owner||e.sender||e.user;if(live)return '@'+String(live).replace(/^@/,'');return (types[e.type]?.name||'Mob desconhecido')+(e.tier===2?' · CORROMPIDO':e.tier===1?' · ELITE':'')}function beginDeath(e){if(deathState)return;const now=performance.now();deathState={killer:e,at:now,showOverAt:now+1800};$('deathKiller').textContent=killerLabel(e);$('deathLevel').textContent=level;$('deathTime').textContent=fmtRunTime(now-runStartedAt);$('deathWave').textContent=waveCount;$('deathKills').textContent=killCount;$('deathCam').classList.add('show');pointer=null;broadcast()}"
+          if 'function beginDeath(' not in s:s=s.replace('function tryPhoenix(){',helper+'function tryPhoenix(){',1)
+          s=s.replace("if(player.life<=0){if(!tryPhoenix()){running=false;$('finalText').textContent='Level '+level+' · '+score+' pontos';$('over').classList.add('show')}}","if(player.life<=0){if(!tryPhoenix())beginDeath(e)}",1)
+          s=s.replace('function update(dt){if(paused||choosing)return;',"function update(dt){if(paused||choosing)return;if(deathState){const now=performance.now();if(now>=deathState.showOverAt){running=false;$('deathCam').classList.remove('show');$('finalText').textContent='Level '+level+' · '+score+' pontos · '+killCount+' abates · '+fmtRunTime(now-runStartedAt);$('over').classList.add('show')}return;}",1)
+          s=s.replace('function world(x,y){return{x:x-player.x+W/2,y:y-player.y+H/2}}',"function world(x,y){let cx=player.x,cy=player.y;if(deathState?.killer){const k=deathState.killer,t=Math.min(1,(performance.now()-deathState.at)/900);cx=player.x+(k.x-player.x)*t*.62;cy=player.y+(k.y-player.y)*t*.62}return{x:x-cx+W/2,y:y-cy+H/2}}",1)
+          # network state exact current marker
+          s=s.replace('autoMode,hordeEnabled,fps:', 'autoMode,hordeEnabled,autofire:autoFire,wave:waveCount,fps:',1)
+          p.write_text(s)
+
+          # Admin patch
+          ap=Path('painel.html');a=ap.read_text()
+          a=a.replace('<title>Caos Admin v0.11.2</title>','<title>Caos Admin v0.11.3</title>')
+          a=a.replace('<div class="version">PAINEL v0.11.2 ·','<div class="version">PAINEL v0.11.3 ·')
+          fpsbtn='<button id="fpsModeToggle" class="modeToggle" type="button" data-on="true">'
+          autofire='<button id="autoFireModeToggle" class="modeToggle isOn" type="button" data-on="true"><span class="modeInfo"><span class="modeIcon">🔫</span><span><b>TIRO AUTOMÁTICO</b><small>liga/desliga os disparos normais do soldado</small></span></span><span class="modeRight"><span class="modeBadge">ON</span><span class="toggleTrack"><span class="toggleKnob"></span></span></span></button>'
+          if 'id="autoFireModeToggle"' not in a:
+            if fpsbtn not in a:raise SystemExit('fps button missing')
+            a=a.replace(fpsbtn,autofire+fpsbtn,1)
+          # sync state inside conn handler, directly after auto UI
+          marker="const ht=$('hordeModeToggle');"
+          sync="const aft=$('autoFireModeToggle');if(aft&&typeof d.autofire==='boolean'){aft.dataset.on=d.autofire?'true':'false';aft.classList.toggle('isOn',!!d.autofire);const ab=aft.querySelector('.modeBadge');if(ab)ab.textContent=d.autofire?'ON':'OFF'};"
+          if sync not in a:a=a.replace(marker,sync+marker,1)
+          # click binding
+          marker="if($('hordeModeToggle'))$('hordeModeToggle').onclick="
+          bind="if($('autoFireModeToggle'))$('autoFireModeToggle').onclick=()=>{const next=$('autoFireModeToggle').dataset.on!=='true';send({command:'autofire',value:next},'🔫 Tiro Automático '+(next?'ON':'OFF'))};"
+          if bind not in a:a=a.replace(marker,bind+marker,1)
+          # send viewer identity with live-created mobs
+          a=a.replace("const cmd=commandFromRule({...r,value:val});if(send(cmd,'🎁 '+user", "const cmd=commandFromRule({...r,value:val});cmd.user=user;if(send(cmd,'🎁 '+user",1)
+          ap.write_text(a)
+          Path('version.json').write_text(json.dumps({'version':'0.11.3','label':'v0.11.3','releasedAt':'2026-08-08T16:22:00Z','build':'combat-balance-deathcam','notes':['Rifle: 2 de dano por projétil','Dano dos mobs rebalanceado: 2 a 5; bosses 7 a 8 antes de modificadores','Tiro Automático ON/OFF no painel','Câmera de morte com foco no assassino','Resumo: assassino, level, tempo, horda e abates','Mobs de Live carregam o @ do viewer para o kill feed']},ensure_ascii=False,indent=2)+'\n')
+          if s==original:raise SystemExit('no game changes')
+          PY
+      - name: Commit build
+        run: |
+          git config user.name "wallissonghost-code"
+          git config user.email "wallissonghost@gmail.com"
+          git add index.html painel.html version.json
+          git commit -m "feat: combat balance, autofire toggle and death cam v0.11.3" || exit 0
+          git push
