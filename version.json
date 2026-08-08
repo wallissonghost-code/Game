@@ -1,12 +1,12 @@
 {
-  "version": "0.10.9",
-  "label": "v0.10.9",
-  "releasedAt": "2026-08-08T15:35:00Z",
-  "build": "phoenix-80-fps-hud",
+  "version": "0.11.0",
+  "label": "v0.11.0",
+  "releasedAt": "2026-08-08T15:42:00Z",
+  "build": "fps-sync-mob-melee",
   "notes": [
-    "Fênix revive com 80% do HP máximo atual",
-    "Fênix concede 5s de proteção dourada",
-    "FPS passa a aparecer em badge próprio no HUD",
-    "Botão Mostrar FPS do Admin controla o badge do jogo"
+    "FPS real do jogo sincronizado e exibido no painel Admin",
+    "Mobs não morrem mais ao colidir com o player",
+    "Cada mob aplica dano corpo a corpo com cooldown individual de 0.9s",
+    "Pequeno recuo visual após o ataque para deixar o contato legível"
   ]
 }
