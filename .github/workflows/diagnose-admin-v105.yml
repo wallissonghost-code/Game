@@ -1,0 +1,38 @@
+name: Diagnose Admin v0.10.5
+on:
+  push:
+    paths:
+      - '.github/workflows/diagnose-admin-v105.yml'
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build diagnostic report
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('painel.html').read_text(encoding='utf-8')
+          g=Path('index.html').read_text(encoding='utf-8')
+          pats=['fps','horde','skillApply','skillAll','skillReset','skillMax','skillTest','autoMode','command','cmd','setHorde','hordes']
+          out=[]
+          for name,text in [('PAINEL',p),('JOGO',g)]:
+              out.append(f'===== {name} =====')
+              for pat in pats:
+                  out.append(f'--- {pat} ---')
+                  for m in re.finditer(pat,text,re.I):
+                      a=max(0,m.start()-350); b=min(len(text),m.end()+650)
+                      out.append(text[a:b].replace('\n',' '))
+                      out.append('')
+          Path('debug-admin-v105.txt').write_text('\n'.join(out),encoding='utf-8')
+          PY
+      - name: Commit report
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add debug-admin-v105.txt
+          git commit -m "chore: diagnose admin controls v0.10.5" || exit 0
+          git push
