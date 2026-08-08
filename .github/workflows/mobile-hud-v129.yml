@@ -1,0 +1,32 @@
+name: Mobile HUD v0.12.9
+'on':
+  push:
+    paths: ['.github/workflows/mobile-hud-v129.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch mobile HUD
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html'); s=p.read_text()
+          css='''\n/* Mobile HUD v0.12.9 */\n@media(max-width:700px){\n.hud{top:max(6px,env(safe-area-inset-top));left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));gap:6px;align-items:flex-start}\n.hud>div:first-child{min-width:0;flex:1 1 auto}.logo{font-size:15px;line-height:1}.sub{font-size:7px;margin-top:4px}.version{font-size:6px;padding:3px 5px;max-width:155px;overflow:hidden;text-overflow:ellipsis}.fpsHud{font-size:6px;padding:3px 5px;margin-left:2px}.right{gap:3px;flex:0 1 auto;min-width:0}.stats{gap:3px}.stats div{min-width:42px;padding:4px 3px;border-radius:9px}.stats span{font-size:5px}.stats strong{font-size:10px;white-space:nowrap}.stats small{font-size:5px}.pauseBtn{width:32px;height:32px;border-radius:9px;font-size:14px}.xpbar{top:max(68px,calc(env(safe-area-inset-top) + 56px));left:8px;right:8px;height:6px}.ghost{left:8px;bottom:max(8px,env(safe-area-inset-bottom));font-size:7px}\n}\n@media(max-width:430px){\n.hud{display:grid;grid-template-columns:minmax(112px,1fr) auto}.logo{font-size:14px}.version{max-width:142px}.stats div{min-width:38px}.stats div:nth-child(4){display:none}.pauseBtn{width:30px;height:30px}.xpbar{top:max(64px,calc(env(safe-area-inset-top) + 52px))}\n}\n@media(max-width:370px){.stats div{min-width:35px}.stats strong{font-size:9px}.version{max-width:125px}.fpsHud{display:none}}\n'''
+          s=s.replace('</style>',css+'</style>',1)
+          s=s.replace('<title>Caos Live v0.12.7</title>','<title>Caos Live v0.12.9</title>')
+          s=s.replace("const VERSION='0.12.7'","const VERSION='0.12.9'")
+          s=s.replace('v0.12.7 · RIG MODULAR PROFISSIONAL','v0.12.9 · MOBILE HUD')
+          p.write_text(s)
+          PY
+      - name: Commit
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add index.html
+          git commit -m 'fix: responsive mobile game HUD v0.12.9'
+          git pull --rebase origin main
+          git push
