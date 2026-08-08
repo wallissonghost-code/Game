@@ -1,11 +1,12 @@
 {
-  "version": "0.10.4",
-  "label": "v0.10.4",
-  "releasedAt": "2026-08-08T10:55:00-03:00",
-  "build": "weapon-skin-cache-sync",
+  "version": "0.10.5",
+  "label": "v0.10.5",
+  "releasedAt": "2026-08-08T11:08:00-03:00",
+  "build": "chunky-pixel-rifle",
   "notes": [
-    "Skin pixel-art da arma atualizada",
-    "Cache da arma forçado para nova versão",
-    "Jogo e painel sincronizados em v0.10.4"
+    "Nova skin pixel-art da arma com leitura melhor em escala pequena",
+    "Arma mais grossa e curta",
+    "Anchor e altura refinados",
+    "Jogo e painel sincronizados"
   ]
 }
