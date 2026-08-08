@@ -1,0 +1,63 @@
+name: Mob Usernames v0.13.1
+'on':
+  push:
+    paths: ['.github/workflows/fix-mob-usernames-v131.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch mob usernames
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html'); s=p.read_text()
+          # Preserve invoker directly on each spawned enemy instead of relying on the last array element.
+          s=s.replace("function makeEnemy(type,near=false){", "function makeEnemy(type,near=false,username=''){")
+          old="attackAt:0,attackFlash:0})}function spawn(type){if(type)return makeEnemy(type,true);const pool=['wraith','reaper','infected','crawler','eye','brute'];makeEnemy(pool[Math.floor(Math.random()*pool.length)])}function spawnWave()"
+          new="attackAt:0,attackFlash:0,username:username?String(username).replace(/^@/,''):''})}function spawn(type,username=''){if(type)return makeEnemy(type,true,username);const pool=['wraith','reaper','infected','crawler','eye','brute'];makeEnemy(pool[Math.floor(Math.random()*pool.length)],false,username)}function spawnWave()"
+          if old not in s: raise SystemExit('enemy constructor marker not found')
+          s=s.replace(old,new,1)
+          s=s.replace("if(c==='spawn')for(let i=0;i<Math.min(100,+d.amount||25);i++){const before=enemies.length;spawn(d.mob||null);if(enemies.length>before&&d.user)enemies[enemies.length-1].username=String(d.user).replace(/^@/,'')}","if(c==='spawn')for(let i=0;i<Math.min(100,+d.amount||25);i++)spawn(d.mob||null,d.user||d.username||d.viewer||'')")
+          # Bosses invoked from live also retain the sender.
+          s=s.replace("if(c==='boss')boss(d.mob||null);", "if(c==='boss')makeEnemy(d.mob||(((Math.floor(level/10))%2)?'colossus':'voidlord'),true,d.user||d.username||d.viewer||'');")
+          # Inject username label immediately before each enemy draw completes. Locate the enemy rendering loop and add one stable overlay.
+          marker="function drawEnemies()"
+          if marker in s:
+            start=s.index(marker); end=s.find('function ',start+len(marker))
+            if end<0: end=len(s)
+            block=s[start:end]
+            if 'LIVE USERNAME LABEL' not in block:
+              # add label before restore at end of per-enemy loop when possible
+              target="ctx.restore()}"
+              pos=block.rfind(target)
+              if pos>=0:
+                label="/* LIVE USERNAME LABEL */if(e.username){ctx.save();ctx.font='700 10px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';const name='@'+String(e.username).replace(/^@/,'');const tw=ctx.measureText(name).width;ctx.fillStyle='rgba(5,8,18,.78)';ctx.beginPath();ctx.roundRect(e.x-player.x+W/2-tw/2-6,e.y-player.y+H/2-e.r-24,tw+12,16,7);ctx.fill();ctx.fillStyle='#f8fafc';ctx.fillText(name,e.x-player.x+W/2,e.y-player.y+H/2-e.r-12);ctx.restore()}"
+                block=block[:pos]+label+block[pos:]
+                s=s[:start]+block+s[end:]
+          # Fallback: append an overlay pass in draw() so labels work regardless of renderer internals.
+          if 'function drawLiveUsernames()' not in s:
+            insert="function drawLiveUsernames(){ctx.save();ctx.font='700 10px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';for(const e of enemies){if(e.dead||!e.username)continue;const sx=e.x-player.x+W/2,sy=e.y-player.y+H/2;if(sx<-80||sx>W+80||sy<-80||sy>H+80)continue;const name='@'+String(e.username).replace(/^@/,'');const tw=ctx.measureText(name).width;ctx.fillStyle='rgba(5,8,18,.78)';ctx.beginPath();ctx.roundRect(sx-tw/2-6,sy-e.r-24,tw+12,16,7);ctx.fill();ctx.fillStyle='#f8fafc';ctx.fillText(name,sx,sy-e.r-12)}ctx.restore()}"
+            anchor='function drawPlayer()'
+            if anchor not in s: raise SystemExit('draw anchor not found')
+            s=s.replace(anchor,insert+anchor,1)
+          # Call overlay after world/enemies are rendered but before HUD-independent effects are done.
+          if 'drawLiveUsernames();' not in s:
+            # safest insertion: every frame just before drawPlayer when draw() calls it
+            s=s.replace('drawPlayer();','drawLiveUsernames();drawPlayer();',1)
+          s=s.replace('<title>Caos Live v0.13.0</title>','<title>Caos Live v0.13.1</title>')
+          s=s.replace("const VERSION='0.13.0'","const VERSION='0.13.1'")
+          s=s.replace('v0.13.0 · PLAYER SEM GIRO','v0.13.1 · LIVE USERNAMES')
+          p.write_text(s)
+          PY
+      - name: Commit
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add index.html
+          git commit -m 'fix: show invoker usernames above live mobs v0.13.1'
+          git pull --rebase origin main
+          git push
