@@ -1,12 +1,12 @@
 {
-  "version": "0.13.5",
-  "label": "v0.13.5",
-  "releasedAt": "2026-08-09T16:37:00Z",
-  "build": "reaper-s-loop-normalized",
+  "version": "0.13.7",
+  "label": "v0.13.7",
+  "releasedAt": "2026-08-09T17:54:00Z",
+  "build": "ogre-unification-4dir-boss",
   "notes": [
-    "Ceifador com escala visual reduzida e proporcional",
-    "Removida rotação que deixava o sprite deitado",
-    "Loop frontal S usa os frames 10-14",
-    "Âncora inferior estabilizada para reduzir pulos"
+    "Todos os mobs comuns usam o Ogro normal em quatro direções",
+    "Colosso e Senhor do Vazio usam o Ogro Boss em quatro direções",
+    "Classes, dano, vida, velocidade e XP continuam diferentes",
+    "Artes vetoriais antigas de inimigos e bosses foram removidas do canvas"
   ]
 }
