@@ -1,0 +1,40 @@
+name: Skin Test Canodaarma v0.0.14
+'on':
+  push:
+    paths: ['.github/workflows/skin-test-canodaarma-v014.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch rear weapon asset
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('skin-test-local.html')
+          s=p.read_text()
+          s=s.replace('Teste Skin v0.0.13','Teste Skin v0.0.14')
+          s=s.replace('v0.0.13</span>','v0.0.14</span>')
+          s=s.replace('TESTE v0.0.13 · Oficial1 + Oficial2 · só o cano acima do capacete','TESTE v0.0.14 · COSTAS usa Canodaarma.zip')
+          s=s.replace("let packs={base:null,armed:null,weapon:null}","let packs={base:null,armed:null,weapon:null,back:null}")
+          s=s.replace("const cfg={down:{l:51,t:52,w:80,h:48,mx:66,my:58,z:7,clip:'none'},up:{l:50,t:16,w:24,h:58,mx:50,my:6,z:3,clip:'inset(0 0 72% 0)'},right:{l:59,t:49,w:84,h:42,mx:85,my:49,z:7,clip:'none'},left:{l:41,t:49,w:84,h:42,mx:15,my:49,z:7,clip:'none'}}[dir]","const cfg={down:{l:51,t:52,w:80,h:48,mx:66,my:58,z:7,clip:'none'},up:{l:50,t:18,w:44,h:70,mx:50,my:10,z:7,clip:'none'},right:{l:59,t:49,w:84,h:42,mx:85,my:49,z:7,clip:'none'},left:{l:41,t:49,w:84,h:42,mx:15,my:49,z:7,clip:'none'}}[dir]")
+          old="if(armed&&packs.weapon){const weaponDir=dir==='left'?'right':dir==='right'?'left':dir,wa=packs.weapon[weaponDir]||packs.weapon.down||[];if(wa.length)weapon.src=wa[frame%wa.length]}"
+          new="if(armed){let wa=[];if(dir==='up'&&packs.back){wa=packs.back.up||packs.back.down||packs.back.right||packs.back.left||[]}else if(packs.weapon){const weaponDir=dir==='left'?'right':dir==='right'?'left':dir;wa=packs.weapon[weaponDir]||packs.weapon.down||[]}if(wa.length)weapon.src=wa[frame%wa.length]}"
+          s=s.replace(old,new)
+          oldboot="const [b,a,w]=await Promise.all([loadZip('./assets/Oficial1.zip',true),loadZip('./assets/Oficial2.zip',true),loadZip('./assets/weapons/Arma3.zip',true)]);packs.base=b;packs.armed=a;packs.weapon=w;ready=true;show();status.textContent='TESTE PRONTO · v0.0.13 · CANO ATRÁS'"
+          newboot="const [b,a,w,bw]=await Promise.all([loadZip('./assets/Oficial1.zip',true),loadZip('./assets/Oficial2.zip',true),loadZip('./assets/weapons/Arma3.zip',true),loadZip('./assets/weapons/Canodaarma.zip',true)]);packs.base=b;packs.armed=a;packs.weapon=w;packs.back=bw;ready=true;show();status.textContent='TESTE PRONTO · v0.0.14 · CANO + RED DOT NAS COSTAS'"
+          s=s.replace(oldboot,newboot)
+          s=s.replace("status.textContent='ERRO · v0.0.13'","status.textContent='ERRO · v0.0.14'")
+          p.write_text(s)
+          PY
+      - name: Commit
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add skin-test-local.html
+          git commit -m 'fix: use Canodaarma.zip for rear weapon view v0.0.14'
+          git pull --rebase origin main
+          git push
