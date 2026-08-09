@@ -1,7 +1,7 @@
 {
   "version": "0.13.7",
   "label": "v0.13.7",
-  "releasedAt": "2026-08-09T17:54:00Z",
+  "releasedAt": "2026-08-09T18:01:30Z",
   "build": "ogre-unification-4dir-boss",
   "notes": [
     "Todos os mobs comuns usam o Ogro normal em quatro direções",
