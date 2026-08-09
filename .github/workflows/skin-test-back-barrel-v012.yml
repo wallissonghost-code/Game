@@ -1,0 +1,35 @@
+name: Skin Test Back Barrel v0.0.12
+'on':
+  push:
+    paths: ['.github/workflows/skin-test-back-barrel-v012.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch back-view weapon layering
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('skin-test-local.html')
+          s=p.read_text()
+          s=s.replace('Teste Skin v0.0.11','Teste Skin v0.0.12')
+          s=s.replace('v0.0.11</span>','v0.0.12</span>')
+          s=s.replace('TESTE v0.0.11 · Oficial1 + Oficial2 · Arma3 lados invertidos','TESTE v0.0.12 · Oficial1 + Oficial2 · cano visível nas costas')
+          s=s.replace("status.textContent='TESTE PRONTO · v0.0.11 · ARMA3 LADOS INVERTIDOS'","status.textContent='TESTE PRONTO · v0.0.12 · CANO NAS COSTAS'")
+          s=s.replace("status.textContent='ERRO · v0.0.11'","status.textContent='ERRO · v0.0.12'")
+          old="function placeWeapon(){const cfg={down:{l:51,t:52,w:80,h:48,mx:66,my:58},up:{l:50,t:45,w:74,h:44,mx:50,my:31},right:{l:59,t:49,w:84,h:42,mx:85,my:49},left:{l:41,t:49,w:84,h:42,mx:15,my:49}}[dir];weapon.style.left=cfg.l+'%';weapon.style.top=cfg.t+'%';weapon.style.width=cfg.w+'px';weapon.style.height=cfg.h+'px';weapon.style.transform='translate(-50%,-50%)';muzzle.style.left=cfg.mx+'%';muzzle.style.top=cfg.my+'%'}"
+          new="function placeWeapon(){const cfg={down:{l:51,t:52,w:80,h:48,mx:66,my:58,z:7,clip:'none'},up:{l:50,t:16,w:24,h:58,mx:50,my:6,z:3,clip:'inset(0 0 72% 0)'},right:{l:59,t:49,w:84,h:42,mx:85,my:49,z:7,clip:'none'},left:{l:41,t:49,w:84,h:42,mx:15,my:49,z:7,clip:'none'}}[dir];weapon.style.left=cfg.l+'%';weapon.style.top=cfg.t+'%';weapon.style.width=cfg.w+'px';weapon.style.height=cfg.h+'px';weapon.style.zIndex=cfg.z;weapon.style.clipPath=cfg.clip;weapon.style.transform='translate(-50%,-50%)';muzzle.style.left=cfg.mx+'%';muzzle.style.top=cfg.my+'%';muzzle.style.display=dir==='up'?'none':''}"
+          if old not in s: raise SystemExit('placeWeapon signature not found')
+          s=s.replace(old,new)
+          p.write_text(s)
+      - name: Commit
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add skin-test-local.html
+          git commit -m 'fix: show only weapon barrel tip on back view v0.0.12'
+          git push
