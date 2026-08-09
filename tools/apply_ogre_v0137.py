@@ -1,0 +1,63 @@
+from pathlib import Path
+import re, json
+
+p = Path('index.html')
+s = p.read_text(encoding='utf-8')
+original = s
+
+s = re.sub(r'<title>Caos Live v[^<]+</title>', '<title>Caos Live v0.13.7</title>', s, count=1)
+s = re.sub(r'<div class="version">v[^<]+</div>', '<div class="version">v0.13.7 · OGROS 4D + BOSS</div>', s, count=1)
+s = re.sub(r'<span class="startVersion">v[^<]+</span>', '<span class="startVersion">v0.13.7</span>', s, count=1)
+s = re.sub(r'<small>Build · [^<]+</small>', '<small>Build · Ogros 4 direções + Boss</small>', s, count=1)
+s = re.sub(r"const VERSION='[^']+'", "const VERSION='0.13.7'", s, count=1)
+
+new_types = "const types={wraith:{name:'Ogro Espectro',r:15,s:96,h:3,d:2,x:7,c:'#7c3aed'},reaper:{name:'Ogro Ceifador',r:21,s:67,h:8,d:4,x:18,c:'#0e7490'},infected:{name:'Ogro Infectado',r:17,s:76,h:5,d:3,x:10,c:'#4d7c0f'},crawler:{name:'Ogro das Sombras',r:16,s:124,h:4,d:2,x:9,c:'#1e293b'},eye:{name:'Ogro Observador',r:16,s:86,h:5,d:2,x:11,c:'#b91c1c'},brute:{name:'Ogro Brutamonte',r:24,s:54,h:14,d:5,x:24,c:'#92400e'},colossus:{name:'Ogro Colosso',r:42,s:42,h:100,d:8,x:150,c:'#991b1b',boss:1},voidlord:{name:'Ogro do Vazio',r:39,s:55,h:100,d:7,x:170,c:'#312e81',boss:1}};"
+s, n_types = re.subn(r"const types=\{.*?\};", new_types, s, count=1, flags=re.S)
+if n_types != 1:
+    raise SystemExit('Falha ao atualizar classes de inimigos')
+
+new_loader = r"""const ogreFrames={up:[],down:[],right:[],left:[]},bossOgreFrames={up:[],down:[],right:[],left:[]};let ogreReady=false,bossOgreReady=false;
+async function loadOgrePack(path,target,bossMode=false){try{const r=await fetch(path,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const zip=await JSZip.loadAsync(await r.arrayBuffer());const names=Object.keys(zip.files).filter(n=>/\.png$/i.test(n)&&!zip.files[n].dir).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));const urls={};for(const n of names){const blob=await zip.files[n].async('blob'),url=URL.createObjectURL(blob),img=new Image();await new Promise((ok,fail)=>{img.onload=ok;img.onerror=fail;img.src=url});urls[n]=img}const by=(row,col)=>names.find(n=>n.includes(`recorte-${row}-${col}.png`));if(bossMode){target.up=[1,2,3,4].map(c=>urls[by(1,c)]).filter(Boolean);target.down=[1,2,3,4].map(c=>urls[by(2,c)]).filter(Boolean);target.right=[1,2,3,4].map(c=>urls[by(3,c)]).filter(Boolean);target.left=[1,2,3,4].map(c=>urls[by(4,c)]).filter(Boolean)}else{target.up=[1,2,3,4].map(row=>urls[by(row,1)]).filter(Boolean);target.down=[1,2,3,4].map(row=>urls[by(row,2)]).filter(Boolean);const side=[];for(let row=1;row<=4;row++)for(const col of[3,4]){const img=urls[by(row,col)];if(img)side.push(img)}target.right=side;target.left=side}return target.up.length>=4&&target.down.length>=4&&target.right.length>=4&&target.left.length>=4}catch(e){console.warn('Ogre pack indisponível',path,e);return false}}
+(async()=>{ogreReady=await loadOgrePack('./assets/recorte-split (1).zip?v=0137',ogreFrames,false);bossOgreReady=await loadOgrePack('./assets/recorte-split-2-sem-fundo-corrigido.zip?v=0137',bossOgreFrames,true)})();
+"""
+s, n_loader = re.subn(r"const rogueFrames=.*?(?=const weaponSprite=)", new_loader, s, count=1, flags=re.S)
+if n_loader != 1:
+    raise SystemExit('Falha ao substituir loader antigo do Ceifador')
+
+if "attackAt:0,attackFlash:0})" in s:
+    s = s.replace("attackAt:0,attackFlash:0})", "attackAt:0,attackFlash:0,facing:'down'})", 1)
+elif "attackAt:0,attackFlash:0,facing:'down'})" not in s:
+    raise SystemExit('Falha ao adicionar facing inicial')
+
+old_move = "const speedMul=distp<crowdRadius*1.15?.72:1;e.x+=Math.cos(steer)*e.speed*enemySpeed*(1+level*.015)*dt*speedMul;e.y+=Math.sin(steer)*e.speed*enemySpeed*(1+level*.015)*dt*speedMul"
+new_move = "const speedMul=distp<crowdRadius*1.15?.72:1,mvx=Math.cos(steer),mvy=Math.sin(steer);e.facing=Math.abs(mvx)>Math.abs(mvy)?(mvx>0?'right':'left'):(mvy>0?'down':'up');e.x+=mvx*e.speed*enemySpeed*(1+level*.015)*dt*speedMul;e.y+=mvy*e.speed*enemySpeed*(1+level*.015)*dt*speedMul"
+if old_move in s:
+    s = s.replace(old_move, new_move, 1)
+elif new_move not in s:
+    raise SystemExit('Trecho de movimento não encontrado')
+
+new_enemy_draw = r"""function drawOgreSkin(e,isBoss){const pack=isBoss?bossOgreFrames:ogreFrames,ready=isBoss?bossOgreReady:ogreReady,dir=e.facing||'down',arr=pack[dir]||pack.down||[];if(!ready||!arr.length)return false;const img=arr[Math.floor(e.t/(isBoss?.15:.135))%arr.length]||pack.down[0];if(!img)return false;const tierScale=e.tier===2?1.10:e.tier===1?1.05:1,h=e.r*(isBoss?3.55:3.35)*tierScale,ratio=(img.naturalWidth&&img.naturalHeight)?img.naturalWidth/img.naturalHeight:1,w=h*ratio;ctx.save();ctx.imageSmoothingEnabled=true;if(!isBoss&&dir==='left'){ctx.scale(-1,1);ctx.drawImage(img,-w/2,-h*.72,w,h)}else ctx.drawImage(img,-w/2,-h*.72,w,h);ctx.restore();return true}
+function drawEnemy(e,p){const c=types[e.type],isBoss=!!c.boss;ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='#0008';ctx.beginPath();ctx.ellipse(0,e.r*.9,e.r*(isBoss?1.15:.95),isBoss?8:6,0,0,7);ctx.fill();ctx.shadowColor=isBoss?'#ef4444':c.c;ctx.shadowBlur=perfMode>=2?(isBoss?8:0):perfMode===1?(isBoss?14:e.tier===2?7:e.tier===1?5:2):(isBoss?24:e.tier===2?18:e.tier===1?12:7);drawOgreSkin(e,isBoss);ctx.shadowBlur=0;if(!isBoss&&(perfMode<2||e.tier>0))tierAura(e);const barY=isBoss?-e.r*2.05:-e.r*1.72,barW=e.r*(isBoss?2.55:2.1);if(e.hp<e.max||isBoss||e.tier>0){ctx.fillStyle='#17070d';ctx.fillRect(-barW/2,barY,barW,6);ctx.fillStyle=isBoss?'#f59e0b':e.tier===2?'#ef4444':e.tier===1?'#a855f7':'#fb7185';ctx.fillRect(-barW/2,barY,barW*(e.hp/e.max),6)}if(isBoss){ctx.fillStyle='#fde68a';ctx.font='bold 8px sans-serif';ctx.textAlign='center';ctx.fillText(c.name,0,barY-7)}else if(e.tier===1||e.tier===2){ctx.fillStyle=e.tier===2?'#fecaca':'#e9d5ff';ctx.font='bold 7px sans-serif';ctx.textAlign='center';ctx.fillText(e.tier===2?'CORROMPIDO':'ELITE',0,barY-6)}if(performance.now()<freezeUntil){const sec=Math.ceil((freezeUntil-performance.now())/1000);ctx.fillStyle='#dff6ff';ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.fillText('❄ '+sec+'s',0,barY-17)}ctx.restore()}
+"""
+s, n_draw = re.subn(r"function drawWraith\(e\)\{.*?(?=function drawPlayer\(\))", new_enemy_draw, s, count=1, flags=re.S)
+if n_draw != 1 and 'function drawOgreSkin(e,isBoss)' not in s:
+    raise SystemExit('Falha ao remover artes antigas de mobs/bosses')
+
+if s == original:
+    raise SystemExit('Nenhuma alteração aplicada')
+p.write_text(s, encoding='utf-8')
+
+version = {
+  'version':'0.13.7',
+  'label':'v0.13.7',
+  'releasedAt':'2026-08-09T17:54:00Z',
+  'build':'ogre-unification-4dir-boss',
+  'notes':[
+    'Todos os mobs comuns usam o Ogro normal em quatro direções',
+    'Colosso e Senhor do Vazio usam o Ogro Boss em quatro direções',
+    'Classes, dano, vida, velocidade e XP continuam diferentes',
+    'Artes vetoriais antigas de inimigos e bosses foram removidas do canvas'
+  ]
+}
+Path('version.json').write_text(json.dumps(version,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+print('Ogre unification v0.13.7 aplicada com sucesso')
