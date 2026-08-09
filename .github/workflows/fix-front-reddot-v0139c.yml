@@ -1,0 +1,47 @@
+name: Fix Front Red Dot v0.13.9 Robust
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-front-reddot-v0139c.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Corrigir proporção frontal por regex
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          pattern=r"if\(autoFire&&dir!=='up'&&weaponV2Ready\)\{.*?ctx\.restore\(\)\}"
+          new="if(autoFire&&dir!=='up'&&weaponV2Ready){const wd=dir==='left'?'right':dir==='right'?'left':dir,wa=playerWeaponFrames[wd]?.length?playerWeaponFrames[wd]:playerWeaponFrames.down,wi=wa[frame%wa.length]||wa[0],ratio=(wi.naturalWidth&&wi.naturalHeight)?wi.naturalWidth/wi.naturalHeight:1;let wx=0,wy=-1,maxW=50,maxH=30;if(dir==='right'){wx=14;maxW=50;maxH=27}else if(dir==='left'){wx=-14;maxW=50;maxH=27}else if(dir==='down'){wx=1;wy=1;maxW=31;maxH=38}let ww=maxW,wh=ww/Math.max(.05,ratio);if(wh>maxH){wh=maxH;ww=wh*ratio}ctx.save();ctx.imageSmoothingEnabled=true;ctx.drawImage(wi,wx-ww/2,wy-wh/2+bob,ww,wh);ctx.restore()}"
+          s2,n=re.subn(pattern,new,s,count=1,flags=re.S)
+          if n!=1:
+              raise SystemExit('bloco de render da Arma3 não localizado')
+          s=s2
+          s=s.replace('Caos Live v0.13.8','Caos Live v0.13.9')
+          s=s.replace("const VERSION='0.13.8'","const VERSION='0.13.9'")
+          s=s.replace('v0.13.8 · PLAYER ARMADO V2','v0.13.9 · ARMA3 PROPORCIONAL')
+          s=s.replace('<span class="startVersion">v0.13.8</span>','<span class="startVersion">v0.13.9</span>')
+          s=s.replace('Build · Oficial1/2 + Arma3 + Munição','Build · Arma3 proporcional + red dot corrigido')
+          p.write_text(s,encoding='utf-8')
+          print('v0.13.9 aplicada com sucesso')
+          PY
+      - name: Commit
+        run: |
+          git config user.name "wallissonghost-code"
+          git config user.email "wallissonghost@gmail.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: preserve Arma3 front aspect ratio v0.13.9"
+          git push origin main
