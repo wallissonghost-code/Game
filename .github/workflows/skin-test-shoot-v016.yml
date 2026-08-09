@@ -1,0 +1,38 @@
+name: Skin Test Shooting v0.0.16
+on:
+  push:
+    paths:
+      - '.github/workflows/skin-test-shoot-v016.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch shooting test
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('skin-test-local.html')
+          s=p.read_text()
+          s=s.replace('v0.0.15','v0.0.16')
+          s=s.replace('TESTE v0.0.15 · COSTAS usa Canodaarma sem fundo branco','TESTE v0.0.16 · andar + atirar simultaneamente')
+          old="fireBtn.onclick=fire;async function boot()"
+          new="""let fireHeld=false,fireTimer=null;function startFire(e){if(e)e.preventDefault();fireHeld=true;fire();clearInterval(fireTimer);fireTimer=setInterval(()=>{if(fireHeld)fire()},145)}function stopFire(e){if(e)e.preventDefault();fireHeld=false;clearInterval(fireTimer);fireTimer=null}fireBtn.onpointerdown=startFire;fireBtn.onpointerup=stopFire;fireBtn.onpointercancel=stopFire;fireBtn.onpointerleave=e=>{if(fireHeld&&e.buttons===0)stopFire(e)};async function boot()"""
+          if old not in s:
+              raise SystemExit('fire hook not found')
+          s=s.replace(old,new)
+          s=s.replace("TESTE PRONTO · v0.0.16 · CANO + RED DOT SEM FUNDO","TESTE PRONTO · v0.0.16 · MOVIMENTO + TIRO")
+          s=s.replace("ERRO · v0.0.16","ERRO · v0.0.16")
+          p.write_text(s)
+          PY
+      - name: Commit
+        run: |
+          git config user.name "wallissonghost-code"
+          git config user.email "wallissonghost@gmail.com"
+          git add skin-test-local.html
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: allow moving while firing in skin test v0.0.16"
+          git push
