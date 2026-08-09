@@ -1,0 +1,48 @@
+name: Fix Reaper v0.13.5
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-reaper-v0135.yml'
+      - 'index.html'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Normalize Reaper rendering
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('Caos Live v0.13.4','Caos Live v0.13.5')
+          s=s.replace("v0.13.4 · CEIFADOR LOOP S","v0.13.5 · CEIFADOR S CORRIGIDO")
+          s=s.replace("const VERSION='0.13.4'","const VERSION='0.13.5'")
+          s=s.replace("const rogueFrames=[];let rogueReady=false;const rogueWalkSeq=[8,9,10,11,10,9];","const rogueFrames=[];let rogueReady=false;const rogueWalkSeq=[10,11,12,13,14,13,12,11];")
+          old=r"function drawReaper\(e\)\{if\(rogueReady\)\{const idx=rogueWalkSeq\[Math\.floor\(e\.t/\.135\)%rogueWalkSeq\.length\],img=rogueFrames\[idx\]\|\|rogueFrames\[0\],ang=Math\.atan2\(player\.y-e\.y,player\.x-e\.x\)-Math\.PI/2,w=e\.r\*2\.55,h=e\.r\*5\.1;ctx\.save\(\);ctx\.rotate\(ang\);ctx\.imageSmoothingEnabled=true;ctx\.drawImage\(img,-w/2,-h\*\.72,w,h\);ctx\.restore\(\);return\}"
+          new="function drawReaper(e){if(rogueReady){const idx=rogueWalkSeq[Math.floor(e.t/.135)%rogueWalkSeq.length],img=rogueFrames[idx]||rogueFrames[10]||rogueFrames[0],tierScale=e.tier===2?1.10:e.tier===1?1.05:1,h=e.r*3.15*tierScale,ratio=(img.naturalWidth&&img.naturalHeight)?img.naturalWidth/img.naturalHeight:.5,w=h*ratio;ctx.save();ctx.imageSmoothingEnabled=true;ctx.drawImage(img,-w/2,-h*.70,w,h);ctx.restore();return}"
+          s2,n=re.subn(old,new,s,count=1)
+          if n!=1:
+              raise SystemExit('drawReaper pattern not found; refusing unsafe patch')
+          s=s2.replace("./assets/recortes_sem_fundo_CORRIGIDO.zip?v=0134","./assets/recortes_sem_fundo_CORRIGIDO.zip?v=0135")
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit correction
+        run: |
+          if git diff --quiet; then
+            echo 'No changes needed'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'fix: normalize Reaper scale orientation and S walk frames'
+          git push
