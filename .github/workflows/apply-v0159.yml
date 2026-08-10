@@ -1,0 +1,21 @@
+name: Apply v0.15.9
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-v0159.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/fix_v0159_colossus_facing.py
+      - run: node --check src/game.js
+      - run: |
+          git config user.name wallissonghost-code
+          git config user.email wallissonghost@gmail.com
+          git add src/game.js index.html version.json
+          git commit -m 'fix: correct Colossus movement facing v0.15.9'
+          git pull --rebase origin main
+          git push origin main
