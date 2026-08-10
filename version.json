@@ -1,4 +1,4 @@
 {
-  "version": "0.16.7",
-  "build": "mob-8-direction-real-frames"
+  "version": "0.16.8",
+  "build": "player-8dir-fixed-mob-visual-size"
 }
