@@ -1,0 +1,15 @@
+name: Inspect Ogroboss1
+on:
+  push:
+    paths:
+      - '.github/workflows/inspect-ogroboss1.yml'
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          echo '=== ZIP CONTENTS ==='
+          unzip -l 'assets/Ogroboss1.zip'
+          echo '=== PNG COUNT ==='
+          unzip -Z1 'assets/Ogroboss1.zip' | grep -Ei '\.png$' | nl -ba
