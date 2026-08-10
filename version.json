@@ -1,6 +1,6 @@
 {
-  "version": "0.15.0",
-  "label": "v0.15.0",
+  "version": "0.15.1",
+  "label": "v0.15.1",
   "releasedAt": "2026-08-10T16:20:00Z",
   "build": "stabilized-core",
   "notes": [
