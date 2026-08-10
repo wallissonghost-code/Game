@@ -20,3 +20,7 @@ html,body,.game,#stage,canvas{
 }
 canvas{display:block;-webkit-tap-highlight-color:transparent!important;}
 canvas:focus,canvas:focus-visible,#stage:focus,#stage:focus-visible{outline:none!important;box-shadow:none!important;}
+
+/* UI touch release v0.15.5 */
+button,.btn,.startBtnPremium,.overlay,.card,.startCard{touch-action:manipulation!important;}
+button,.btn,.startBtnPremium{pointer-events:auto!important;-webkit-user-select:none!important;user-select:none!important;}
