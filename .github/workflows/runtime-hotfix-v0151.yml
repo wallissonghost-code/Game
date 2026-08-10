@@ -1,0 +1,49 @@
+name: Runtime Hotfix v0.15.1
+on:
+  push:
+    paths:
+      - '.github/workflows/runtime-hotfix-v0151.yml'
+permissions:
+  contents: write
+jobs:
+  hotfix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Runtime syntax check and hotfix
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'Checking game JS syntax...'
+          node --check src/game.js
+          echo 'Checking panel JS syntax...'
+          node --check src/panel.js
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('src/game.js')
+          s=p.read_text(encoding='utf-8')
+          # Make PLAY independent from Peer/session state and make runtime errors visible.
+          old="startButton.onclick=()=>reset()"
+          new="startButton.onclick=()=>{try{reset()}catch(e){console.error('PLAY ERROR',e);document.querySelectorAll('.overlay').forEach(x=>x.classList.remove('show'));running=true;last=performance.now();try{ui()}catch{};try{raf=requestAnimationFrame(loop)}catch{};try{toast('ARENA INICIADA · FALLBACK')}catch{}}}"
+          if old not in s:
+              raise SystemExit('start handler marker not found')
+          s=s.replace(old,new,1)
+          # broadcast must never be able to abort reset/play.
+          s=s.replace("raf=requestAnimationFrame(loop);broadcast()}","raf=requestAnimationFrame(loop);try{broadcast()}catch(e){console.warn('broadcast startup ignored',e)}}",1)
+          p.write_text(s,encoding='utf-8')
+
+          # bump cache/version so iOS/Cloudflare cannot keep the broken JS.
+          p=Path('index.html'); h=p.read_text(encoding='utf-8')
+          h=h.replace('v0.15.0','v0.15.1').replace('v=0150','v=0151')
+          p.write_text(h,encoding='utf-8')
+          p=Path('version.json'); v=p.read_text(encoding='utf-8').replace('"0.15.0"','"0.15.1"').replace('"v0.15.0"','"v0.15.1"')
+          p.write_text(v,encoding='utf-8')
+          PY
+          node --check src/game.js
+          git config user.name wallissonghost-code
+          git config user.email wallissonghost@gmail.com
+          git add src/game.js index.html version.json
+          git commit -m "fix: harden PLAY runtime and bust cache v0.15.1"
+          git push origin main
