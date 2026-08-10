@@ -1,0 +1,40 @@
+name: Hotfix Play v0.14.9
+on:
+  push:
+    paths: ['.github/workflows/hotfix-play-v0149.yml']
+permissions:
+  contents: write
+jobs:
+  hotfix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Restore known-good game and bump version
+        run: |
+          git show 3a454a7076d37f01d5abab34e4d588a6de4c5927:index.html > index.html
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('Caos Live v0.14.7','Caos Live v0.14.9')
+          s=s.replace("const VERSION='0.14.7'","const VERSION='0.14.9'",1)
+          s=s.replace('v0.14.7 · HORDE FIX','v0.14.9 · PLAY HOTFIX',1)
+          s=s.replace('<span class="startVersion">v0.14.7</span>','<span class="startVersion">v0.14.9</span>',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Validate basic start wiring
+        run: |
+          grep -q "id=\"startBtn\"" index.html
+          grep -q "startButton.onclick" index.html
+          grep -q "const VERSION='0.14.9'" index.html
+      - name: Commit
+        run: |
+          git config user.name wallissonghost-code
+          git config user.email wallissonghost@gmail.com
+          git add index.html
+          git commit -m "hotfix: restore playable arena v0.14.9"
+          git pull --rebase origin main
+          git push origin main
