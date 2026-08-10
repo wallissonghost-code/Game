@@ -1,0 +1,28 @@
+name: Fix uniform mob visual size v0.16.9
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-mob-visual-size-v0169.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        run: python3 scripts/fix-mob-visual-size-v0169.py
+      - name: Validate
+        run: |
+          node --check src/game.js
+          node scripts/check-game.mjs
+          grep -q "uniform-visible-mob-size" version.json
+          grep -q "cropAlphaFrame" src/game.js
+      - name: Commit
+        run: |
+          git config user.name wallissonghost-code
+          git config user.email wallissonghost@gmail.com
+          git add src/game.js index.html version.json
+          git commit -m 'fix: normalize visible size of common mobs v0.16.9'
+          git pull --rebase origin main
+          git push origin main
