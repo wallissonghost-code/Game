@@ -1,4 +1,4 @@
-name: Generate mob contact sheet
+name: Generate player contact sheet
 on:
   push:
     paths:
@@ -17,5 +17,5 @@ jobs:
       - run: python3 scripts/make-mob-contact-sheet.py
       - uses: actions/upload-artifact@v4
         with:
-          name: mobs-contact-sheet
-          path: debug/mobs-contact-sheet.pdf
+          name: player-contact-sheet
+          path: debug/player-contact-sheet.pdf
