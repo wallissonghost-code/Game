@@ -1,0 +1,34 @@
+name: Fix Update Brace v0.15.1
+on:
+  push:
+    paths: ['.github/workflows/fix-update-brace-v0151.yml']
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair update loop and verify syntax
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('src/game.js'); s=p.read_text(encoding='utf-8')
+          old="e.y+=e.mvy*e.speed*enemySpeed*(1+level*.015)*dt*(e.speedMul||1);}}{const hitDist="
+          new="e.y+=e.mvy*e.speed*enemySpeed*(1+level*.015)*dt*(e.speedMul||1);} {const hitDist="
+          if old not in s: raise SystemExit('broken update marker not found')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          node --check src/game.js
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('index.html'); s=p.read_text(encoding='utf-8').replace('v0.15.0','v0.15.1').replace('v=0150','v=0151'); p.write_text(s,encoding='utf-8')
+          p=Path('version.json'); s=p.read_text(encoding='utf-8').replace('"0.15.0"','"0.15.1"').replace('"v0.15.0"','"v0.15.1"'); p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name wallissonghost-code
+          git config user.email wallissonghost@gmail.com
+          git add src/game.js index.html version.json
+          git commit -m "fix: repair update loop syntax and restore PLAY v0.15.1"
+          git push
