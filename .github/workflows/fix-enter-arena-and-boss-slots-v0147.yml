@@ -1,0 +1,53 @@
+name: Fix Enter Arena and Boss Slots v0.14.7
+on:
+  push:
+    paths: ['.github/workflows/fix-enter-arena-and-boss-slots-v0147.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch player loader and boss slots
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old="""(async()=>{try{const [base,armed,weap,back,ammo]=await Promise.all([zipImgs('./assets/Oficial1.zip'),zipImgs('./assets/Oficial2.zip'),zipImgs('./assets/weapons/Arma3.zip'),zipImgs('./assets/weapons/Canodaarmasemfundo.zip',true),zipImgs('./assets/weapons/Municao.zip',true)]);mapPlayer16(base,playerBaseFrames);mapPlayer16(armed,playerArmedFrames);mapPlayer16(weap,playerWeaponFrames);playerBackFrames.up=back.slice(0,Math.max(1,Math.min(4,back.length)));ammoFrames=ammo;playerV2Ready=playerBaseFrames.down.length>0&&playerArmedFrames.down.length>0;weaponV2Ready=playerWeaponFrames.down.length>0;backV2Ready=playerBackFrames.up.length>0;ammoReady=ammoFrames.length>0;console.log('PLAYER V2 READY',playerV2Ready,weaponV2Ready,backV2Ready,ammoReady)}catch(e){console.warn('Player V2 fallback ativo',e)}})();"""
+          new="""(async()=>{
+          try{const [base,armed]=await Promise.all([zipImgs('./assets/Oficial1.zip'),zipImgs('./assets/Oficial2.zip')]);mapPlayer16(base,playerBaseFrames);mapPlayer16(armed,playerArmedFrames);playerV2Ready=playerBaseFrames.down.length>0&&playerArmedFrames.down.length>0;console.log('PLAYER BODY READY',playerV2Ready)}catch(e){console.error('PLAYER BODY ERROR',e)}
+          try{const weap=await zipImgs('./assets/weapons/Arma3.zip');mapPlayer16(weap,playerWeaponFrames);weaponV2Ready=playerWeaponFrames.down.length>0}catch(e){console.warn('ARMA3 opcional indisponivel',e)}
+          try{const back=await zipImgs('./assets/weapons/Canodaarmasemfundo.zip',true);playerBackFrames.up=back.slice(0,Math.max(1,Math.min(4,back.length)));backV2Ready=playerBackFrames.up.length>0}catch(e){console.warn('CANO opcional indisponivel',e)}
+          try{ammoFrames=await zipImgs('./assets/weapons/Municao.zip',true);ammoReady=ammoFrames.length>0}catch(e){console.warn('MUNICAO opcional indisponivel',e)}
+          })();"""
+          if old not in s: raise SystemExit('player loader antigo nao encontrado')
+          s=s.replace(old,new,1)
+          oldboss="""const ogreFrames={up:[],down:[],right:[],left:[]},bossOgreFrames={up:[],down:[],right:[],left:[]};let ogreReady=false,bossOgreReady=false;"""
+          newboss="""const ogreFrames={up:[],down:[],right:[],left:[]},bossOgreFrames={up:[],down:[],right:[],left:[]},bossColossusFrames={up:[],down:[],right:[],left:[]},bossVoidFrames={up:[],down:[],right:[],left:[]};let ogreReady=false,bossOgreReady=false,bossColossusReady=false,bossVoidReady=false;"""
+          if oldboss in s: s=s.replace(oldboss,newboss,1)
+          oldload="""(async()=>{ogreReady=await loadOgrePack('./assets/recorte-split (1).zip?v=0137',ogreFrames,false);bossOgreReady=await loadOgrePack('./assets/recorte-split-2-sem-fundo-corrigido.zip?v=0137',bossOgreFrames,true)})();"""
+          newload="""(async()=>{ogreReady=await loadOgrePack('./assets/recorte-split (1).zip?v=0137',ogreFrames,false);bossOgreReady=false;bossColossusReady=false;bossVoidReady=false})();"""
+          if oldload in s: s=s.replace(oldload,newload,1)
+          s=s.replace("const VERSION='0.14.6'","const VERSION='0.14.7'",1)
+          s=s.replace('<title>Caos Live v0.14.6</title>','<title>Caos Live v0.14.7</title>',1)
+          s=s.replace('v0.14.6 · HORDE ENGINE','v0.14.7 · HORDE FIX',1)
+          s=s.replace('<span class="startVersion">v0.14.6</span>','<span class="startVersion">v0.14.7</span>',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Validate
+        run: |
+          grep -q "PLAYER BODY READY" index.html
+          grep -q "const VERSION='0.14.7'" index.html
+          ! grep -q "recorte-split-2-sem-fundo-corrigido.zip" index.html
+      - name: Commit
+        run: |
+          git config user.name wallissonghost-code
+          git config user.email wallissonghost@gmail.com
+          git add index.html
+          git commit -m "fix: unblock arena and prepare separate boss slots v0.14.7"
+          git pull --rebase origin main
+          git push origin main
