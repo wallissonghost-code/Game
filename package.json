@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "tiktok": "node scripts/tiktok-bridge.mjs",
-    "cloud": "node cloud/connector-server.mjs"
+    "cloud": "node cloud/connector-server.mjs",
+    "check": "node scripts/check-game.mjs",
+    "validate": "npm run check"
   },
   "dependencies": {
     "tiktok-live-connector": "^2.4.3",

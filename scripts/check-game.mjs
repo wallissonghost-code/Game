@@ -1,0 +1,16 @@
+import fs from 'node:fs';
+const fail=(m)=>{console.error('FAIL:',m);process.exitCode=1};
+const ok=(m)=>console.log('OK:',m);
+const read=(p)=>fs.readFileSync(p,'utf8');
+const game=read('index.html'), panel=read('painel.html');
+const version=JSON.parse(read('version.json')).version;
+if(version!=='0.15.0') fail('version.json fora de 0.15.0'); else ok('versao central 0.15.0');
+if(!game.includes("const VERSION='0.15.0'")) fail('VERSION do jogo divergente'); else ok('versao do jogo');
+if(!panel.includes('v0.15.0')) fail('painel divergente'); else ok('versao do painel');
+if(game.includes('CARREGANDO SKIN...')) fail('PLAY ainda possui skin gate'); else ok('PLAY sem skin gate');
+if(!game.includes("startButton.onclick=()=>reset()")) fail('handler do PLAY ausente'); else ok('handler do PLAY');
+const required=['assets/Oficial1.zip','assets/Oficial2.zip','assets/Ogroboss1.zip','assets/Ogro2.0Boss.zip','assets/weapons/Arma3.zip','assets/weapons/Municao.zip'];
+for(const f of required) fs.existsSync(f)?ok(f):fail('asset ausente '+f);
+const cloud=read('cloud/connector-server.mjs');
+if(!cloud.includes('function patchGameHtml(html){return patchSharedVersion(html)}')) fail('Cloud ainda pode mutar gameplay'); else ok('Cloud somente sincroniza versao');
+if(process.exitCode) process.exit(process.exitCode);
