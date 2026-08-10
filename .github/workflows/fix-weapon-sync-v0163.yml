@@ -1,0 +1,50 @@
+name: Fix weapon sync v0.16.3
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-weapon-sync-v0163.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch weapon mapping
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('src/game.js')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("const VERSION='0.16.2'","const VERSION='0.16.3'",1)
+          marker="function mapPlayer16(arr,target){if(arr.length>=16){target.down=arr.slice(0,4);target.up=arr.slice(4,8);target.left=arr.slice(8,12);target.right=arr.slice(12,16)}else if(arr.length>=4){target.down=[arr[0]];target.up=[arr[1]||arr[0]];target.left=[arr[2]||arr[0]];target.right=[arr[3]||arr[0]]}}"
+          weapon_map="function mapWeapon16(arr,target){if(arr.length>=16){target.up=arr.slice(0,4);target.down=arr.slice(4,8);target.right=arr.slice(8,12);target.left=arr.slice(12,16)}else if(arr.length>=4){target.up=[arr[0]];target.down=[arr[1]||arr[0]];target.right=[arr[2]||arr[0]];target.left=[arr[3]||arr[0]]}}"
+          if marker not in s: raise SystemExit('mapPlayer16 marker missing')
+          if weapon_map not in s: s=s.replace(marker,marker+'\n'+weapon_map,1)
+          old="try{const weap=await zipImgs('./assets/weapons/Arma3.zip');mapPlayer16(weap,playerWeaponFrames);weaponV2Ready=playerWeaponFrames.down.length>0}"
+          new="try{const weap=await zipImgs('./assets/weapons/Arma3.zip');mapWeapon16(weap,playerWeaponFrames);weaponV2Ready=playerWeaponFrames.down.length>0}"
+          if old not in s: raise SystemExit('weapon loader marker missing')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+
+          Path('version.json').write_text('{\n  "version": "0.16.3",\n  "build": "weapon-frame-sync"\n}\n',encoding='utf-8')
+          idx=Path('index.html')
+          h=idx.read_text(encoding='utf-8').replace('v0.16.2','v0.16.3')
+          h=re.sub(r'src/game\.js\?v=\d+', 'src/game.js?v=0163', h, count=1)
+          idx.write_text(h,encoding='utf-8')
+          PY
+      - name: Validate
+        run: |
+          node --check src/game.js
+          node scripts/check-game.mjs
+          grep -q "mapWeapon16(weap,playerWeaponFrames)" src/game.js
+      - name: Commit
+        run: |
+          git config user.name wallissonghost-code
+          git config user.email wallissonghost@gmail.com
+          git add src/game.js index.html version.json
+          git commit -m 'fix: decouple weapon frame mapping from player v0.16.3'
+          git pull --rebase origin main
+          git push origin main
