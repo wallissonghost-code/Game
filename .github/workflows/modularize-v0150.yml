@@ -1,0 +1,82 @@
+name: Modularize Caos Live v0.15.0
+on:
+  push:
+    paths:
+      - '.github/workflows/modularize-v0150.yml'
+permissions:
+  contents: write
+jobs:
+  modularize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Extract game and panel assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          Path('src/styles').mkdir(parents=True,exist_ok=True)
+          Path('src').mkdir(exist_ok=True)
+
+          def modularize(path, css_out, js_out, css_href, js_src):
+              p=Path(path); s=p.read_text(encoding='utf-8')
+              styles=re.findall(r'<style>(.*?)</style>',s,flags=re.S)
+              if styles:
+                  Path(css_out).write_text('\n\n'.join(styles).strip()+'\n',encoding='utf-8')
+                  first=True
+                  def repl_style(m):
+                      nonlocal first
+                      if first:
+                          first=False
+                          return f'<link rel="stylesheet" href="{css_href}?v=0150">'
+                      return ''
+                  s=re.sub(r'<style>.*?</style>',repl_style,s,flags=re.S)
+
+              inline=[]
+              def repl_script(m):
+                  attrs=m.group(1) or ''
+                  body=m.group(2) or ''
+                  if 'src=' in attrs:
+                      return m.group(0)
+                  if body.strip(): inline.append(body.strip())
+                  return ''
+              s=re.sub(r'<script([^>]*)>(.*?)</script>',repl_script,s,flags=re.S)
+              if inline:
+                  Path(js_out).write_text('\n\n'.join(inline).strip()+'\n',encoding='utf-8')
+                  marker='</body>'
+                  s=s.replace(marker,f'<script src="{js_src}?v=0150"></script>{marker}',1)
+              p.write_text(s,encoding='utf-8')
+
+          modularize('index.html','src/styles/game.css','src/game.js','src/styles/game.css','src/game.js')
+          modularize('painel.html','src/styles/panel.css','src/panel.js','src/styles/panel.css','src/panel.js')
+          PY
+
+          # Update validator to understand modular files.
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('scripts/check-game.mjs')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("const game=read('index.html'), panel=read('painel.html');","const gameHtml=read('index.html'), panelHtml=read('painel.html');\nconst game=read('src/game.js'), panel=read('src/panel.js');")
+          s=s.replace("if(!panel.includes('v0.15.0')) fail('painel divergente'); else ok('versao do painel');","if(!panelHtml.includes('src/panel.js?v=0150')) fail('painel nao modularizado'); else ok('painel modularizado');\nif(!gameHtml.includes('src/game.js?v=0150')) fail('jogo nao modularizado'); else ok('jogo modularizado');\nif(!panel.includes('0.15.0') && !panelHtml.includes('v0.15.0')) fail('painel divergente'); else ok('versao do painel');")
+          s=s.replace("if(game.includes('CARREGANDO SKIN...'))","if(game.includes('CARREGANDO SKIN...'))")
+          p.write_text(s,encoding='utf-8')
+          PY
+
+          node scripts/check-game.mjs
+      - name: Commit modular core
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name wallissonghost-code
+          git config user.email wallissonghost@gmail.com
+          git add -A
+          git commit -m "refactor: modularize game and admin frontend v0.15.0"
+          git pull --rebase origin main
+          node scripts/check-game.mjs
+          git push origin main
