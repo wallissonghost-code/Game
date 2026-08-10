@@ -19,3 +19,4 @@ jobs:
           git commit -m 'fix: wait for real player skin before arena v0.15.3'
           git pull --rebase origin main
           git push origin main
+# rerun 2
