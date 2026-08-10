@@ -1,0 +1,28 @@
+name: Fix stable mob facing v0.16.5
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-mob-facing-v0165.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        run: python3 scripts/fix-mob-facing-v0165.py
+      - name: Validate
+        run: |
+          node --check src/game.js
+          node scripts/check-game.mjs
+          grep -q "function stableEnemyFacing" src/game.js
+          grep -q "stableEnemyFacing(e,e.mvx,e.mvy)" src/game.js
+      - name: Commit
+        run: |
+          git config user.name wallissonghost-code
+          git config user.email wallissonghost@gmail.com
+          git add src/game.js index.html version.json
+          git commit -m 'fix: stabilize mob facing and stop rotation v0.16.5'
+          git pull --rebase origin main
+          git push origin main
