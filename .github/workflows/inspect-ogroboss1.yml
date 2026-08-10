@@ -3,13 +3,40 @@ on:
   push:
     paths:
       - '.github/workflows/inspect-ogroboss1.yml'
+permissions:
+  contents: write
 jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: |
-          echo '=== ZIP CONTENTS ==='
-          unzip -l 'assets/Ogroboss1.zip'
-          echo '=== PNG COUNT ==='
-          unzip -Z1 'assets/Ogroboss1.zip' | grep -Ei '\.png$' | nl -ba
+          rm -rf /tmp/ogre && mkdir -p /tmp/ogre
+          unzip -q 'assets/Ogroboss1.zip' -d /tmp/ogre
+          python3 - <<'PY'
+from PIL import Image,ImageOps,ImageDraw
+from pathlib import Path
+files=sorted(Path('/tmp/ogre').glob('frame_*.png'))
+thumbs=[]
+for i,p in enumerate(files,1):
+    im=Image.open(p).convert('RGBA')
+    box=im.getbbox()
+    if box: im=im.crop(box)
+    im.thumbnail((260,260))
+    tile=Image.new('RGBA',(300,310),'white')
+    tile.alpha_composite(im,((300-im.width)//2,20))
+    d=ImageDraw.Draw(tile)
+    d.text((10,285),f'{i:02d} {p.name}',fill='black')
+    thumbs.append(tile.convert('RGB'))
+out=Image.new('RGB',(1200,1240),'white')
+for i,t in enumerate(thumbs):
+    out.paste(t,((i%4)*300,(i//4)*310))
+out.save('ogroboss1-contact-sheet.jpg',quality=92)
+PY
+      - run: |
+          git config user.name wallissonghost-code
+          git config user.email wallissonghost@gmail.com
+          git add ogroboss1-contact-sheet.jpg
+          git commit -m 'chore: add temporary Ogroboss1 contact sheet'
+          git pull --rebase origin main
+          git push origin main
