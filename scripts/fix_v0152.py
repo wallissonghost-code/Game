@@ -1,0 +1,53 @@
+from pathlib import Path
+import re
+
+p=Path('src/game.js')
+s=p.read_text()
+
+new_draw="""function drawPlayer(){
+  ctx.save();ctx.translate(W/2,H/2);
+  ctx.fillStyle='#0009';ctx.beginPath();ctx.ellipse(0,25,23,7,0,0,Math.PI*2);ctx.fill();
+  const a=player.aim||0,dir=playerFacing(a),frame=player.moving?Math.floor(player.walk)%4:0,bob=player.moving?Math.sin(player.walk*Math.PI*.5)*.8:0;
+  if(playerV2Ready){
+    const pack=autoFire?playerArmedFrames:playerBaseFrames,arr=pack[dir]?.length?pack[dir]:pack.down,img=arr[frame%arr.length]||arr[0];
+    const h=80,bodyRatio=(img.naturalWidth&&img.naturalHeight)?img.naturalWidth/img.naturalHeight:.8,w=Math.min(78,h*bodyRatio),bottom=36+bob;
+    if(autoFire&&dir==='up'&&backV2Ready){const ba=playerBackFrames.up,bi=ba[frame%ba.length]||ba[0],bh=43,br=(bi.naturalWidth&&bi.naturalHeight)?bi.naturalWidth/bi.naturalHeight:.45,bw=Math.min(27,bh*br);ctx.save();ctx.imageSmoothingEnabled=true;ctx.drawImage(bi,-bw/2,-50+bob,bw,bh);ctx.restore()}
+    ctx.save();ctx.imageSmoothingEnabled=true;ctx.drawImage(img,-w/2,bottom-h,w,h);ctx.restore();
+    if(autoFire&&dir!=='up'&&weaponV2Ready){
+      const wd=dir==='left'?'right':dir==='right'?'left':dir,wa=playerWeaponFrames[wd]?.length?playerWeaponFrames[wd]:playerWeaponFrames.down,wi=wa[frame%wa.length]||wa[0];
+      const ratio=(wi.naturalWidth&&wi.naturalHeight)?wi.naturalWidth/wi.naturalHeight:1;
+      let wx=0,wy=-1,maxW=50,maxH=30;
+      if(dir==='right'){wx=14;maxW=50;maxH=27}else if(dir==='left'){wx=-14;maxW=50;maxH=27}else if(dir==='down'){wx=1;wy=0;maxW=30;maxH=39}
+      let ww=maxW,wh=ww/Math.max(.05,ratio);if(wh>maxH){wh=maxH;ww=wh*ratio}
+      ctx.save();ctx.imageSmoothingEnabled=true;ctx.drawImage(wi,wx-ww/2,wy-wh/2+bob,ww,wh);ctx.restore()
+    }
+    if(autoFire&&player.shotFlash>0){const m=muzzleLocal(dir);ctx.save();ctx.globalCompositeOperation='screen';ctx.fillStyle='#fff7b2';ctx.shadowColor='#f59e0b';ctx.shadowBlur=14;ctx.beginPath();ctx.arc(m.x,m.y+bob,4.2,0,Math.PI*2);ctx.fill();ctx.restore()}
+    ctx.restore();return;
+  }
+  ctx.fillStyle='#374151';ctx.beginPath();ctx.roundRect(-13,-19,26,38,8);ctx.fill();
+  ctx.fillStyle='#556b2f';ctx.beginPath();ctx.roundRect(-10,-15,20,26,6);ctx.fill();
+  ctx.restore();
+}function drawPhoenixShield"""
+
+s,n=re.subn(r'function drawPlayer\(\)\{.*?\}function drawPhoenixShield',new_draw,s,count=1,flags=re.S)
+if n!=1:
+    raise SystemExit('drawPlayer block not found')
+
+old="const crowdRadius=player.r+e.r+26,approachRadius=crowdRadius+74;if(distp<approachRadius){const slot=((e.seed*1.618)%1)*Math.PI*2,tx=player.x+Math.cos(slot)*crowdRadius,ty=player.y+Math.sin(slot)*crowdRadius;steer=Math.atan2(ty-e.y,tx-e.x);if(distp<crowdRadius*.78)steer=Math.atan2(e.y-player.y,e.x-player.x)}e.mvx=Math.cos(steer);e.mvy=Math.sin(steer);e.speedMul=distp<crowdRadius*1.15?.72:1;e.facing=Math.abs(e.mvx)>Math.abs(e.mvy)?(e.mvx>0?'right':'left'):(e.mvy>0?'down':'up')"
+new="const stopRadius=player.r+e.r+(e.max>=100?58:38);if(distp<=stopRadius){e.mvx=0;e.mvy=0;e.speedMul=0;const fx=dxp,fy=dyp;e.facing=Math.abs(fx)>Math.abs(fy)?(fx>0?'right':'left'):(fy>0?'down':'up')}else{e.mvx=Math.cos(steer);e.mvy=Math.sin(steer);e.speedMul=distp<stopRadius+42?.68:1;e.facing=Math.abs(e.mvx)>Math.abs(e.mvy)?(e.mvx>0?'right':'left'):(e.mvy>0?'down':'up')}"
+if old not in s:
+    raise SystemExit('mob orbit block not found')
+s=s.replace(old,new,1)
+
+s=s.replace("if(hordeEnabled){spawnTimer-=dt;","if(hordeEnabled&&ogreReady){spawnTimer-=dt;",1)
+s=s.replace("const VERSION='0.15.0'","const VERSION='0.15.2'",1)
+p.write_text(s)
+
+idx=Path('index.html')
+h=idx.read_text()
+h=h.replace('Caos Live v0.15.0','Caos Live v0.15.2')
+h=h.replace('v0.15.0 · CORE ESTÁVEL','v0.15.2 · SKINS + IA ESTÁVEL')
+h=h.replace('v0.15.0</span>','v0.15.2</span>')
+h=h.replace('src/game.js?v=0150','src/game.js?v=0152')
+idx.write_text(h)
+Path('version.json').write_text('{\n  "version": "0.15.2",\n  "build": "skins-ai-stable"\n}\n')
