@@ -1,0 +1,13 @@
+name: Diagnose Runtime v0.15.1
+on:
+  push:
+    paths: ['.github/workflows/diagnose-runtime-v0151.yml']
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check game syntax
+        run: node --check src/game.js
+      - name: Check panel syntax
+        run: node --check src/panel.js
