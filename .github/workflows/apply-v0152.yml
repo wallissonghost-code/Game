@@ -1,0 +1,21 @@
+name: Apply v0.15.2
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-v0152.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/fix_v0152.py
+      - run: node --check src/game.js
+      - run: |
+          git config user.name wallissonghost-code
+          git config user.email wallissonghost@gmail.com
+          git add src/game.js index.html version.json
+          git commit -m 'fix: restore player skin and stabilize mob contact v0.15.2'
+          git pull --rebase origin main
+          git push origin main
