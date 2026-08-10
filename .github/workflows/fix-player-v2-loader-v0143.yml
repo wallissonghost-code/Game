@@ -12,6 +12,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
+          fetch-depth: 0
       - name: Patch loader and version
         run: |
           python3 - <<'PY'
@@ -48,10 +49,11 @@ jobs:
           grep -q "const VERSION='0.14.3'" index.html
           grep -q "Oficial2.zip" index.html
           grep -q "Arma3.zip" index.html
-      - name: Commit
+      - name: Commit and push
         run: |
           git config user.name "wallissonghost-code"
           git config user.email "wallissonghost@gmail.com"
           git add index.html
           git commit -m "fix: make player v2 skin loader independent v0.14.3"
+          git pull --rebase origin main
           git push origin main
