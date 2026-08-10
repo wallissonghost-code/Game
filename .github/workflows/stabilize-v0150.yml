@@ -1,0 +1,152 @@
+name: Stabilize Caos Live v0.15.0
+on:
+  push:
+    paths:
+      - '.github/workflows/stabilize-v0150.yml'
+permissions:
+  contents: write
+jobs:
+  stabilize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Stabilize repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import json,re
+
+          root=Path('.')
+          idx=Path('index.html')
+          panel=Path('painel.html')
+          cloud=Path('cloud/connector-server.mjs')
+
+          # 1) Single version source.
+          version={
+            'version':'0.15.0',
+            'label':'v0.15.0',
+            'releasedAt':'2026-08-10T16:20:00Z',
+            'build':'stabilized-core',
+            'notes':[
+              'PLAY independente do carregamento de assets opcionais',
+              'Versao unificada entre jogo, painel e Cloud',
+              'Workflows antigos de patch removidos',
+              'Cloud nao altera mais gameplay por string replacement',
+              'Validacao automatica de assets e inicializacao'
+            ]
+          }
+          Path('version.json').write_text(json.dumps(version,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+
+          # 2) Normalize visible/runtime version without changing gameplay.
+          s=idx.read_text(encoding='utf-8')
+          s=re.sub(r'Caos Live v\d+\.\d+\.\d+','Caos Live v0.15.0',s)
+          s=re.sub(r"const VERSION='\d+\.\d+\.\d+'","const VERSION='0.15.0'",s, count=1)
+          s=re.sub(r'v\d+\.\d+\.\d+ · [^<]+','v0.15.0 · CORE ESTÁVEL',s, count=1)
+          s=re.sub(r'<span class="startVersion">v\d+\.\d+\.\d+</span>','<span class="startVersion">v0.15.0</span>',s, count=1)
+          # Ensure PLAY is never gated by playerV2Ready.
+          a=s.find("const startButton=$('startBtn');")
+          if a!=-1:
+              b=s.find("$('pauseBtn').onclick",a)
+              if b!=-1:
+                  stable="const startButton=$('startBtn');if(startButton){startButton.disabled=false;startButton.textContent='ENTRAR NA ARENA';startButton.style.opacity='1';startButton.onclick=()=>reset()}$('restartBtn').onclick=()=>reset();"
+                  s=s[:a]+stable+s[b:]
+          idx.write_text(s,encoding='utf-8')
+
+          p=panel.read_text(encoding='utf-8')
+          p=re.sub(r'Caos Admin v\d+\.\d+\.\d+','Caos Admin v0.15.0',p)
+          p=re.sub(r'v\d+\.\d+\.\d+','v0.15.0',p)
+          # Keep game URL fresh from panel.
+          p=re.sub(r'index\.html\?v=\d+','index.html?v=0150',p)
+          panel.write_text(p,encoding='utf-8')
+
+          # 3) Cloud may sync version, but must never rewrite game logic at runtime.
+          c=cloud.read_text(encoding='utf-8')
+          start=c.find('function patchGameHtml(html){')
+          if start!=-1:
+              # Find matching function closing brace robustly.
+              i=start+c[start:].find('{')
+              depth=0; end=None; quote=None; esc=False
+              for j in range(i,len(c)):
+                  ch=c[j]
+                  if quote:
+                      if esc: esc=False
+                      elif ch=='\\': esc=True
+                      elif ch==quote: quote=None
+                      continue
+                  if ch in "'\"`": quote=ch; continue
+                  if ch=='{': depth+=1
+                  elif ch=='}':
+                      depth-=1
+                      if depth==0:
+                          end=j+1; break
+              if end:
+                  c=c[:start]+"function patchGameHtml(html){return patchSharedVersion(html)}"+c[end:]
+          cloud.write_text(c,encoding='utf-8')
+
+          # 4) Repository health checker.
+          check=r'''import fs from 'node:fs';
+          const fail=(m)=>{console.error('FAIL:',m);process.exitCode=1};
+          const ok=(m)=>console.log('OK:',m);
+          const read=(p)=>fs.readFileSync(p,'utf8');
+          const game=read('index.html'), panel=read('painel.html');
+          const version=JSON.parse(read('version.json')).version;
+          if(version!=='0.15.0') fail('version.json fora de 0.15.0'); else ok('versao central 0.15.0');
+          if(!game.includes("const VERSION='0.15.0'")) fail('VERSION do jogo divergente'); else ok('versao do jogo');
+          if(!panel.includes('v0.15.0')) fail('painel divergente'); else ok('versao do painel');
+          if(game.includes('CARREGANDO SKIN...')) fail('PLAY ainda possui skin gate'); else ok('PLAY sem skin gate');
+          if(!game.includes("startButton.onclick=()=>reset()")) fail('handler do PLAY ausente'); else ok('handler do PLAY');
+          const required=['assets/Oficial1.zip','assets/Oficial2.zip','assets/Ogroboss1.zip','assets/Ogro2.0Boss.zip','assets/weapons/Arma3.zip','assets/weapons/Municao.zip'];
+          for(const f of required) fs.existsSync(f)?ok(f):fail('asset ausente '+f);
+          const cloud=read('cloud/connector-server.mjs');
+          if(!cloud.includes('function patchGameHtml(html){return patchSharedVersion(html)}')) fail('Cloud ainda pode mutar gameplay'); else ok('Cloud somente sincroniza versao');
+          if(process.exitCode) process.exit(process.exitCode);
+          '''
+          Path('scripts/check-game.mjs').write_text('\n'.join(line.strip() for line in check.splitlines())+'\n',encoding='utf-8')
+
+          # 5) Package scripts.
+          pkg=json.loads(Path('package.json').read_text(encoding='utf-8'))
+          pkg.setdefault('scripts',{})['check']='node scripts/check-game.mjs'
+          pkg['scripts']['validate']='npm run check'
+          Path('package.json').write_text(json.dumps(pkg,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+
+          # 6) Remove known obsolete/debug files only if current production code does not reference them.
+          production='\n'.join([idx.read_text(encoding='utf-8'),panel.read_text(encoding='utf-8'),cloud.read_text(encoding='utf-8')])
+          candidates=[
+            'debug-admin-v105.txt','.github/debug-command-handler.txt','.github/debug-index-spawn.txt','.github/debug-spawn-user.txt',
+            'humanoid-test.html','sprite-test.html',
+            'assets/Personagem.zip','assets/Skin_personagem_sem_fundo.zip','assets/personagem_12_frames_corrigidos.zip','assets/recorte-split (1).zip',
+            'assets/soldier-premium-01-backup.png',
+            'assets/weapons/Outraarma.zip','assets/weapons/recorte-split.zip'
+          ]
+          for name in candidates:
+              path=Path(name)
+              if path.exists() and path.name not in production and name not in production:
+                  path.unlink()
+                  print('REMOVED ORPHAN',name)
+              elif path.exists():
+                  print('KEPT REFERENCED',name)
+          PY
+
+          # 7) Delete legacy one-shot patch workflows. Keep only this stabilizer for this run.
+          find .github/workflows -maxdepth 1 -type f \( -name '*.yml' -o -name '*.yaml' \) ! -name 'stabilize-v0150.yml' -print -delete
+          rm -rf .github/scripts || true
+
+          # Validate before commit.
+          node scripts/check-game.mjs
+
+      - name: Commit stabilized core
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name wallissonghost-code
+          git config user.email wallissonghost@gmail.com
+          git add -A
+          git commit -m "refactor: stabilize and clean Caos Live v0.15.0"
+          git pull --rebase origin main
+          node scripts/check-game.mjs
+          git push origin main
