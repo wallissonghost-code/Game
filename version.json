@@ -1,4 +1,4 @@
 {
-  "version": "0.16.4",
-  "build": "mob-grid-movement-restored"
+  "version": "0.16.5",
+  "build": "stable-mob-facing"
 }
