@@ -1,0 +1,24 @@
+name: Generate mob contact sheet
+on:
+  push:
+    paths:
+      - '.github/workflows/mob-contact-sheet.yml'
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pillow reportlab
+      - run: python3 scripts/make-mob-contact-sheet.py
+      - run: |
+          git config user.name wallissonghost-code
+          git config user.email wallissonghost@gmail.com
+          git add debug/mobs-contact-sheet.pdf
+          git commit -m 'chore: generate mob contact sheet'
+          git pull --rebase origin main
+          git push origin main
