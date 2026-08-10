@@ -1,0 +1,28 @@
+name: Fix mob grid movement v0.16.4
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-mob-grid-v0164.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply mob movement fix
+        run: python3 scripts/fix-mob-grid-v0164.py
+      - name: Validate
+        run: |
+          node --check src/game.js
+          node scripts/check-game.mjs
+          grep -q "const rows=Math.floor(arr.length/4)" src/game.js
+          grep -q "target.right=side;target.left=side" src/game.js
+      - name: Commit
+        run: |
+          git config user.name wallissonghost-code
+          git config user.email wallissonghost@gmail.com
+          git add src/game.js index.html version.json
+          git commit -m 'fix: restore ZIP-style mob frame movement v0.16.4'
+          git pull --rebase origin main
+          git push origin main
