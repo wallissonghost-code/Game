@@ -33,9 +33,9 @@ jobs:
               './assets/Oficial2.zip': './assets/player/Oficial2.zip',
               './assets/soldier-premium-01.png': './assets/player/soldier-premium-01.png',
           }
-          exts={'.js','.mjs','.html','.css','.json','.md','.txt','.bat','.yml','.yaml'}
+          exts={'.js','.mjs','.html','.css','.json','.md','.txt','.bat'}
           for p in Path('.').rglob('*'):
-              if not p.is_file() or '.git' in p.parts or p.suffix.lower() not in exts:
+              if not p.is_file() or '.git' in p.parts or '.github' in p.parts or p.suffix.lower() not in exts:
                   continue
               try:
                   s=p.read_text(encoding='utf-8')
@@ -78,7 +78,8 @@ jobs:
         run: |
           git config user.name wallissonghost-code
           git config user.email wallissonghost@gmail.com
-          git add -A
+          git add assets src/game.js index.html version.json skin-test-local.html 2>/dev/null || true
+          git diff --cached --quiet && exit 0
           git commit -m 'refactor: organize assets into bosses mobs player weapons v0.16.0'
           git pull --rebase origin main
           git push origin main
