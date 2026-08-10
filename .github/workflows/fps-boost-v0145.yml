@@ -1,0 +1,38 @@
+name: FPS Boost v0.14.5
+on:
+  push:
+    paths: ['.github/workflows/fps-boost-v0145.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html'); s=p.read_text()
+          s=s.replace("const VERSION='0.14.4'","const VERSION='0.14.5'",1)
+          s=s.replace('Caos Live v0.14.4','Caos Live v0.14.5',1)
+          s=s.replace('v0.14.4 · SKIN V2 RESTAURADA','v0.14.5 · FPS BOOST',1)
+          s=s.replace('<span class="startVersion">v0.14.4</span>','<span class="startVersion">v0.14.5</span>',1)
+          s=s.replace("const base=Math.min(devicePixelRatio||1,2);dpr=Math.max(.7,base*renderScale)","const mobile=W<=700,base=Math.min(devicePixelRatio||1,mobile?1.35:1.75);dpr=Math.max(.62,base*renderScale)",1)
+          old="function tunePerformance(t){perfFrames++;if(t-perfWindowStart<1000)return;perfLastFps=Math.max(1,Math.round(perfFrames*1000/(t-perfWindowStart)));window.__caosFps=perfLastFps;perfFrames=0;perfWindowStart=t;let next=perfMode;if(perfLastFps<34)next=2;else if(perfLastFps<49)next=Math.max(1,perfMode);else if(perfLastFps>57)next=0;else if(perfLastFps>53&&perfMode===2)next=1;if(next!==perfMode){perfMode=next;const target=perfMode===2?.62:perfMode===1?.80:1;if(Math.abs(renderScale-target)>.01){renderScale=target;resize()}}}"
+          new="function tunePerformance(t){perfFrames++;if(t-perfWindowStart<800)return;perfLastFps=Math.max(1,Math.round(perfFrames*1000/(t-perfWindowStart)));window.__caosFps=perfLastFps;perfFrames=0;perfWindowStart=t;const mobs=enemies.length;let next=perfMode;if(perfLastFps<40||mobs>=165)next=2;else if(perfLastFps<53||mobs>=90)next=Math.max(1,perfMode);else if(perfLastFps>58&&mobs<70)next=0;else if(perfLastFps>55&&mobs<110&&perfMode===2)next=1;if(next!==perfMode){perfMode=next;const target=perfMode===2?.56:perfMode===1?.76:1;if(Math.abs(renderScale-target)>.01){renderScale=target;resize()}}}"
+          if old not in s: raise SystemExit('perf function missing')
+          s=s.replace(old,new,1)
+          s=s.replace("if(e.hp<e.max||isBoss||e.tier>0){ctx.fillStyle='#17070d';","if((perfMode<2||isBoss||e.tier>0)&&(e.hp<e.max||isBoss||e.tier>0)){ctx.fillStyle='#17070d';",1)
+          p.write_text(s)
+          PY
+      - name: Commit
+        run: |
+          git config user.name wallissonghost-code
+          git config user.email wallissonghost@gmail.com
+          git add index.html
+          git commit -m "perf: adaptive mobile fps boost v0.14.5"
+          git pull --rebase origin main
+          git push origin main
