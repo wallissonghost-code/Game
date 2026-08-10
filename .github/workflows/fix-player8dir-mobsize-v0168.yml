@@ -1,0 +1,27 @@
+name: Fix player 8dir and mob size v0.16.8
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-player8dir-mobsize-v0168.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/fix-player8dir-mobsize-v0168.py
+      - name: Validate
+        run: |
+          node --check src/game.js
+          node scripts/check-game.mjs
+          grep -q "PLAYER PNG READY 8DIR" src/game.js
+          grep -q "h=(isBoss?e.r\*3.55:62)" src/game.js
+      - name: Commit
+        run: |
+          git config user.name wallissonghost-code
+          git config user.email wallissonghost@gmail.com
+          git add src/game.js index.html version.json
+          git commit -m 'fix: player real 8 directions and normalize mob visual size v0.16.8'
+          git pull --rebase origin main
+          git push origin main
