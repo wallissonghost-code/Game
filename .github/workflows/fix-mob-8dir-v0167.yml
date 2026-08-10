@@ -1,0 +1,28 @@
+name: Fix real 8-direction mobs v0.16.7
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-mob-8dir-v0167.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/fix-mob-8dir-v0167.py
+      - name: Validate
+        run: |
+          node --check src/game.js
+          node scripts/check-game.mjs
+          grep -q "function stableEnemyFacing8" src/game.js
+          grep -q "target.dr=\[arr\[1\],arr\[9\],arr\[17\],arr\[25\]\]" src/game.js
+          grep -q '"version": "0.16.7"' version.json
+      - name: Commit
+        run: |
+          git config user.name wallissonghost-code
+          git config user.email wallissonghost@gmail.com
+          git add src/game.js index.html version.json
+          git commit -m 'fix: map common mobs to real 8-direction frame cycles v0.16.7'
+          git pull --rebase origin main
+          git push origin main
