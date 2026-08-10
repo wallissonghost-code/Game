@@ -1,0 +1,68 @@
+name: Direct PNG Player Mobs v0.16.1
+on:
+  push:
+    paths:
+      - '.github/workflows/direct-png-player-mobs-v0161.yml'
+permissions:
+  contents: write
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch loaders
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('src/game.js')
+          s=p.read_text(encoding='utf-8')
+
+          s=s.replace("const VERSION='0.16.0'","const VERSION='0.16.1'",1)
+
+          marker="async function loadOgrePack(path,target,bossMode=false)"
+          direct="""async function loadDirectPngSequence(folder,count,cacheTag='0161'){const arr=[];for(let i=1;i<=count;i++){const img=new Image(),name=`frame_${String(i).padStart(3,'0')}.png`;await new Promise((ok,fail)=>{img.onload=ok;img.onerror=()=>fail(Error(folder+'/'+name));img.src=`${folder}/${name}?v=${cacheTag}`});arr.push(img)}return arr}\nfunction mapDirect32(arr,target){if(arr.length>=32){target.up=arr.slice(0,8);target.down=arr.slice(8,16);target.right=arr.slice(16,24);target.left=arr.slice(24,32)}else if(arr.length>=16){target.up=arr.slice(0,4);target.down=arr.slice(4,8);target.right=arr.slice(8,12);target.left=arr.slice(12,16)}return target.up.length>0&&target.down.length>0&&target.right.length>0&&target.left.length>0}\n"""
+          if direct.strip() not in s:
+              if marker not in s: raise SystemExit('loadOgrePack marker not found')
+              s=s.replace(marker,direct+marker,1)
+
+          old_iife=re.compile(r"\(async\(\)=>\{const \[common,colossus,voidlord\]=await Promise\.all\(\[loadOgrePack\('\./assets/mobs/recorte-split \(1\)\.zip',ogreFrames,false\),loadOgrePack\('\./assets/bosses/Ogroboss1\.zip',bossColossusFrames,true\),loadOgrePack\('\./assets/bosses/Ogro2\.0Boss\.zip',bossVoidFrames,true\)\]\);ogreReady=common;bossColossusReady=colossus;bossVoidReady=voidlord;bossOgreReady=bossColossusReady\|\|bossVoidReady;console\.log\('BOSS SKINS READY',\{colossus:bossColossusReady,voidlord:bossVoidReady\}\)\}\)\(\);")
+          new_iife="""(async()=>{let common=false;try{const mobFrames=await loadDirectPngSequence('./assets/mobs',32);common=mapDirect32(mobFrames,ogreFrames);console.log('MOB PNG READY',common,mobFrames.length)}catch(e){console.error('MOB PNG ERROR',e)}const [colossus,voidlord]=await Promise.all([loadOgrePack('./assets/bosses/Ogroboss1.zip',bossColossusFrames,true),loadOgrePack('./assets/bosses/Ogro2.0Boss.zip',bossVoidFrames,true)]);ogreReady=common;bossColossusReady=colossus;bossVoidReady=voidlord;bossOgreReady=bossColossusReady||bossVoidReady;console.log('BOSS SKINS READY',{colossus:bossColossusReady,voidlord:bossVoidReady})})();"""
+          s,n=old_iife.subn(new_iife,s,count=1)
+          if n!=1: raise SystemExit(f'common mob loader replace failed: {n}')
+
+          old_player="try{const [base,armed]=await Promise.all([zipImgs('./assets/player/Oficial1.zip'),zipImgs('./assets/player/Oficial2.zip')]);mapPlayer16(base,playerBaseFrames);mapPlayer16(armed,playerArmedFrames);playerV2Ready=playerBaseFrames.down.length>0&&playerArmedFrames.down.length>0;console.log('PLAYER BODY READY',playerV2Ready)}catch(e){console.error('PLAYER BODY ERROR',e)}finally{playerLoadFinished=true;syncStartButton()}"
+          new_player="try{const all=await loadDirectPngSequence('./assets/player',32);const base=all.slice(0,16),armed=all.slice(16,32);mapPlayer16(base,playerBaseFrames);mapPlayer16(armed,playerArmedFrames);playerV2Ready=playerBaseFrames.down.length>0&&playerArmedFrames.down.length>0;console.log('PLAYER PNG READY',playerV2Ready,{base:base.length,armed:armed.length})}catch(e){console.error('PLAYER PNG ERROR',e)}finally{playerLoadFinished=true;syncStartButton()}"
+          if old_player not in s: raise SystemExit('player ZIP loader marker not found')
+          s=s.replace(old_player,new_player,1)
+
+          p.write_text(s,encoding='utf-8')
+
+          v=Path('version.json')
+          v.write_text('{\n  "version": "0.16.1",\n  "build": "direct-png-player-mobs"\n}\n',encoding='utf-8')
+
+          idx=Path('index.html')
+          h=idx.read_text(encoding='utf-8')
+          h=re.sub(r'v0\.16\.0', 'v0.16.1', h)
+          h=re.sub(r'src/game\.js\?v=\d+', 'src/game.js?v=0161', h, count=1)
+          idx.write_text(h,encoding='utf-8')
+          PY
+      - name: Validate
+        run: |
+          node --check src/game.js
+          for i in $(seq -w 1 32); do test -f "assets/player/frame_0${i}.png" || test -f "assets/player/frame_${i}.png"; done
+          for i in $(seq -w 1 32); do test -f "assets/mobs/frame_0${i}.png" || test -f "assets/mobs/frame_${i}.png"; done
+          ! grep -q "assets/player/Oficial1.zip" src/game.js
+          ! grep -q "assets/player/Oficial2.zip" src/game.js
+          ! grep -q "assets/mobs/recorte-split (1).zip" src/game.js
+          grep -q "loadDirectPngSequence('./assets/player',32)" src/game.js
+          grep -q "loadDirectPngSequence('./assets/mobs',32)" src/game.js
+      - name: Commit
+        run: |
+          git config user.name wallissonghost-code
+          git config user.email wallissonghost@gmail.com
+          git add src/game.js index.html version.json
+          git commit -m 'feat: load player and mobs directly from 32 PNG frames v0.16.1'
+          git pull --rebase origin main
+          git push origin main
