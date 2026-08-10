@@ -1,0 +1,18 @@
+name: Capture Syntax v0.15.1
+on:
+  push:
+    paths: ['.github/workflows/capture-syntax-v0151.yml']
+permissions:
+  contents: write
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          node --check src/game.js 2> syntax-error.txt || true
+          git config user.name wallissonghost-code
+          git config user.email wallissonghost@gmail.com
+          git add syntax-error.txt
+          git commit -m "diagnose: capture game syntax error"
+          git push
