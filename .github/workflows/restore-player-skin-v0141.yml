@@ -1,0 +1,64 @@
+name: Restore Player Skin v0.14.1
+on:
+  push:
+    paths:
+      - '.github/workflows/restore-player-skin-v0141.yml'
+permissions:
+  contents: write
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Restore player renderer only
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          p=Path('index.html')
+          cur=p.read_text(encoding='utf-8')
+          old=subprocess.check_output(['git','show','21f26f8758f097b2875b4230c8231251d1988193:index.html'],text=True)
+
+          def extract_func(s,name):
+              start=s.find('function '+name+'(')
+              if start<0: raise SystemExit('function '+name+' not found')
+              brace=s.find('{',start)
+              depth=0
+              quote=None
+              esc=False
+              i=brace
+              while i<len(s):
+                  ch=s[i]
+                  if quote:
+                      if esc: esc=False
+                      elif ch=='\\': esc=True
+                      elif ch==quote: quote=None
+                  else:
+                      if ch in "'\"`": quote=ch
+                      elif ch=='{': depth+=1
+                      elif ch=='}':
+                          depth-=1
+                          if depth==0: return start,i+1,s[start:i+1]
+                  i+=1
+              raise SystemExit('unterminated '+name)
+
+          os,oe,of=extract_func(old,'drawPlayer')
+          cs,ce,cf=extract_func(cur,'drawPlayer')
+          cur=cur[:cs]+of+cur[ce:]
+          cur=cur.replace("const VERSION='0.14.0'","const VERSION='0.14.1'",1)
+          cur=cur.replace('Caos Live v0.14.0','Caos Live v0.14.1',1)
+          cur=cur.replace('v0.14.0 · LIVE @USERS','v0.14.1 · SKIN + LIVE @USERS',1)
+          cur=cur.replace('>v0.14.0</span>','>v0.14.1</span>',1)
+          p.write_text(cur,encoding='utf-8')
+          print('drawPlayer restored; LIVE changes preserved')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "fix: restore Oficial1/2 Arma3 player renderer v0.14.1" || exit 0
+          git push
