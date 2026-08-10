@@ -1,0 +1,46 @@
+name: Live User Visuals v0.14.0
+on:
+  push:
+    paths:
+      - '.github/workflows/live-user-visuals-v0140.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Add live labels and effect announcements
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+
+          # Announce every live-triggered command that carries a user.
+          anchor="const c=d?.command;"
+          addon="const c=d?.command;if(d?.user&&c){const lu=liveUserLabel(d.user),ln={spawn:'INVOCou INIMIGO',boss:'INVOCou BOSS',heal:'ATIVOU CURA',damage:'CAUSOU DANO',freeze:'CONGELOU A ARENA',invincible:'ATIVOU INVENCIBILIDADE',clear:'LIMPOU A ARENA',xp:'DEU XP',level:'DEU LEVEL'}[c];if(lu&&ln)toast('📡 '+lu+' · '+ln)}"
+          if anchor not in s:
+              raise SystemExit('command anchor missing')
+          s=s.replace(anchor,addon,1)
+
+          # Draw persistent @user tags over mobs spawned by LIVE.
+          draw_anchor="drawPlayer();"
+          label_code="""for(const le of enemies){if(le.dead||!le.username)continue;const lp=world(le.x,le.y),lu='@'+String(le.username).replace(/^@/,'');ctx.save();ctx.font='800 9px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';const lw=ctx.measureText(lu).width+12,lh=17,lx=lp.x-lw/2,ly=lp.y-le.r-31;ctx.fillStyle='rgba(5,8,18,.86)';ctx.strokeStyle='rgba(139,92,246,.72)';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(lx,ly,lw,lh,8);ctx.fill();ctx.stroke();ctx.fillStyle='#ddd6fe';ctx.fillText(lu,lp.x,ly+lh/2+.5);ctx.restore()}drawPlayer();"""
+          if draw_anchor not in s:
+              raise SystemExit('drawPlayer call missing')
+          s=s.replace(draw_anchor,label_code,1)
+          p.write_text(s,encoding='utf-8')
+          print('live user visuals applied')
+          PY
+      - name: Commit
+        run: |
+          git config user.name "wallissonghost-code"
+          git config user.email "wallissonghost@gmail.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: show donor @ on live mobs and triggered effects v0.14.0"
+          git push origin main
