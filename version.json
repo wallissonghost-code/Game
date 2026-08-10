@@ -1,13 +1,4 @@
 {
-  "version": "0.15.1",
-  "label": "v0.15.1",
-  "releasedAt": "2026-08-10T16:20:00Z",
-  "build": "stabilized-core",
-  "notes": [
-    "PLAY independente do carregamento de assets opcionais",
-    "Versao unificada entre jogo, painel e Cloud",
-    "Workflows antigos de patch removidos",
-    "Cloud nao altera mais gameplay por string replacement",
-    "Validacao automatica de assets e inicializacao"
-  ]
+  "version": "0.15.2",
+  "build": "skins-ai-stable"
 }
