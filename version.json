@@ -1,4 +1,4 @@
 {
-  "version": "0.16.2",
-  "build": "frame-direction-fix"
+  "version": "0.16.3",
+  "build": "weapon-frame-sync"
 }
