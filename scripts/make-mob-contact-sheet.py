@@ -4,7 +4,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import ImageReader
 from pathlib import Path
 import io
-files=[Path(f'assets/mobs/frame_{i:03d}.png') for i in range(1,33)]
+files=[Path(f'assets/player/frame_{i:03d}.png') for i in range(1,33)]
 thumbs=[]
 for i,p in enumerate(files,1):
     im=Image.open(p).convert('RGBA')
@@ -15,7 +15,7 @@ for i,p in enumerate(files,1):
     d=ImageDraw.Draw(bg);d.rectangle((0,0,299,339),outline=(40,40,40,255),width=2);d.text((10,310),f'FRAME {i:03d}',fill=(0,0,0,255))
     thumbs.append(bg.convert('RGB'))
 Path('debug').mkdir(exist_ok=True)
-c=canvas.Canvas('debug/mobs-contact-sheet.pdf',pagesize=A4)
+c=canvas.Canvas('debug/player-contact-sheet.pdf',pagesize=A4)
 W,H=A4;cols=4;rows=4;cellw=W/cols;cellh=H/rows
 for start in range(0,32,16):
     for j in range(16):
