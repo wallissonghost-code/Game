@@ -1,4 +1,4 @@
 {
-  "version": "0.16.1",
-  "build": "direct-png-player-mobs"
+  "version": "0.16.2",
+  "build": "frame-direction-fix"
 }
