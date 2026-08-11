@@ -32,10 +32,10 @@ try{
 s,n=old_init.subn(new_init,s,count=1)
 if n!=1: raise SystemExit(f'init replace {n}')
 
-old_muzzle=re.compile(r"function muzzleLocal\(dir\)\{return .*?\}",re.S)
+old_muzzle="function muzzleLocal(dir){return dir==='right'?{x:43,y:-1}:dir==='left'?{x:-43,y:-1}:dir==='up'?{x:0,y:-43}:{x:7,y:29}}"
 new_muzzle="function muzzleLocal(dir){const m={right:{x:44,y:-3},dr:{x:35,y:22},down:{x:7,y:32},dl:{x:-35,y:22},left:{x:-44,y:-3},ul:{x:-34,y:-26},up:{x:0,y:-44},ur:{x:34,y:-26}};return m[dir]||m.down}"
-s,n=old_muzzle.subn(new_muzzle,s,count=1)
-if n!=1: raise SystemExit(f'muzzle replace {n}')
+if old_muzzle not in s: raise SystemExit('muzzle exact function not found')
+s=s.replace(old_muzzle,new_muzzle,1)
 
 old_player=re.compile(r"  if\(playerV2Ready\)\{\n    const pack=.*?\n    ctx\.restore\(\);return;\n  \}",re.S)
 new_player="""  if(playerV2Ready){
