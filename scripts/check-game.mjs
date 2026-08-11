@@ -43,4 +43,14 @@ const cloud=read('cloud/connector-server.mjs');
 if(!cloud.includes('function patchGameHtml(html){return patchSharedVersion(html)}')) fail('Cloud pode mutar gameplay'); else ok('Cloud nao muta gameplay');
 if(!cloud.includes('function patchAdminHtml(html){return patchSharedVersion(html)}')) fail('Cloud ainda muta painel'); else ok('Painel nativo sem injecao legada');
 
+
+if(!game.includes('manualAimByMovement=false')) fail('estado opcional Mira pelo Movimento ausente'); else ok('Mira pelo Movimento OFF por padrao');
+if(!game.includes("if(c==='manualaim')")) fail('comando manualaim ausente'); else ok('comando manualaim');
+if(!game.includes('manualAim:manualAimByMovement')) fail('telemetria manualAim ausente'); else ok('telemetria manualAim');
+if(!game.includes('if(manualAimByMovement&&!autoMode){if(player.moving)player.aim=Math.atan2(player.moveY,player.moveX)}')) fail('movimento nao controla mira no modo extra'); else ok('movimento controla mira no modo extra');
+if(!game.includes('const manual=manualAimByMovement&&!autoMode')) fail('tiro ainda pode retargetar no modo extra'); else ok('tiro respeita mira manual');
+if(!panelHtml.includes('id="manualAimModeToggle"')) fail('toggle Mira pelo Movimento ausente no Admin'); else ok('toggle Mira pelo Movimento no Admin');
+if(!panel.includes("command:'manualaim'")) fail('painel nao envia manualaim'); else ok('painel envia manualaim');
+if(!panel.includes("typeof d.manualAim==='boolean'")) fail('painel nao sincroniza manualAim'); else ok('painel sincroniza manualAim');
+
 if(process.exitCode) process.exit(process.exitCode);

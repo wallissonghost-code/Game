@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#050812">
 <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
-<title>Caos Admin v0.17.11</title>
-<link rel="stylesheet" href="src/styles/panel.css?v=01711">
+<title>Caos Admin v0.17.12</title>
+<link rel="stylesheet" href="src/styles/panel.css?v=01712">
 </head>
 <body>
 <main class="app">
@@ -15,7 +15,7 @@
     <div class="brandMark"><span>CAOS</span><b>ADMIN</b></div>
     <div class="brandSub">CENTRAL DE COMANDO · LIVE CONTROL</div>
   </div>
-  <div class="topMeta"><span id="versionSync" class="syncBadge">SINCRONIZANDO</span><span id="panelVersion" class="topVersion">v0.17.11</span><a class="openGame" href="index.html?v=01711">ABRIR JOGO</a></div>
+  <div class="topMeta"><span id="versionSync" class="syncBadge">SINCRONIZANDO</span><span id="panelVersion" class="topVersion">v0.17.12</span><a class="openGame" href="index.html?v=01712">ABRIR JOGO</a></div>
 </header>
 
 <section class="dashboardTop">
@@ -81,6 +81,8 @@
       <button id="autoModeToggle" class="modeToggle" type="button" data-on="false"><span class="modeInfo"><span class="modeIcon">🤖</span><span><b>AUTO INTELIGENTE</b><small>movimento, desvio e escolha de skills</small></span></span><span class="modeRight"><span class="modeBadge">OFF</span><span class="toggleTrack"><span class="toggleKnob"></span></span></span></button>
       <button id="hordeModeToggle" class="modeToggle hordeOn" type="button" data-on="true"><span class="modeInfo"><span class="modeIcon">🌊</span><span><b>HORDAS AUTOMÁTICAS</b><small>spawn normal da partida</small></span></span><span class="modeRight"><span class="modeBadge">ON</span><span class="toggleTrack"><span class="toggleKnob"></span></span></span></button>
       <button id="autoFireModeToggle" class="modeToggle isOn" type="button" data-on="true"><span class="modeInfo"><span class="modeIcon">🔫</span><span><b>TIRO AUTOMÁTICO</b><small>disparos normais do soldado</small></span></span><span class="modeRight"><span class="modeBadge">ON</span><span class="toggleTrack"><span class="toggleKnob"></span></span></span></button>
+
+      <button id="manualAimModeToggle" class="modeToggle" type="button" data-on="false"><span class="modeInfo"><span class="modeIcon">🎯</span><span><b>MIRA PELO MOVIMENTO</b><small>OFF = clássico · ON = movimento define mira e tiro</small></span></span><span class="modeRight"><span class="modeBadge">OFF</span><span class="toggleTrack"><span class="toggleKnob"></span></span></span></button>
       <button id="fpsModeToggle" class="modeToggle isOn" type="button" data-on="true"><span class="modeInfo"><span class="modeIcon">📊</span><span><b>MOSTRAR FPS</b><small>contador de desempenho no jogo</small></span></span><span class="modeRight"><span class="modeBadge">ON</span><span class="toggleTrack"><span class="toggleKnob"></span></span></span></button>
     </div>
     <div class="actionGrid grid"><button data-cmd="pause">Ⅱ PAUSAR<small>congela a partida</small></button><button data-cmd="resume">▶ CONTINUAR<small>retoma imediatamente</small></button><button class="good" data-cmd="heal" data-amount="1">❤ CURAR +1<small>ação instantânea</small></button><button class="danger" data-cmd="damage" data-amount="2">💥 DANO -2<small>ação instantânea</small></button><button data-cmd="clear">🧹 LIMPAR ARENA<small>remove todos os mobs</small></button><button class="blue" data-cmd="freeze" data-seconds="8">❄ CONGELAR 8s<small>efeito temporário</small></button><button class="gold" data-cmd="invincible" data-seconds="10">🛡 INVENCÍVEL 10s<small>escudo temporário</small></button><button class="danger" data-cmd="restart">↻ REINICIAR<small>nova partida limpa</small></button></div>
@@ -106,6 +108,6 @@
 </section>
 </main>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="src/panel.js?v=01711"></script>
+<script src="src/panel.js?v=01712"></script>
 </body>
 </html>
