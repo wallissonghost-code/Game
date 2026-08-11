@@ -1,0 +1,59 @@
+name: Fix Colossus mapping v0.17.7
+on:
+  push:
+    paths: ['.github/workflows/fix-colossus-map-v0177.yml']
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply Colossus ZIP direction mapping
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/game.js')
+          s=p.read_text()
+          old="else if(ordered.length>=16){target.up=ordered.slice(0,4);target.down=ordered.slice(4,8);target.right=ordered.slice(8,12);target.left=ordered.slice(12,16)}"
+          new="else if(ordered.length>=16){if(path.includes('Ogroboss1.zip')){target.down=ordered.slice(0,4);target.up=ordered.slice(4,8);target.left=ordered.slice(8,12);target.right=ordered.slice(12,16)}else{target.up=ordered.slice(0,4);target.down=ordered.slice(4,8);target.right=ordered.slice(8,12);target.left=ordered.slice(12,16)}}"
+          if old not in s:
+              raise SystemExit('expected boss mapping block not found')
+          s=s.replace(old,new,1)
+          s=s.replace("const VERSION='0.17.6'","const VERSION='0.17.7'",1)
+          p.write_text(s)
+
+          p=Path('index.html'); s=p.read_text()
+          s=s.replace('v0.17.6 · ONDAS + AURAS','v0.17.7 · COLOSSO CORRIGIDO')
+          s=s.replace('src/game.js?v=0176','src/game.js?v=0177')
+          p.write_text(s)
+
+          Path('version.json').write_text('{\n  "version": "0.17.7",\n  "build": "colossus-zip-direction-map"\n}\n')
+          PY
+      - name: Validate JavaScript and ZIP
+        run: |
+          node --check src/game.js
+          python3 - <<'PY'
+          import zipfile,re
+          z=zipfile.ZipFile('assets/bosses/Ogroboss1.zip')
+          names=sorted([n for n in z.namelist() if n.lower().endswith('.png')])
+          assert len(names)==16, len(names)
+          s=open('src/game.js').read()
+          assert "path.includes('Ogroboss1.zip')" in s
+          assert "target.down=ordered.slice(0,4)" in s
+          assert "target.up=ordered.slice(4,8)" in s
+          assert "target.left=ordered.slice(8,12)" in s
+          assert "target.right=ordered.slice(12,16)" in s
+          print('Colossus ZIP: 16 frames; mapping validated')
+          PY
+      - name: Clean diagnostics
+        run: |
+          rm -rf debug/colossus-inspect debug/colossus-groups
+          rm -f .github/workflows/inspect-colossus-zip.yml .github/workflows/export-colossus-sheet-base64.yml .github/workflows/export-colossus-groups.yml
+      - name: Commit fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --quiet || git commit -m 'fix: correct Colossus ZIP direction mapping v0.17.7'
+          git push
