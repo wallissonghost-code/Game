@@ -1,0 +1,28 @@
+name: Diagnostic v0.17.6
+on:
+  push:
+    paths: ['.github/workflows/diag-v0176.yml']
+permissions:
+  contents: write
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('src/game.js').read_text()
+          keys=['function spawn','tier===1','tier===2','skinVariant','bossColossusFrames','drawImage(img','skillLv','command===\'spawn\'','command:\'spawn\'']
+          out=[]
+          for k in keys:
+            i=s.find(k)
+            out.append('\n\n### '+k+' @ '+str(i)+'\n')
+            if i>=0: out.append(s[max(0,i-1200):i+2500])
+          Path('debug-v0176.txt').write_text(''.join(out))
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add debug-v0176.txt
+          git commit -m 'chore: add v0.17.6 diagnostic' || true
+          git push
