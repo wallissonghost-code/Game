@@ -1,0 +1,488 @@
+{
+  "pack": "CAOS LIVE - Field / Swamp",
+  "formatVersion": 1,
+  "tileCell": {
+    "width": 96,
+    "height": 128,
+    "anchor": "bottom-center",
+    "scaled": false
+  },
+  "objectCanvas": {
+    "width": 128,
+    "height": 176,
+    "anchor": "bottom-center",
+    "scaled": false
+  },
+  "notes": [
+    "As artes originais não foram esticadas nem deformadas.",
+    "Os tiles foram restaurados para uma célula comum de 96x128.",
+    "Os objetos foram restaurados para canvas comum de 128x176.",
+    "A colisão do manifest é uma sugestão inicial; hitboxes finas devem ser definidas na engine."
+  ],
+  "tiles": [
+    {
+      "source": "frame_001.png",
+      "file": "assets/map/field/tiles/dirt/dirt_01.png",
+      "category": "dirt",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_002.png",
+      "file": "assets/map/field/tiles/dirt/dirt_02.png",
+      "category": "dirt",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_003.png",
+      "file": "assets/map/field/tiles/dirt/dirt_03.png",
+      "category": "dirt",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_004.png",
+      "file": "assets/map/field/tiles/dirt/dirt_04.png",
+      "category": "dirt",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_005.png",
+      "file": "assets/map/field/tiles/moss/moss_01.png",
+      "category": "moss",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_006.png",
+      "file": "assets/map/field/tiles/moss/moss_02.png",
+      "category": "moss",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_007.png",
+      "file": "assets/map/field/tiles/moss/moss_03.png",
+      "category": "moss",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_008.png",
+      "file": "assets/map/field/tiles/moss/moss_04.png",
+      "category": "moss",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_009.png",
+      "file": "assets/map/field/tiles/moss/moss_05.png",
+      "category": "moss",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_010.png",
+      "file": "assets/map/field/tiles/moss/moss_06.png",
+      "category": "moss",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_011.png",
+      "file": "assets/map/field/tiles/moss/moss_07.png",
+      "category": "moss",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_012.png",
+      "file": "assets/map/field/tiles/moss/moss_08.png",
+      "category": "moss",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_013.png",
+      "file": "assets/map/field/tiles/moss/moss_09.png",
+      "category": "moss",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_014.png",
+      "file": "assets/map/field/tiles/moss/moss_10.png",
+      "category": "moss",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_015.png",
+      "file": "assets/map/field/tiles/swamp/swamp_01.png",
+      "category": "swamp",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_016.png",
+      "file": "assets/map/field/tiles/swamp/swamp_02.png",
+      "category": "swamp",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_017.png",
+      "file": "assets/map/field/tiles/swamp/swamp_03.png",
+      "category": "swamp",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_018.png",
+      "file": "assets/map/field/tiles/swamp/swamp_04.png",
+      "category": "swamp",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_019.png",
+      "file": "assets/map/field/tiles/swamp/swamp_05.png",
+      "category": "swamp",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_020.png",
+      "file": "assets/map/field/tiles/swamp/swamp_06.png",
+      "category": "swamp",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_021.png",
+      "file": "assets/map/field/tiles/swamp/swamp_07.png",
+      "category": "swamp",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_022.png",
+      "file": "assets/map/field/tiles/water/water_01.png",
+      "category": "water",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_023.png",
+      "file": "assets/map/field/tiles/water/water_02.png",
+      "category": "water",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_024.png",
+      "file": "assets/map/field/tiles/water/water_03.png",
+      "category": "water",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_025.png",
+      "file": "assets/map/field/tiles/water/water_04.png",
+      "category": "water",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_026.png",
+      "file": "assets/map/field/tiles/water/water_05.png",
+      "category": "water",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_027.png",
+      "file": "assets/map/field/tiles/water/water_06.png",
+      "category": "water",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_028.png",
+      "file": "assets/map/field/tiles/water/water_07.png",
+      "category": "water",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_029.png",
+      "file": "assets/map/field/tiles/dirt/dirt_05.png",
+      "category": "dirt",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_030.png",
+      "file": "assets/map/field/tiles/transitions/transitions_01.png",
+      "category": "transitions",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_031.png",
+      "file": "assets/map/field/tiles/transitions/transitions_02.png",
+      "category": "transitions",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_032.png",
+      "file": "assets/map/field/tiles/transitions/transitions_03.png",
+      "category": "transitions",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_033.png",
+      "file": "assets/map/field/tiles/transitions/transitions_04.png",
+      "category": "transitions",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_034.png",
+      "file": "assets/map/field/tiles/transitions/transitions_05.png",
+      "category": "transitions",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    },
+    {
+      "source": "frame_035.png",
+      "file": "assets/map/field/tiles/transitions/transitions_06.png",
+      "category": "transitions",
+      "canvas": [
+        96,
+        128
+      ],
+      "anchor": "bottom-center",
+      "collision": false
+    }
+  ],
+  "objects": [
+    {
+      "source": "frame_001.png",
+      "file": "assets/map/field/obstacles/bone_gate_01.png",
+      "canvas": [
+        128,
+        176
+      ],
+      "anchor": "bottom-center",
+      "collision": true,
+      "kind": "obstacle"
+    },
+    {
+      "source": "frame_002.png",
+      "file": "assets/map/field/obstacles/spike_fence_01.png",
+      "canvas": [
+        128,
+        176
+      ],
+      "anchor": "bottom-center",
+      "collision": true,
+      "kind": "obstacle"
+    },
+    {
+      "source": "frame_003.png",
+      "file": "assets/map/field/obstacles/stone_totem_01.png",
+      "canvas": [
+        128,
+        176
+      ],
+      "anchor": "bottom-center",
+      "collision": true,
+      "kind": "obstacle"
+    },
+    {
+      "source": "frame_004.png",
+      "file": "assets/map/field/obstacles/wood_bridge_01.png",
+      "canvas": [
+        128,
+        176
+      ],
+      "anchor": "bottom-center",
+      "collision": false,
+      "kind": "walkable"
+    },
+    {
+      "source": "frame_005.png",
+      "file": "assets/map/field/obstacles/ritual_pit_01.png",
+      "canvas": [
+        128,
+        176
+      ],
+      "anchor": "bottom-center",
+      "collision": true,
+      "kind": "obstacle"
+    },
+    {
+      "source": "frame_006.png",
+      "file": "assets/map/field/obstacles/hanging_cage_01.png",
+      "canvas": [
+        128,
+        176
+      ],
+      "anchor": "bottom-center",
+      "collision": true,
+      "kind": "obstacle"
+    },
+    {
+      "source": "frame_007.png",
+      "file": "assets/map/field/obstacles/stone_ruin_01.png",
+      "canvas": [
+        128,
+        176
+      ],
+      "anchor": "bottom-center",
+      "collision": true,
+      "kind": "obstacle"
+    }
+  ]
+}

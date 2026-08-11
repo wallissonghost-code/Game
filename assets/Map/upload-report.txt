@@ -1,0 +1,111 @@
+# Map upload organization report
+
+Field pack:
+assets/Map/field/README.md
+assets/Map/field/manifest.json
+assets/Map/field/obstacles/bone_gate_01.png
+assets/Map/field/obstacles/hanging_cage_01.png
+assets/Map/field/obstacles/ritual_pit_01.png
+assets/Map/field/obstacles/spike_fence_01.png
+assets/Map/field/obstacles/stone_ruin_01.png
+assets/Map/field/obstacles/stone_totem_01.png
+assets/Map/field/obstacles/wood_bridge_01.png
+assets/Map/field/tiles/dirt/dirt_01.png
+assets/Map/field/tiles/dirt/dirt_02.png
+assets/Map/field/tiles/dirt/dirt_03.png
+assets/Map/field/tiles/dirt/dirt_04.png
+assets/Map/field/tiles/dirt/dirt_05.png
+assets/Map/field/tiles/moss/moss_01.png
+assets/Map/field/tiles/moss/moss_02.png
+assets/Map/field/tiles/moss/moss_03.png
+assets/Map/field/tiles/moss/moss_04.png
+assets/Map/field/tiles/moss/moss_05.png
+assets/Map/field/tiles/moss/moss_06.png
+assets/Map/field/tiles/moss/moss_07.png
+assets/Map/field/tiles/moss/moss_08.png
+assets/Map/field/tiles/moss/moss_09.png
+assets/Map/field/tiles/moss/moss_10.png
+assets/Map/field/tiles/swamp/swamp_01.png
+assets/Map/field/tiles/swamp/swamp_02.png
+assets/Map/field/tiles/swamp/swamp_03.png
+assets/Map/field/tiles/swamp/swamp_04.png
+assets/Map/field/tiles/swamp/swamp_05.png
+assets/Map/field/tiles/swamp/swamp_06.png
+assets/Map/field/tiles/swamp/swamp_07.png
+assets/Map/field/tiles/transitions/transitions_01.png
+assets/Map/field/tiles/transitions/transitions_02.png
+assets/Map/field/tiles/transitions/transitions_03.png
+assets/Map/field/tiles/transitions/transitions_04.png
+assets/Map/field/tiles/transitions/transitions_05.png
+assets/Map/field/tiles/transitions/transitions_06.png
+assets/Map/field/tiles/water/water_01.png
+assets/Map/field/tiles/water/water_02.png
+assets/Map/field/tiles/water/water_03.png
+assets/Map/field/tiles/water/water_04.png
+assets/Map/field/tiles/water/water_05.png
+assets/Map/field/tiles/water/water_06.png
+assets/Map/field/tiles/water/water_07.png
+
+Loose PNGs preserved for review:
+assets/Map/extras-uploaded/177057CD-03D9-4006-8C79-D5DC6C35603E.png
+assets/Map/extras-uploaded/325BE40C-C44B-425F-8B11-B1A6CDD08217.png
+assets/Map/extras-uploaded/3348968F-21DD-4618-9B03-F245C2813E29.png
+assets/Map/extras-uploaded/4FDCA70C-799C-4220-AA08-C627824D3542.png
+assets/Map/extras-uploaded/893B5774-DC26-4C12-8E78-15F9909D4D9C.png
+assets/Map/extras-uploaded/B2A68FA7-E69B-43B8-B405-6089F55569D3.png
+assets/Map/extras-uploaded/BC230B3F-1904-4ECC-A6A5-92DAFB261895.png
+assets/Map/extras-uploaded/FCAB31E5-0229-4378-9FC3-B5C35F7608DC.png
+assets/Map/extras-uploaded/FE8723AB-0120-4E71-AEB6-7CF11A0B0046.png
+
+PNG metadata:
+assets/Map/extras-uploaded/177057CD-03D9-4006-8C79-D5DC6C35603E.png: PNG image data, 1536 x 1024, 8-bit/color RGBA, non-interlaced
+assets/Map/extras-uploaded/325BE40C-C44B-425F-8B11-B1A6CDD08217.png: PNG image data, 1536 x 1024, 8-bit/color RGBA, non-interlaced
+assets/Map/extras-uploaded/3348968F-21DD-4618-9B03-F245C2813E29.png: PNG image data, 1254 x 1254, 8-bit/color RGBA, non-interlaced
+assets/Map/extras-uploaded/4FDCA70C-799C-4220-AA08-C627824D3542.png: PNG image data, 1254 x 1254, 8-bit/color RGB, non-interlaced
+assets/Map/extras-uploaded/893B5774-DC26-4C12-8E78-15F9909D4D9C.png: PNG image data, 1536 x 1024, 8-bit/color RGBA, non-interlaced
+assets/Map/extras-uploaded/B2A68FA7-E69B-43B8-B405-6089F55569D3.png: PNG image data, 1536 x 1024, 8-bit/color RGBA, non-interlaced
+assets/Map/extras-uploaded/BC230B3F-1904-4ECC-A6A5-92DAFB261895.png: PNG image data, 1536 x 1024, 8-bit/color RGBA, non-interlaced
+assets/Map/extras-uploaded/FCAB31E5-0229-4378-9FC3-B5C35F7608DC.png: PNG image data, 1536 x 1024, 8-bit/color RGBA, non-interlaced
+assets/Map/extras-uploaded/FE8723AB-0120-4E71-AEB6-7CF11A0B0046.png: PNG image data, 1536 x 1024, 8-bit/color RGBA, non-interlaced
+assets/Map/field/obstacles/bone_gate_01.png:                         PNG image data, 128 x 176, 8-bit/color RGBA, non-interlaced
+assets/Map/field/obstacles/hanging_cage_01.png:                      PNG image data, 128 x 176, 8-bit/color RGBA, non-interlaced
+assets/Map/field/obstacles/ritual_pit_01.png:                        PNG image data, 128 x 176, 8-bit/color RGBA, non-interlaced
+assets/Map/field/obstacles/spike_fence_01.png:                       PNG image data, 128 x 176, 8-bit/color RGBA, non-interlaced
+assets/Map/field/obstacles/stone_ruin_01.png:                        PNG image data, 128 x 176, 8-bit/color RGBA, non-interlaced
+assets/Map/field/obstacles/stone_totem_01.png:                       PNG image data, 128 x 176, 8-bit/color RGBA, non-interlaced
+assets/Map/field/obstacles/wood_bridge_01.png:                       PNG image data, 128 x 176, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/dirt/dirt_01.png:                             PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/dirt/dirt_02.png:                             PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/dirt/dirt_03.png:                             PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/dirt/dirt_04.png:                             PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/dirt/dirt_05.png:                             PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/moss/moss_01.png:                             PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/moss/moss_02.png:                             PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/moss/moss_03.png:                             PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/moss/moss_04.png:                             PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/moss/moss_05.png:                             PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/moss/moss_06.png:                             PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/moss/moss_07.png:                             PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/moss/moss_08.png:                             PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/moss/moss_09.png:                             PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/moss/moss_10.png:                             PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/swamp/swamp_01.png:                           PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/swamp/swamp_02.png:                           PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/swamp/swamp_03.png:                           PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/swamp/swamp_04.png:                           PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/swamp/swamp_05.png:                           PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/swamp/swamp_06.png:                           PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/swamp/swamp_07.png:                           PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/transitions/transitions_01.png:               PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/transitions/transitions_02.png:               PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/transitions/transitions_03.png:               PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/transitions/transitions_04.png:               PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/transitions/transitions_05.png:               PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/transitions/transitions_06.png:               PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/water/water_01.png:                           PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/water/water_02.png:                           PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/water/water_03.png:                           PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/water/water_04.png:                           PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/water/water_05.png:                           PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/water/water_06.png:                           PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
+assets/Map/field/tiles/water/water_07.png:                           PNG image data, 96 x 128, 8-bit/color RGBA, non-interlaced
