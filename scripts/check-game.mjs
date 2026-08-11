@@ -23,7 +23,7 @@ if(!game.includes('damage:2,armorReduction:0')) fail('reset da Armadura ausente'
 
 for(let i=1;i<=32;i++){
   const n=String(i).padStart(3,'0');
-  for(const dir of ['assets/player','assets/mobs','assets/weapons']){
+  for(const dir of ['assets/player','assets/mobs/Ogro','assets/weapons']){
     const f=`${dir}/frame_${n}.png`; if(!fs.existsSync(f)) fail('asset ausente '+f);
   }
   const armed=`assets/player-armed/Posearma${i}.png`; if(!fs.existsSync(armed)) fail('asset ausente '+armed);
@@ -54,3 +54,6 @@ if(!panel.includes("command:'manualaim'")) fail('painel nao envia manualaim'); e
 if(!panel.includes("typeof d.manualAim==='boolean'")) fail('painel nao sincroniza manualAim'); else ok('painel sincroniza manualAim');
 
 if(process.exitCode) process.exit(process.exitCode);
+
+if(!fs.existsSync('assets/mobs/Ogro Elite/.gitkeep')) fail('pasta Ogro Elite ausente'); else ok('pasta Ogro Elite pronta');
+for(let i=1;i<=32;i++){const n=String(i).padStart(3,'0');if(fs.existsSync(`assets/mobs/frame_${n}.png`)) fail('frame legado ainda na raiz mobs: '+n)}
