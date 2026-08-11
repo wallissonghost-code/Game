@@ -1,0 +1,38 @@
+name: Panel skill sync v0.17.5
+on:
+  push:
+    paths: ['.github/workflows/panel-skill-v0175.yml']
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add Piercing Ammo to skill test panel
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('painel.html'); s=p.read_text()
+          s=s.replace('<title>Caos Admin v0.15.0</title>','<title>Caos Admin v0.17.5</title>')
+          s=s.replace('<span class="topVersion">v0.15.0</span>','<span class="topVersion">v0.17.5</span>')
+          s=s.replace('href="index.html?v=0150"','href="index.html?v=0175"')
+          s=s.replace('<option value="flash">☀️ Flash de Luz</option>','<option value="flash">☀️ Flash de Luz</option><option value="pierce">🎯 Munição Perfurante</option>')
+          s=s.replace('src="src/panel.js?v=0150"','src="src/panel.js?v=0175"')
+          p.write_text(s)
+          p=Path('src/panel.js'); s=p.read_text()
+          s=s.replace("flash:'Flash',arc:'Arco'","flash:'Flash',pierce:'Perfurante',arc:'Arco'")
+          p.write_text(s)
+          PY
+      - name: Validate panel sync
+        run: |
+          grep -q 'value="pierce"' painel.html
+          grep -q "pierce:'Perfurante'" src/panel.js
+          grep -q 'v0.17.5' painel.html
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add painel.html src/panel.js
+          git diff --cached --quiet || git commit -m 'feat: sync piercing ammo skill with admin panel'
+          git push
