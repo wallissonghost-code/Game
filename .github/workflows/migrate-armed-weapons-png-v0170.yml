@@ -29,3 +29,4 @@ jobs:
           git add src/game.js
           git commit -m 'feat: migrate armed player and weapon assets to direct PNG v0.17.0'
           git push
+      # retry 3: exact muzzle replacement
