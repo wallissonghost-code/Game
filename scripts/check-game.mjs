@@ -30,7 +30,7 @@ for(let i=1;i<=32;i++){
 }
 for(const f of ['assets/bosses/Ogroboss1.zip','assets/bosses/Ogro2.0Boss.zip']) fs.existsSync(f)?ok(f):fail('asset ausente '+f);
 
-const required=['room','connect','status','net','cloudConnect','tiktokConnect','liveEnabled','health','level','xp','fpsState','mobs','kills','elapsed','wave','score','eliteCount','corruptedCount','bossCount','gameState','autoState','perfState','autoModeToggle','hordeModeToggle','autoFireModeToggle','fpsModeToggle','skillTestSelect','skillTestLevel','skillApply','skillAll','skillReset','skillMax','mobTier','mobType','mobAmount','spawn','spawnElite','spawnCorrupted','log','panelVersion','versionSync','likeTotal','likeProgress','mobPresetLow','mobPresetMedium','mobPresetHigh','mobPresetMax','mobAdvancedSave'];
+const required=['room','connect','status','net','cloudConnect','tiktokConnect','liveEnabled','health','level','xp','fpsState','mobs','kills','elapsed','wave','score','eliteCount','corruptedCount','bossCount','gameState','autoState','perfState','autoModeToggle','hordeModeToggle','autoFireModeToggle','fpsModeToggle','skillTestSelect','skillTestLevel','skillApply','skillAll','skillReset','skillMax','bossTier','mobTier','mobType','mobAmount','spawn','spawnElite','spawnCorrupted','log','panelVersion','versionSync','likeTotal','likeProgress','mobPresetLow','mobPresetMedium','mobPresetHigh','mobPresetMax','mobAdvancedSave'];
 for(const id of required) if(!panelHtml.includes(`id="${id}"`)) fail('ID do painel ausente: '+id);
 
 if(!panel.includes("d.type==='like'")) fail('painel nao trata curtidas TikTok'); else ok('curtidas TikTok tratadas');
@@ -79,3 +79,12 @@ if(game.includes("e.tier===1?67:62")) fail('escala visual legada 67px ainda ativ
 // v0.17.17 · escala visual dos mobs
 if(!game.includes("MOB_VISUAL_HEIGHT={normal:62,elite:86,bossScale:3.55}")) fail('regua visual dos mobs ausente'); else ok('regua visual normal 62 / elite 86 / boss x3.55');
 if(!game.includes("e.tier===1?MOB_VISUAL_HEIGHT.elite:MOB_VISUAL_HEIGHT.normal")) fail('Elite nao usa regua visual'); else ok('Elite usa escala visual dedicada');
+
+// v0.17.18 · variantes raras de Boss
+if(!game.includes("BOSS_VARIANTS={normal:{hp:1,dmg:1,speed:1,xp:1},elite:{hp:1.75,dmg:1.25,speed:1.05,xp:1.75},corrupted:{hp:2.5,dmg:1.5,speed:1.10,xp:2.5}}")) fail('multiplicadores de Boss divergentes'); else ok('Boss Elite/Corrompido balanceados');
+if(!game.includes("return r<.01?2:r<.07?1:3")) fail('chance rara de Boss divergente'); else ok('Boss natural 93/6/1');
+if(!game.includes("boss(d.mob||null,d.tier??null)")) fail('Admin nao envia tier ao Boss'); else ok('Boss aceita tier forcado');
+if(!game.includes("bossVariantAura")) fail('aura de Boss raro ausente'); else ok('aura de Boss raro');
+if(!game.includes("· CORROMPIDO")||!game.includes("· ELITE")) fail('rotulo visual de Boss raro ausente'); else ok('rotulo Elite/Corrompido no Boss');
+if(!panelHtml.includes('id="bossTier"')) fail('seletor de tier do Boss ausente'); else ok('Admin controla tier do Boss');
+if(!panel.includes("b.dataset.cmd==='boss'?($('bossTier')?.value||null):undefined")) fail('painel nao envia tier de Boss'); else ok('painel envia tier de Boss');

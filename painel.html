@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#050812">
 <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
-<title>Caos Admin v0.17.17</title>
-<link rel="stylesheet" href="src/styles/panel.css?v=01717">
+<title>Caos Admin v0.17.18</title>
+<link rel="stylesheet" href="src/styles/panel.css?v=01718">
 </head>
 <body>
 <main class="app">
@@ -15,7 +15,7 @@
     <div class="brandMark"><span>CAOS</span><b>ADMIN</b></div>
     <div class="brandSub">CENTRAL DE COMANDO · LIVE CONTROL</div>
   </div>
-  <div class="topMeta"><span id="versionSync" class="syncBadge">SINCRONIZANDO</span><span id="panelVersion" class="topVersion">v0.17.17</span><a class="openGame" href="index.html?v=01717">ABRIR JOGO</a></div>
+  <div class="topMeta"><span id="versionSync" class="syncBadge">SINCRONIZANDO</span><span id="panelVersion" class="topVersion">v0.17.18</span><a class="openGame" href="index.html?v=01718">ABRIR JOGO</a></div>
 </header>
 
 <section class="dashboardTop">
@@ -99,7 +99,7 @@
   <div class="adminColumns">
     <section class="card">
       <div class="sectionTitle"><div><span class="eyebrow">COMBATE</span><h2>Bosses e mobs</h2></div></div>
-      <h3>Bosses · 100 HP</h3><div class="grid"><button class="gold" data-cmd="boss" data-mob="colossus">👹 COLOSSO CARMESIM</button><button class="purple" data-cmd="boss" data-mob="voidlord">👁 SENHOR DO VAZIO</button></div>
+      <h3>Bosses · variantes raras</h3><div class="tools mobsTools"><select id="bossTier"><option value="">🎲 Natural · 93% normal / 6% Elite / 1% Corrompido</option><option value="normal">Normal</option><option value="1">🟣 Forçar ELITE</option><option value="2">🔴⚫ Forçar CORROMPIDO</option></select></div><div class="grid"><button class="gold" data-cmd="boss" data-mob="colossus">👹 COLOSSO CARMESIM</button><button class="purple" data-cmd="boss" data-mob="voidlord">👁 SENHOR DO VAZIO</button></div>
       <h3>Adicionar mobs</h3><div class="tools mobsTools"><select id="mobTier"><option value="">Normal / aleatório</option><option value="1">🟣 Forçar ELITE</option><option value="2">🔴⚫ Forçar CORROMPIDO</option></select><select id="mobType"><option value="">Mobs mistos</option><option value="wraith">Espectro</option><option value="reaper">Ceifador</option><option value="infected">Infectado</option><option value="crawler">Criatura das Sombras</option><option value="eye">Observador</option><option value="brute">Brutamonte</option></select><input id="mobAmount" type="number" min="1" max="100" value="25"></div>
       <button id="spawn" class="wideBtn">ADICIONAR MOBS</button><div class="grid compactGrid"><button id="spawnElite" class="purple">🟣 SPAWN ELITE</button><button id="spawnCorrupted" class="danger">⚫🔴 SPAWN CORROMPIDO</button></div>
       <h3>Velocidade dos mobs</h3><div class="speedGrid"><button data-speed="0.5">0.5×</button><button data-speed="1">1×</button><button data-speed="1.5">1.5×</button><button data-speed="2.5">2.5×</button></div>
@@ -116,6 +116,6 @@
 </section>
 </main>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="src/panel.js?v=01717"></script>
+<script src="src/panel.js?v=01718"></script>
 </body>
 </html>
