@@ -1,0 +1,32 @@
+name: Render diagnostic v0176
+on:
+  push:
+    paths: ['.github/workflows/diag-render-v0176.yml']
+permissions:
+  contents: write
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract render sections
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('src/game.js').read_text()
+          needles=['shadowBlur','globalAlpha','maxW','visualH','bossColossusReady','damageFx.push','skinVariant']
+          pieces=[]
+          for needle in needles:
+            pos=0
+            while True:
+              i=s.find(needle,pos)
+              if i<0: break
+              pieces.append('\n--- '+needle+' @ '+str(i)+' ---\n'+s[max(0,i-1400):i+3200])
+              pos=i+len(needle)
+          Path('render-diag-v0176.txt').write_text(''.join(pieces))
+          PY
+          git config user.name github-actions
+          git config user.email actions@github.com
+          git add render-diag-v0176.txt
+          git commit -m 'chore: render diagnostic v0176' || true
+          git push
