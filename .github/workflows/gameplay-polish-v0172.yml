@@ -1,0 +1,28 @@
+name: Gameplay polish v0.17.2
+on:
+  push:
+    paths:
+      - '.github/workflows/gameplay-polish-v0172.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 scripts/gameplay-polish-v0172.py
+      - run: node --check src/game.js
+      - run: |
+          grep -q "VERSION='0.17.2'" src/game.js
+          grep -q "const FIRE_RANGE=460" src/game.js
+          grep -q "function separateEnemies" src/game.js
+          grep -q "src/game.js?v=0172" index.html
+      - run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/game.js index.html version.json
+          git commit -m 'fix: polish targeting mob separation and elite tiers v0.17.2'
+          git push
