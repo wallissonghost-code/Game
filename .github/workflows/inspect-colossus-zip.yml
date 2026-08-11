@@ -1,0 +1,50 @@
+name: Inspect Colossus ZIP
+on:
+  push:
+    paths: ['.github/workflows/inspect-colossus-zip.yml']
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect full ZIP
+        run: |
+          rm -rf /tmp/colossus debug/colossus-inspect
+          mkdir -p /tmp/colossus debug/colossus-inspect
+          unzip -q assets/bosses/Ogroboss1.zip -d /tmp/colossus
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageOps, ImageDraw
+          root=Path('/tmp/colossus')
+          files=sorted([p for p in root.rglob('*') if p.suffix.lower()=='.png'], key=lambda p:str(p).lower())
+          out=Path('debug/colossus-inspect')
+          lines=[f'TOTAL={len(files)}']
+          thumbs=[]
+          for i,p in enumerate(files,1):
+              im=Image.open(p).convert('RGBA')
+              bbox=im.getbbox()
+              lines.append(f'{i:02d}\t{p.relative_to(root)}\t{im.width}x{im.height}\tbbox={bbox}')
+              if bbox: im=im.crop(bbox)
+              canvas=Image.new('RGBA',(280,300),(20,24,32,255))
+              im.thumbnail((250,245),Image.Resampling.LANCZOS)
+              x=(280-im.width)//2; y=28+(245-im.height)//2
+              canvas.alpha_composite(im,(x,y))
+              d=ImageDraw.Draw(canvas)
+              d.rectangle((0,0,279,27),fill=(0,0,0,210))
+              d.text((6,6),f'{i:02d} {p.name}',fill='white')
+              thumbs.append(canvas.convert('RGB'))
+          (out/'manifest.txt').write_text('\n'.join(lines))
+          cols=4; rows=(len(thumbs)+cols-1)//cols
+          sheet=Image.new('RGB',(cols*280,rows*300),(12,15,22))
+          for i,im in enumerate(thumbs): sheet.paste(im,((i%cols)*280,(i//cols)*300))
+          sheet.save(out/'contact-sheet.jpg',quality=92)
+          PY
+      - name: Commit diagnostics
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add debug/colossus-inspect
+          git diff --cached --quiet || git commit -m 'debug: inspect all Colossus ZIP frames'
+          git push
