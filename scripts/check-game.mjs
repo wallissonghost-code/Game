@@ -44,16 +44,23 @@ if(!cloud.includes('function patchGameHtml(html){return patchSharedVersion(html)
 if(!cloud.includes('function patchAdminHtml(html){return patchSharedVersion(html)}')) fail('Cloud ainda muta painel'); else ok('Painel nativo sem injecao legada');
 
 
-if(!game.includes('manualAimByMovement=false')) fail('estado opcional Mira pelo Movimento ausente'); else ok('Mira pelo Movimento OFF por padrao');
-if(!game.includes("if(c==='manualaim')")) fail('comando manualaim ausente'); else ok('comando manualaim');
-if(!game.includes('manualAim:manualAimByMovement')) fail('telemetria manualAim ausente'); else ok('telemetria manualAim');
-if(!game.includes('if(manualAimByMovement&&!autoMode){if(player.moving)player.aim=Math.atan2(player.moveY,player.moveX)}')) fail('movimento nao controla mira no modo extra'); else ok('movimento controla mira no modo extra');
-if(!game.includes('const manual=manualAimByMovement&&!autoMode')) fail('tiro ainda pode retargetar no modo extra'); else ok('tiro respeita mira manual');
-if(!panelHtml.includes('id="manualAimModeToggle"')) fail('toggle Mira pelo Movimento ausente no Admin'); else ok('toggle Mira pelo Movimento no Admin');
-if(!panel.includes("command:'manualaim'")) fail('painel nao envia manualaim'); else ok('painel envia manualaim');
-if(!panel.includes("typeof d.manualAim==='boolean'")) fail('painel nao sincroniza manualAim'); else ok('painel sincroniza manualAim');
 
 if(process.exitCode) process.exit(process.exitCode);
 
 if(!fs.existsSync('assets/mobs/Ogro Elite/.gitkeep')) fail('pasta Ogro Elite ausente'); else ok('pasta Ogro Elite pronta');
 for(let i=1;i<=32;i++){const n=String(i).padStart(3,'0');if(fs.existsSync(`assets/mobs/frame_${n}.png`)) fail('frame legado ainda na raiz mobs: '+n)}
+
+// v0.17.14 · gameplay + weapon
+if(!game.includes("gameplayMode='classic'")) fail('jogabilidade nao inicia em Classico'); else ok('Classico por padrao');
+if(!game.includes("gameplayMode==='sweep'")) fail('modo Varredura ausente'); else ok('Varredura presente');
+if(!game.includes("gameplayMode==='hardcore'")) fail('modo Hardcore ausente'); else ok('Hardcore presente');
+if(!game.includes('const SWEEP_HALF_ANGLE=Math.PI/3')) fail('cone de Varredura divergente'); else ok('cone Varredura 120 graus');
+if(!game.includes("target=sweepTarget();if(!target)return")) fail('Varredura pode atirar sem alvo'); else ok('Varredura nao atira sem alvo');
+if(!game.includes("if(c==='gameplaymode')")) fail('comando gameplaymode ausente'); else ok('comando gameplaymode');
+if(!game.includes("gameplayMode,manualAim:gameplayMode==='hardcore'")) fail('telemetria gameplay ausente'); else ok('telemetria gameplay');
+for(const id of ['gameplayClassic','gameplaySweep','gameplayHardcore','gameplayModeState','gameplayModeHint','gameplayState']) if(!panelHtml.includes(`id="${id}"`)) fail('controle gameplay ausente: '+id);
+if(!panel.includes("command:'gameplaymode'")) fail('painel nao envia gameplaymode'); else ok('painel envia gameplaymode');
+if(!panel.includes("d.gameplayMode||(d.manualAim?'hardcore':'classic')")) fail('painel nao sincroniza gameplay'); else ok('painel sincroniza gameplay');
+if(!game.includes("folder.includes('/mobs')||folder.includes('/weapons')")) fail('arma nao normaliza alpha'); else ok('arma normaliza margens transparentes');
+if(game.includes('01711')) fail('cache legado 01711 ainda presente no game'); else ok('sem cache legado 01711');
+if(!game.includes("ASSET_TAG=VERSION.replace(/\\./g,'')")) fail('ASSET_TAG dinamico ausente'); else ok('cache de assets deriva da versao');

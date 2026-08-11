@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#050812">
 <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
-<title>Caos Admin v0.17.13</title>
-<link rel="stylesheet" href="src/styles/panel.css?v=01713">
+<title>Caos Admin v0.17.14</title>
+<link rel="stylesheet" href="src/styles/panel.css?v=01714">
 </head>
 <body>
 <main class="app">
@@ -15,7 +15,7 @@
     <div class="brandMark"><span>CAOS</span><b>ADMIN</b></div>
     <div class="brandSub">CENTRAL DE COMANDO · LIVE CONTROL</div>
   </div>
-  <div class="topMeta"><span id="versionSync" class="syncBadge">SINCRONIZANDO</span><span id="panelVersion" class="topVersion">v0.17.13</span><a class="openGame" href="index.html?v=01713">ABRIR JOGO</a></div>
+  <div class="topMeta"><span id="versionSync" class="syncBadge">SINCRONIZANDO</span><span id="panelVersion" class="topVersion">v0.17.14</span><a class="openGame" href="index.html?v=01714">ABRIR JOGO</a></div>
 </header>
 
 <section class="dashboardTop">
@@ -71,7 +71,7 @@
     <div class="state">
       <div><span>VIDA</span><b id="health">—</b></div><div><span>LEVEL</span><b id="level">—</b></div><div><span>XP</span><b id="xp">—</b></div><div><span>FPS</span><b id="fpsState">—</b></div><div><span>MOBS</span><b id="mobs">—</b></div>
       <div><span>ABATES</span><b id="kills">—</b></div><div><span>TEMPO</span><b id="elapsed">00:00</b></div><div><span>HORDA</span><b id="wave">—</b></div><div><span>PONTOS</span><b id="score">—</b></div><div><span>ELITES</span><b id="eliteCount">—</b></div>
-      <div><span>CORROMPIDOS</span><b id="corruptedCount">—</b></div><div><span>BOSSES</span><b id="bossCount">—</b></div><div><span>ESTADO</span><b id="gameState">—</b></div><div><span>AUTO</span><b id="autoState">OFF</b></div><div><span>PERFORMANCE</span><b id="perfState">—</b></div>
+      <div><span>CORROMPIDOS</span><b id="corruptedCount">—</b></div><div><span>BOSSES</span><b id="bossCount">—</b></div><div><span>ESTADO</span><b id="gameState">—</b></div><div><span>AUTO</span><b id="autoState">OFF</b></div><div><span>PERFORMANCE</span><b id="perfState">—</b></div><div><span>JOGABILIDADE</span><b id="gameplayState">CLÁSSICO</b></div>
     </div>
   </section>
 
@@ -82,7 +82,15 @@
       <button id="hordeModeToggle" class="modeToggle hordeOn" type="button" data-on="true"><span class="modeInfo"><span class="modeIcon">🌊</span><span><b>HORDAS AUTOMÁTICAS</b><small>spawn normal da partida</small></span></span><span class="modeRight"><span class="modeBadge">ON</span><span class="toggleTrack"><span class="toggleKnob"></span></span></span></button>
       <button id="autoFireModeToggle" class="modeToggle isOn" type="button" data-on="true"><span class="modeInfo"><span class="modeIcon">🔫</span><span><b>TIRO AUTOMÁTICO</b><small>disparos normais do soldado</small></span></span><span class="modeRight"><span class="modeBadge">ON</span><span class="toggleTrack"><span class="toggleKnob"></span></span></span></button>
 
-      <button id="manualAimModeToggle" class="modeToggle" type="button" data-on="false"><span class="modeInfo"><span class="modeIcon">🎯</span><span><b>MIRA PELO MOVIMENTO</b><small>OFF = clássico · ON = movimento define mira e tiro</small></span></span><span class="modeRight"><span class="modeBadge">OFF</span><span class="toggleTrack"><span class="toggleKnob"></span></span></span></button>
+      <div class="gameplayModeBox">
+        <div class="gameplayModeHead"><span><b>🎮 JOGABILIDADE</b><small>Escolha como o soldado mira durante o controle manual.</small></span><strong id="gameplayModeState">CLÁSSICO</strong></div>
+        <div class="gameplayModeChoices">
+          <button id="gameplayClassic" class="gameplayChoice active" type="button" data-gameplay-mode="classic"><b>CLÁSSICO</b><small>mira automática livre</small></button>
+          <button id="gameplaySweep" class="gameplayChoice" type="button" data-gameplay-mode="sweep"><b>VARREDURA</b><small>alvos somente à frente</small></button>
+          <button id="gameplayHardcore" class="gameplayChoice" type="button" data-gameplay-mode="hardcore"><b>HARDCORE</b><small>tiro preso ao movimento</small></button>
+        </div>
+        <p id="gameplayModeHint" class="gameplayModeHint">Clássico: comportamento original do Caos Live.</p>
+      </div>
       <button id="fpsModeToggle" class="modeToggle isOn" type="button" data-on="true"><span class="modeInfo"><span class="modeIcon">📊</span><span><b>MOSTRAR FPS</b><small>contador de desempenho no jogo</small></span></span><span class="modeRight"><span class="modeBadge">ON</span><span class="toggleTrack"><span class="toggleKnob"></span></span></span></button>
     </div>
     <div class="actionGrid grid"><button data-cmd="pause">Ⅱ PAUSAR<small>congela a partida</small></button><button data-cmd="resume">▶ CONTINUAR<small>retoma imediatamente</small></button><button class="good" data-cmd="heal" data-amount="1">❤ CURAR +1<small>ação instantânea</small></button><button class="danger" data-cmd="damage" data-amount="2">💥 DANO -2<small>ação instantânea</small></button><button data-cmd="clear">🧹 LIMPAR ARENA<small>remove todos os mobs</small></button><button class="blue" data-cmd="freeze" data-seconds="8">❄ CONGELAR 8s<small>efeito temporário</small></button><button class="gold" data-cmd="invincible" data-seconds="10">🛡 INVENCÍVEL 10s<small>escudo temporário</small></button><button class="danger" data-cmd="restart">↻ REINICIAR<small>nova partida limpa</small></button></div>
@@ -108,6 +116,6 @@
 </section>
 </main>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="src/panel.js?v=01713"></script>
+<script src="src/panel.js?v=01714"></script>
 </body>
 </html>
