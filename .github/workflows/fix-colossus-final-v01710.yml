@@ -1,0 +1,95 @@
+name: Final Colossus Repair v0.17.10
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-colossus-final-v01710.yml'
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Apply verified 16-frame mapping
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,re
+          V='0.17.10'; TAG='01710'
+          def read(p): return Path(p).read_text(encoding='utf-8')
+          def write(p,s): Path(p).write_text(s,encoding='utf-8')
+
+          # Single source of truth.
+          write('version.json',json.dumps({'version':V,'build':'colossus-frame-verified-final'},ensure_ascii=False,indent=2)+'\n')
+
+          p='src/game.js'; s=read(p)
+          s,n=re.subn(r"const VERSION='\d+\.\d+\.\d+'",f"const VERSION='{V}'",s,count=1)
+          assert n==1,'VERSION marker missing'
+
+          # ZIP audit result:
+          # 01-04 = BACK  -> UP
+          # 05-08 = FRONT -> DOWN
+          # 09-12 = LEFT
+          # 13-16 = RIGHT
+          verified="target.up=ordered.slice(0,4);target.down=ordered.slice(4,8);target.left=ordered.slice(8,12);target.right=ordered.slice(12,16)"
+          assert verified in s,'Verified Colossus frame map not found'
+
+          # v0.17.9 regression: the already-correct arrays were swapped AGAIN at render time.
+          bad="if(e.type==='colossus'){if(dir==='up')dir='down';else if(dir==='down')dir='up'}"
+          assert bad in s,'Expected v0.17.9 render inversion not found'
+          s=s.replace(bad,'',1)
+          assert bad not in s,'Render inversion still present'
+
+          # Cache bust every sprite/ZIP involved in direction rendering.
+          s=s.replace("cacheTag='0179'",f"cacheTag='{TAG}'")
+          s=s.replace("'?v=0179'",f"'?v={TAG}'")
+          s=s.replace("'0179')",f"'{TAG}')")
+          write(p,s)
+
+          p='index.html'; s=read(p)
+          s=re.sub(r'<title>Caos Live v\d+\.\d+\.\d+</title>',f'<title>Caos Live v{V}</title>',s)
+          s=re.sub(r'<div class="version">v\d+\.\d+\.\d+ · [^<]+</div>',f'<div class="version">v{V} · COLOSSO FRAME VERIFIED</div>',s)
+          s=re.sub(r'<span class="startVersion">v\d+\.\d+\.\d+</span>',f'<span class="startVersion">v{V}</span>',s)
+          s=re.sub(r'src="src/game\.js\?v=\d+"',f'src="src/game.js?v={TAG}"',s)
+          write(p,s)
+
+          # Keep Admin on exactly the same release even before the next panel repair.
+          p='painel.html'; s=read(p)
+          s=re.sub(r'<title>Caos Admin v\d+\.\d+\.\d+</title>',f'<title>Caos Admin v{V}</title>',s)
+          s=re.sub(r'<span class="topVersion">v\d+\.\d+\.\d+</span>',f'<span class="topVersion">v{V}</span>',s)
+          s=re.sub(r'index\.html\?v=\d+',f'index.html?v={TAG}',s)
+          s=re.sub(r'src/panel\.js\?v=\d+',f'src/panel.js?v={TAG}',s)
+          s=re.sub(r'src/styles/panel\.css\?v=\d+',f'src/styles/panel.css?v={TAG}',s)
+          write(p,s)
+
+          # Make permanent CI understand the verified map instead of merely checking a word.
+          p='scripts/check-game.mjs'; s=read(p)
+          s=s.replace("src/game.js?v=0179",f"src/game.js?v={TAG}").replace("src/panel.js?v=0179",f"src/panel.js?v={TAG}")
+          old="if(!game.includes(\"e.type==='colossus'\")) fail('correcao vertical do Colosso ausente'); else ok('direcao vertical Colosso protegida');"
+          new="if(!game.includes(\"target.up=ordered.slice(0,4);target.down=ordered.slice(4,8);target.left=ordered.slice(8,12);target.right=ordered.slice(12,16)\")) fail('mapa 16-frame do Colosso divergente'); else ok('Colosso 01-04 UP, 05-08 DOWN, 09-12 LEFT, 13-16 RIGHT');\nif(game.includes(\"if(e.type==='colossus'){if(dir==='up')dir='down';else if(dir==='down')dir='up'}\")) fail('inversao dupla UP/DOWN voltou'); else ok('sem inversao dupla no render');"
+          if old in s: s=s.replace(old,new)
+          else:
+              # Append guard if checker changed later.
+              s += "\nif(!game.includes(\"target.up=ordered.slice(0,4);target.down=ordered.slice(4,8);target.left=ordered.slice(8,12);target.right=ordered.slice(12,16)\")) fail('mapa 16-frame do Colosso divergente');\nif(game.includes(\"if(e.type==='colossus'){if(dir==='up')dir='down';else if(dir==='down')dir='up'}\")) fail('inversao dupla UP/DOWN voltou');\n"
+          write(p,s)
+          PY
+      - name: Syntax and project validation
+        run: |
+          node --check src/game.js
+          node --check src/panel.js
+          node --check cloud/connector-server.mjs
+          node scripts/check-game.mjs
+      - name: Commit verified repair
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add version.json src/game.js index.html painel.html scripts/check-game.mjs
+          git diff --cached --quiet && exit 0
+          git commit -m 'fix: Colossus verified frame mapping v0.17.10'
+          git push
