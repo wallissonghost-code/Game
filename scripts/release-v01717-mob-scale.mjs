@@ -37,7 +37,13 @@ for(const file of ['index.html','painel.html']){
 write('version.json',JSON.stringify({version:newVersion,build:'mob-visual-scale-system'},null,2)+'\n');
 
 let check=read('scripts/check-game.mjs');
-check += `\n// v0.17.17 · escala visual dos mobs\nif(!game.includes("MOB_VISUAL_HEIGHT={normal:62,elite:86,bossScale:3.55}")) fail('regua visual dos mobs ausente'); else ok('regua visual normal 62 / elite 86 / boss x3.55');\nif(!game.includes("e.tier===1?MOB_VISUAL_HEIGHT.elite:MOB_VISUAL_HEIGHT.normal")) fail('Elite nao usa regua visual'); else ok('Elite usa escala visual dedicada');\n`;
+check=check.replace(
+  `if(!game.includes("const h=isBoss?e.r*3.55:(e.tier===1?67:62),ratio=")) fail('escala visual do Elite divergente'); else ok('Elite visual 67px, normal 62px');`,
+  `if(game.includes("e.tier===1?67:62")) fail('escala visual legada 67px ainda ativa'); else ok('escala visual legada removida');`
+);
+if(!check.includes('regua visual normal 62 / elite 86 / boss x3.55')){
+  check += `\n// v0.17.17 · escala visual dos mobs\nif(!game.includes("MOB_VISUAL_HEIGHT={normal:62,elite:86,bossScale:3.55}")) fail('regua visual dos mobs ausente'); else ok('regua visual normal 62 / elite 86 / boss x3.55');\nif(!game.includes("e.tier===1?MOB_VISUAL_HEIGHT.elite:MOB_VISUAL_HEIGHT.normal")) fail('Elite nao usa regua visual'); else ok('Elite usa escala visual dedicada');\n`;
+}
 write('scripts/check-game.mjs',check);
 
 let readme=read('assets/README.md');
