@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#050812">
 <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
-<title>Caos Admin v0.17.10</title>
-<link rel="stylesheet" href="src/styles/panel.css?v=01710">
+<title>Caos Admin v0.17.11</title>
+<link rel="stylesheet" href="src/styles/panel.css?v=01711">
 </head>
 <body>
 <main class="app">
@@ -15,7 +15,7 @@
     <div class="brandMark"><span>CAOS</span><b>ADMIN</b></div>
     <div class="brandSub">CENTRAL DE COMANDO · LIVE CONTROL</div>
   </div>
-  <div class="topMeta"><span class="topVersion">v0.17.10</span><a class="openGame" href="index.html?v=01710">ABRIR JOGO</a></div>
+  <div class="topMeta"><span id="versionSync" class="syncBadge">SINCRONIZANDO</span><span id="panelVersion" class="topVersion">v0.17.11</span><a class="openGame" href="index.html?v=01711">ABRIR JOGO</a></div>
 </header>
 
 <section class="dashboardTop">
@@ -41,6 +41,13 @@
 <section class="card automationsCard">
   <div class="sectionTitle"><div><span class="eyebrow">AUTOMAÇÕES</span><h2>Regras da Live</h2></div><span class="miniStatus">EVENTOS → JOGO</span></div>
   <div class="switchRow"><input id="liveEnabled" type="checkbox"><label for="liveEnabled"><b>Automações da Live</b><small>Executa as regras abaixo quando presentes ou comentários forem recebidos.</small></label></div>
+
+  <div class="chatGuard">
+    <div class="guardHead"><div><span class="eyebrow">PROTEÇÃO DA LIVE</span><b>Mobs do chat · anti-lag</b></div><span id="mobGuardStatus" class="miniStatus">PADRÃO</span></div>
+    <p class="hint">O comentário <b>MOB</b> cria 1 inimigo. Os perfis limitam spam sem desligar as outras regras.</p>
+    <div class="guardPresets"><button id="mobPresetLow" class="good">POUCOS<small>0,4s · 20/10s</small></button><button id="mobPresetMedium" class="blue">MÉDIO<small>1,5s · 15/10s</small></button><button id="mobPresetHigh" class="purple">MUITOS<small>3s · 10/10s</small></button><button id="mobPresetMax" class="gold">MÁXIMO<small>0s · 25/10s</small></button></div>
+    <details><summary>AJUSTE MANUAL</summary><div class="guardAdvanced"><input id="mobCooldownInput" type="number" min="0" step="0.1" value="0.4" placeholder="Cooldown por usuário (s)"><input id="mobLimitInput" type="number" min="1" max="100" value="20" placeholder="Mobs por 10s"><button id="mobAdvancedSave">SALVAR</button></div></details>
+  </div>
   <div class="ruleBuilder">
     <div class="field"><label>GATILHO</label><select id="triggerType"><option value="gift">🎁 Presente</option><option value="comment">💬 Comentário</option></select></div>
     <div class="field triggerGift"><label>PRESENTE</label><input id="giftName" placeholder="Ex.: Rosa"></div>
@@ -53,6 +60,7 @@
   </div>
   <div class="liveActions"><button id="saveRule" class="primary">+ SALVAR REGRA</button><button id="presetRose">1 ROSA → ESPECTRO</button><button id="clearRules" class="dangerGhost">LIMPAR REGRAS</button></div>
   <div id="rules" class="rules"></div>
+  <div class="liveCounters"><span>CURTIDAS <b id="likeTotal">0</b></span><span>ESCUDO <b id="likeProgress">0/10</b></span><span>REGRA <b>10 likes → 3s</b></span></div>
   <div class="testPanel"><div><span class="eyebrow">TESTE RÁPIDO</span><p>Simule um presente sem precisar iniciar uma Live.</p></div><div class="testRow"><input id="testGift" value="Rosa" placeholder="Presente"><input id="testCount" type="number" min="1" value="1"><button id="testEvent">SIMULAR</button></div></div>
   <div id="liveStatus" class="net leftNet">Nenhum evento recebido.</div>
 </section>
@@ -98,6 +106,6 @@
 </section>
 </main>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="src/panel.js?v=01710"></script>
+<script src="src/panel.js?v=01711"></script>
 </body>
 </html>
