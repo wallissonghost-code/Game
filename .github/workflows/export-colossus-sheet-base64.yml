@@ -9,13 +9,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Export contact sheet as text
+      - name: Install Pillow
+        run: python3 -m pip install --user pillow
+      - name: Export compact contact sheet as text
         run: |
-          base64 -w 0 debug/colossus-inspect/contact-sheet.jpg > debug/colossus-inspect/contact-sheet.base64.txt
+          python3 - <<'PY'
+          from PIL import Image
+          p='debug/colossus-inspect/contact-sheet.jpg'
+          im=Image.open(p).convert('RGB')
+          im.thumbnail((560,600),Image.Resampling.LANCZOS)
+          im.save('debug/colossus-inspect/contact-sheet-mini.jpg',quality=55,optimize=True)
+          PY
+          base64 -w 0 debug/colossus-inspect/contact-sheet-mini.jpg | fold -w 4000 > debug/colossus-inspect/contact-sheet-mini.base64.txt
       - name: Commit
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add debug/colossus-inspect/contact-sheet.base64.txt
-          git diff --cached --quiet || git commit -m 'debug: export Colossus contact sheet base64'
+          git add debug/colossus-inspect/contact-sheet-mini.jpg debug/colossus-inspect/contact-sheet-mini.base64.txt
+          git diff --cached --quiet || git commit -m 'debug: export compact Colossus contact sheet'
           git push
