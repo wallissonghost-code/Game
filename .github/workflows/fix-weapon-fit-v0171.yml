@@ -1,0 +1,27 @@
+name: Fix weapon fit v0.17.1
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-weapon-fit-v0171.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 scripts/fix-weapon-fit-v0171.py
+      - run: node --check src/game.js
+      - run: |
+          grep -q "VERSION='0.17.1'" src/game.js
+          grep -q "flip:true" src/game.js
+          grep -q "src/game.js?v=0171" index.html
+      - run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/game.js index.html version.json
+          git commit -m 'fix: enlarge and align weapon in 8 directions v0.17.1'
+          git push
