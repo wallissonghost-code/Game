@@ -1,0 +1,3 @@
+Caos Live v0.17.9
+Build: colossus-direction-admin-pro-ci-fix
+Validated: game.js, panel.js, connector-server.mjs, current PNG assets, boss packs and admin IDs.
