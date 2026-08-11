@@ -1,0 +1,2 @@
+Caos Live v0.17.11
+Validated release trigger for GitHub Pages.
