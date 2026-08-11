@@ -75,7 +75,7 @@ function drawPlayer(){
       down:{x:2,y:-1,maxW:30,maxH:50,flip:false},dr:{x:14,y:-6,maxW:52,maxH:31,flip:false},right:{x:17,y:-5,maxW:56,maxH:28,flip:true},ur:{x:13,y:-12,maxW:50,maxH:31,flip:false},
       up:{x:0,y:-18,maxW:30,maxH:50,flip:false},ul:{x:-13,y:-12,maxW:50,maxH:31,flip:false},left:{x:-17,y:-5,maxW:56,maxH:28,flip:false},dl:{x:-14,y:-6,maxW:52,maxH:31,flip:false}
     };
-    const drawWeapon=()=>{if(!autoFire||!weaponV2Ready)return;const wa=playerWeaponFrames[dir]?.length?playerWeaponFrames[dir]:playerWeaponFrames.down,wi=wa[frame%wa.length]||wa[0];if(!wi)return;const q=weaponLayout[dir]||weaponLayout.down,ratio=(wi.naturalWidth&&wi.naturalHeight)?wi.naturalWidth/wi.naturalHeight:1;let ww=q.maxW,wh=ww/Math.max(.05,ratio);if(wh>q.maxH){wh=q.maxH;ww=wh*ratio}ctx.save();ctx.imageSmoothingEnabled=true;ctx.translate(q.x,q.y+bob);if(q.flip)ctx.scale(-1,1);ctx.drawImage(wi,-ww/2,-wh/2,ww,wh);ctx.restore()};
+    const drawWeapon=()=>{if(!autoFire||!weaponV2Ready)return;const wa=playerWeaponFrames[dir]?.length?playerWeaponFrames[dir]:playerWeaponFrames.down,wi=wa[frame%wa.length]||wa[0];if(!wi)return;const q=weaponLayout[dir]||weaponLayout.down,iw=wi.naturalWidth||wi.width||1,ih=wi.naturalHeight||wi.height||1,ratio=iw/Math.max(1,ih);let ww=q.maxW,wh=ww/Math.max(.05,ratio);if(wh>q.maxH){wh=q.maxH;ww=wh*ratio}ctx.save();ctx.imageSmoothingEnabled=true;ctx.translate(q.x,q.y+bob);if(q.flip)ctx.scale(-1,1);ctx.drawImage(wi,-ww/2,-wh/2,ww,wh);ctx.restore()};
     const weaponBehind=autoFire&&['up','ur','ul'].includes(dir);
     if(weaponBehind)drawWeapon();
     ctx.save();ctx.imageSmoothingEnabled=true;ctx.drawImage(img,-w/2,bottom-h,w,h);ctx.restore();

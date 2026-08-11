@@ -64,3 +64,5 @@ if(!panel.includes("d.gameplayMode||(d.manualAim?'hardcore':'classic')")) fail('
 if(!game.includes("folder.includes('/mobs')||folder.includes('/weapons')")) fail('arma nao normaliza alpha'); else ok('arma normaliza margens transparentes');
 if(game.includes('01711')) fail('cache legado 01711 ainda presente no game'); else ok('sem cache legado 01711');
 if(!game.includes("ASSET_TAG=VERSION.replace(/\\./g,'')")) fail('ASSET_TAG dinamico ausente'); else ok('cache de assets deriva da versao');
+
+if(!game.includes('iw=wi.naturalWidth||wi.width||1')) fail('weapon canvas ratio ausente'); else ok('weapon canvas ratio preservado');
