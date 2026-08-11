@@ -3,36 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#070913">
-<title>Caos Live · Cloud Connector</title>
-<style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#070913;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{display:flex;flex-direction:column}.bar{padding:12px;display:grid;grid-template-columns:1.2fr 1fr 1fr auto auto;gap:8px;border-bottom:1px solid #293153;background:#0b1020}.bar input,.bar select{min-width:0;padding:12px;border:1px solid #35406d;border-radius:12px;background:#070b16;color:#fff;font-weight:800}.bar button{border:0;border-radius:12px;padding:12px 14px;background:#7c3aed;color:#fff;font-weight:900}.bar button.danger{background:#36131c}.status{grid-column:1/-1;font-size:11px;color:#aeb7d8}.status.ok{color:#22c55e}.status.err{color:#ef4444}.note{grid-column:1/-1;font-size:10px;color:#7f8ab4;line-height:1.4}iframe{border:0;width:100%;flex:1;background:#070913}@media(max-width:780px){.bar{grid-template-columns:1fr 1fr}.bar input,.bar select{grid-column:1/-1}.bar button{grid-column:auto}}
-</style>
+<meta name="theme-color" content="#050812">
+<meta http-equiv="refresh" content="0;url=painel.html?v=0179">
+<title>Caos Admin</title>
+<style>html,body{margin:0;min-height:100%;background:#050812;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{display:grid;place-items:center;padding:24px}.box{max-width:420px;text-align:center;padding:24px;border:1px solid #293153;border-radius:20px;background:#0b1020}.box b{color:#9d6cff}.box a{display:inline-block;margin-top:14px;padding:11px 15px;border-radius:12px;background:#6f38d6;color:#fff;text-decoration:none;font-weight:900}</style>
+<script>location.replace('painel.html?v=0179')</script>
 </head>
-<body>
-<div class="bar">
-  <select id="mode"><option value="cloud">CAOS CLOUD</option><option value="local">LOCAL / PC</option></select>
-  <input id="endpoint" placeholder="wss://game-f202.onrender.com">
-  <input id="key" type="password" placeholder="Chave do Connector">
-  <button id="open">CONECTAR CONNECTOR</button>
-  <button id="close" class="danger">DESCONECTAR</button>
-  <input id="username" placeholder="@usuario do TikTok">
-  <button id="live">CONECTAR LIVE</button>
-  <button id="stop" class="danger">PARAR LIVE</button>
-  <div id="status" class="status">Caos Cloud pronto para conectar.</div>
-  <div class="note">CAOS CLOUD já está configurado para o servidor do Render e funciona no celular. Você só precisa informar sua chave privada do Connector e o @ da LIVE. Nenhuma senha do TikTok é enviada por este painel.</div>
-</div>
-<iframe id="admin" src="painel.html" title="Caos Admin"></iframe>
-<script>
-(()=>{'use strict';const $=id=>document.getElementById(id),admin=$('admin');let ws=null;const DEFAULT_CLOUD='wss://game-f202.onrender.com';let cfg={};try{cfg=JSON.parse(localStorage.getItem('caos-cloud-config')||'{}')}catch{}$('mode').value=cfg.mode||'cloud';$('endpoint').value=cfg.endpoint||DEFAULT_CLOUD;$('key').value=cfg.key||'';$('username').value=cfg.user?('@'+cfg.user):'';
-function save(){localStorage.setItem('caos-cloud-config',JSON.stringify({mode:$('mode').value,endpoint:$('endpoint').value.trim(),key:$('key').value,user:$('username').value.trim().replace(/^@/,'')}))}
-function set(t,c=''){const s=$('status');s.textContent=t;s.className='status '+c}
-function url(){if($('mode').value==='local')return'ws://127.0.0.1:2121';return $('endpoint').value.trim()||DEFAULT_CLOUD}
-function send(x){if(ws?.readyState===1){ws.send(JSON.stringify(x));return true}set('Connector desconectado.','err');return false}
-function giftToAdmin(d){try{const win=admin.contentWindow;if(typeof win.caosTikTokGift==='function'){win.caosTikTokGift({gift:d.gift,count:d.count,user:'@'+(d.user||'viewer'),giftId:d.giftId});set('🎁 @'+(d.user||'viewer')+' enviou '+d.count+'× '+d.gift,'ok')}else set('Painel ainda carregando.','err')}catch(e){set('Falha ao enviar presente: '+e.message,'err')}}
-function open(){save();const u=url();if(!u)return set('Informe o endereço WSS do Caos Cloud.','err');try{ws?.close()}catch{}set('Conectando ao Connector...');try{ws=new WebSocket(u)}catch(e){return set('URL inválida: '+e.message,'err')}ws.onopen=()=>{set('Connector conectado.','ok');if($('key').value)send({type:'auth',key:$('key').value})};ws.onmessage=e=>{let d;try{d=JSON.parse(e.data)}catch{return}if(d.type==='bridge'){set(d.authRequired?'Connector online · autenticação necessária':'Connector online.','ok')}if(d.type==='auth')set(d.ok?'Connector autenticado.':'Chave do Connector inválida.',d.ok?'ok':'err');if(d.type==='status'){if(d.status==='connecting')set('Conectando à LIVE de @'+d.username+'...');if(d.status==='connected')set('TIKTOK LIVE CONECTADO · @'+d.username,'ok');if(d.status==='disconnected')set('LIVE desconectada.')}if(d.type==='gift')giftToAdmin(d);if(d.type==='error')set('Erro: '+d.message,'err')};ws.onclose=()=>set('Connector desconectado.','err');ws.onerror=()=>set('Falha de conexão com o Connector.','err')}
-$('open').onclick=open;$('close').onclick=()=>{try{ws?.close()}catch{}set('Connector desconectado.')};$('live').onclick=()=>{save();const u=$('username').value.trim().replace(/^@/,'');if(!u)return set('Informe o @usuario que está AO VIVO.','err');send({type:'connect',username:u})};$('stop').onclick=()=>send({type:'disconnect'});$('mode').onchange=()=>{if($('mode').value==='local'){$('endpoint').value='';set('Modo local selecionado.')}else{$('endpoint').value=DEFAULT_CLOUD;set('Caos Cloud selecionado.')}};
-})();
-</script>
-</body>
+<body><div class="box"><h2>CAOS <b>ADMIN</b></h2><p>O conector da Live agora faz parte do painel principal.</p><a href="painel.html?v=0179">ABRIR PAINEL</a></div></body>
 </html>
