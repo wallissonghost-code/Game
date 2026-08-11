@@ -72,3 +72,6 @@ for(let i=1;i<=32;i++){const n=String(i).padStart(3,'0');const f=`assets/mobs/Og
 if(!game.includes('eliteOgreFrames={up:[],down:[],right:[],left:[]}')) fail('pack Ogro Elite ausente'); else ok('pack Ogro Elite configurado');
 if(!game.includes("loadDirectPngSequence('./assets/mobs/Ogro Elite',32,ASSET_TAG)")) fail('loader Ogro Elite ausente'); else ok('32 frames Elite carregados');
 if(!game.includes("e.tier===1&&eliteOgreReady?eliteOgreFrames:ogreFrames")) fail('Elite nao usa skin exclusiva'); else ok('tier Elite usa skin Ogro Elite');
+
+// v0.17.16 · Elite visual scale
+if(!game.includes("const h=isBoss?e.r*3.55:(e.tier===1?67:62),ratio=")) fail('escala visual do Elite divergente'); else ok('Elite visual 67px, normal 62px');
