@@ -66,3 +66,9 @@ if(game.includes('01711')) fail('cache legado 01711 ainda presente no game'); el
 if(!game.includes("ASSET_TAG=VERSION.replace(/\\./g,'')")) fail('ASSET_TAG dinamico ausente'); else ok('cache de assets deriva da versao');
 
 if(!game.includes('iw=wi.naturalWidth||wi.width||1')) fail('weapon canvas ratio ausente'); else ok('weapon canvas ratio preservado');
+
+// v0.17.15 · elite skin
+for(let i=1;i<=32;i++){const n=String(i).padStart(3,'0');const f=`assets/mobs/Ogro Elite/frame_${n}.png`;if(!fs.existsSync(f)) fail('asset Elite ausente '+f)}
+if(!game.includes('eliteOgreFrames={up:[],down:[],right:[],left:[]}')) fail('pack Ogro Elite ausente'); else ok('pack Ogro Elite configurado');
+if(!game.includes("loadDirectPngSequence('./assets/mobs/Ogro Elite',32,ASSET_TAG)")) fail('loader Ogro Elite ausente'); else ok('32 frames Elite carregados');
+if(!game.includes("e.tier===1&&eliteOgreReady?eliteOgreFrames:ogreFrames")) fail('Elite nao usa skin exclusiva'); else ok('tier Elite usa skin Ogro Elite');
