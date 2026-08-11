@@ -1,0 +1,40 @@
+name: Caos Live v0.17.14 Weapon Ratio Hotfix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/hotfix-v01714-weapon-ratio.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  hotfix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Apply weapon ratio hotfix
+        run: node scripts/hotfix-v01714-weapon-ratio.mjs
+      - name: Validate
+        run: |
+          node --check src/game.js
+          node scripts/check-game.mjs
+      - name: Commit hotfix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/game.js scripts/check-game.mjs
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "fix: preserve weapon aspect ratio after alpha crop v0.17.14"
+            git push origin main
+          fi
