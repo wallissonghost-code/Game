@@ -1,0 +1,191 @@
+from pathlib import Path
+import json
+import re
+
+V = '0.17.11'
+TAG = '01711'
+
+
+def read(path):
+    return Path(path).read_text(encoding='utf-8')
+
+
+def write(path, content):
+    Path(path).write_text(content, encoding='utf-8')
+
+
+# Single source of truth for game, admin, cloud and deploy validation.
+write('version.json', json.dumps({
+    'version': V,
+    'build': 'admin-sync-likes-bossqty-lethal-antlag-pages'
+}, ensure_ascii=False, indent=2) + '\n')
+
+# -----------------------------------------------------------------------------
+# GAME
+# -----------------------------------------------------------------------------
+p = 'src/game.js'
+s = read(p)
+s, n = re.subn(r"const VERSION='\d+\.\d+\.\d+'", f"const VERSION='{V}'", s, count=1)
+assert n == 1, 'game VERSION not found'
+
+verified_map = "target.up=ordered.slice(0,4);target.down=ordered.slice(4,8);target.left=ordered.slice(8,12);target.right=ordered.slice(12,16)"
+double_inversion = "if(e.type==='colossus'){if(dir==='up')dir='down';else if(dir==='down')dir='up'}"
+assert verified_map in s, 'verified Colossus 16-frame map missing'
+assert double_inversion not in s, 'Colossus double inversion returned'
+
+s = s.replace("cacheTag='01710'", f"cacheTag='{TAG}'")
+s = s.replace("'?v=01710'", f"'?v={TAG}'")
+s = s.replace("'01710')", f"'{TAG}')")
+
+old = "if(c==='damage')player.life=Math.max(0,player.life-(+d.amount||2));"
+new = "if(c==='damage'){player.life=Math.max(0,player.life-(+d.amount||2));if(running&&player.life<=0&&!deathState){if(!tryPhoenix()){const k={username:d.user?String(d.user).replace(/^@/,''):'ADMIN',type:null,tier:0,x:player.x,y:player.y,r:20,dead:false};beginDeath(k)}}}"
+assert old in s, 'admin damage marker missing'
+s = s.replace(old, new, 1)
+
+old = "if(c==='boss'){const before=enemies.length;boss(d.mob||null);if(enemies.length>before&&d.user)enemies[enemies.length-1].username=String(d.user).replace(/^@/,'')}"
+new = "if(c==='boss'){const qty=Math.max(1,Math.min(20,+d.amount||1));for(let i=0;i<qty;i++){const before=enemies.length;boss(d.mob||null);if(enemies.length>before&&d.user)enemies[enemies.length-1].username=String(d.user).replace(/^@/,'')}}"
+assert old in s, 'boss command marker missing'
+s = s.replace(old, new, 1)
+write(p, s)
+
+# -----------------------------------------------------------------------------
+# GAME HTML
+# -----------------------------------------------------------------------------
+p = 'index.html'
+s = read(p)
+s = re.sub(r'<title>Caos Live v\d+\.\d+\.\d+</title>', f'<title>Caos Live v{V}</title>', s)
+s = re.sub(r'<div class="version"(?: id="gameVersion")?>v\d+\.\d+\.\d+ · [^<]+</div>', f'<div class="version" id="gameVersion">v{V} · SINCRONIZADO</div>', s)
+s = re.sub(r'<span class="startVersion"(?: id="startVersion")?>v\d+\.\d+\.\d+</span>', f'<span class="startVersion" id="startVersion">v{V}</span>', s)
+s = re.sub(r'src="src/game\.js\?v=\d+"', f'src="src/game.js?v={TAG}"', s)
+write(p, s)
+
+# -----------------------------------------------------------------------------
+# PANEL HTML
+# -----------------------------------------------------------------------------
+p = 'painel.html'
+s = read(p)
+s = re.sub(r'<title>Caos Admin v\d+\.\d+\.\d+</title>', f'<title>Caos Admin v{V}</title>', s)
+s = re.sub(r'src/styles/panel\.css\?v=\d+', f'src/styles/panel.css?v={TAG}', s)
+s = re.sub(r'src/panel\.js\?v=\d+', f'src/panel.js?v={TAG}', s)
+s = re.sub(r'index\.html\?v=\d+', f'index.html?v={TAG}', s)
+s = re.sub(r'<span(?: id="panelVersion")? class="topVersion">v\d+\.\d+\.\d+</span>', f'<span id="panelVersion" class="topVersion">v{V}</span>', s)
+
+if 'id="versionSync"' not in s:
+    s = s.replace('<div class="topMeta">', '<div class="topMeta"><span id="versionSync" class="syncBadge">SINCRONIZANDO</span>', 1)
+
+anti = '''
+  <div class="chatGuard">
+    <div class="guardHead"><div><span class="eyebrow">PROTEÇÃO DA LIVE</span><b>Mobs do chat · anti-lag</b></div><span id="mobGuardStatus" class="miniStatus">PADRÃO</span></div>
+    <p class="hint">O comentário <b>MOB</b> cria 1 inimigo. Os perfis limitam spam sem desligar as outras regras.</p>
+    <div class="guardPresets"><button id="mobPresetLow" class="good">POUCOS<small>0,4s · 20/10s</small></button><button id="mobPresetMedium" class="blue">MÉDIO<small>1,5s · 15/10s</small></button><button id="mobPresetHigh" class="purple">MUITOS<small>3s · 10/10s</small></button><button id="mobPresetMax" class="gold">MÁXIMO<small>0s · 25/10s</small></button></div>
+    <details><summary>AJUSTE MANUAL</summary><div class="guardAdvanced"><input id="mobCooldownInput" type="number" min="0" step="0.1" value="0.4" placeholder="Cooldown por usuário (s)"><input id="mobLimitInput" type="number" min="1" max="100" value="20" placeholder="Mobs por 10s"><button id="mobAdvancedSave">SALVAR</button></div></details>
+  </div>
+'''
+if 'id="mobPresetLow"' not in s:
+    marker = '  <div class="ruleBuilder">'
+    assert marker in s, 'rule builder marker missing'
+    s = s.replace(marker, anti + marker, 1)
+
+counters = '<div class="liveCounters"><span>CURTIDAS <b id="likeTotal">0</b></span><span>ESCUDO <b id="likeProgress">0/10</b></span><span>REGRA <b>10 likes → 3s</b></span></div>\n  '
+if 'id="likeTotal"' not in s:
+    marker = '  <div class="testPanel">'
+    assert marker in s, 'test panel marker missing'
+    s = s.replace(marker, '  ' + counters + '<div class="testPanel">', 1)
+write(p, s)
+
+# -----------------------------------------------------------------------------
+# PANEL JS
+# -----------------------------------------------------------------------------
+p = 'src/panel.js'
+s = read(p)
+assert "cloudLive=false;const CLOUD_URL" in s, 'panel state marker missing'
+s = s.replace("cloudLive=false;const CLOUD_URL", "cloudLive=false,panelVersion='';const CLOUD_URL", 1)
+
+marker = "$('cloudUser').value=localStorage.getItem(CLOUD_USER)||'';function add(t){"
+assert marker in s, 'panel initialization marker missing'
+insert = """$('cloudUser').value=localStorage.getItem(CLOUD_USER)||'';
+function syncVersion(gameVersion=''){const badge=$('versionSync'),pv=$('panelVersion');if(pv&&panelVersion)pv.textContent='v'+panelVersion;if(!badge)return;if(!panelVersion){badge.textContent='VERSÃO...';badge.className='syncBadge';return}if(!gameVersion){badge.textContent='PAINEL v'+panelVersion;badge.className='syncBadge';return}const ok=String(gameVersion)===String(panelVersion);badge.textContent=ok?'VERSÕES OK':'VERSÃO DIFERENTE';badge.className='syncBadge '+(ok?'ok':'err');if(!ok)add('⚠ Jogo v'+gameVersion+' ≠ Painel v'+panelVersion)}
+async function loadPanelVersion(){try{const r=await fetch('./version.json?ts='+Date.now(),{cache:'no-store'}),j=await r.json();panelVersion=String(j.version||'');syncVersion();if(panelVersion)document.title='Caos Admin v'+panelVersion}catch{syncVersion()}}
+function add(t){"""
+s = s.replace(marker, insert, 1)
+
+marker = "lastStateAt=Date.now();$('health').textContent"
+assert marker in s, 'telemetry marker missing'
+s = s.replace(marker, "lastStateAt=Date.now();syncVersion(d.version);$('health').textContent", 1)
+
+old = "if(r.action==='boss')return{command:'boss',mob:r.mob};"
+assert old in s, 'boss rule marker missing'
+s = s.replace(old, "if(r.action==='boss')return{command:'boss',mob:r.mob,amount:v};", 1)
+
+old = "const val=r.action==='spawn'?r.value*units:r.value;"
+assert old in s, 'gift multiplication marker missing'
+s = s.replace(old, "const val=(r.action==='spawn'||r.action==='boss')?r.value*units:r.value;", 1)
+
+marker = "function processGift(evt){"
+assert marker in s, 'processGift marker missing'
+support = """let liveLikeTotal=0,likeShieldProgress=0,likeShieldCooldownUntil=0;const mobCommentLastByUser=new Map();let mobCommentWindow=[];let MOB_USER_COOLDOWN=400,MAX_MOB_COMMENTS_10S=20;const MOB_PROFILE_KEY='chaos-mob-profile-v2';
+function setMobProfile(name,cooldownMs,limit,forceHordeOff=false){MOB_USER_COOLDOWN=Math.max(0,+cooldownMs||0);MAX_MOB_COMMENTS_10S=Math.max(1,+limit||20);try{localStorage.setItem(MOB_PROFILE_KEY,JSON.stringify({name,cooldownMs:MOB_USER_COOLDOWN,limit:MAX_MOB_COMMENTS_10S}))}catch{}if($('mobCooldownInput'))$('mobCooldownInput').value=String(MOB_USER_COOLDOWN/1000);if($('mobLimitInput'))$('mobLimitInput').value=MAX_MOB_COMMENTS_10S;if($('mobGuardStatus'))$('mobGuardStatus').textContent=(name||'PERSONALIZADO').toUpperCase();if(forceHordeOff)send({command:'horde',value:false},'🌊 Hordas automáticas OFF · proteção da live');add('Anti-lag: '+name+' · '+MOB_USER_COOLDOWN+'ms/usuário · '+MAX_MOB_COMMENTS_10S+' mobs/10s')}
+function loadMobProfile(){try{const p=JSON.parse(localStorage.getItem(MOB_PROFILE_KEY)||'null');if(p)setMobProfile(p.name||'personalizado',p.cooldownMs,p.limit,false);else setMobProfile('poucos',400,20,false)}catch{setMobProfile('poucos',400,20,false)}}
+function spawnCommentMob(user){const now=Date.now(),key=String(user||'viewer').toLowerCase();mobCommentWindow=mobCommentWindow.filter(t=>now-t<10000);if(MOB_USER_COOLDOWN&&now-(mobCommentLastByUser.get(key)||0)<MOB_USER_COOLDOWN){add('⏳ '+user+' · MOB em cooldown');return false}if(mobCommentWindow.length>=MAX_MOB_COMMENTS_10S){$('liveStatus').textContent='🛑 Anti-lag segurou novos MOBs';add('🛑 Limite global '+MAX_MOB_COMMENTS_10S+' mobs/10s');return false}mobCommentLastByUser.set(key,now);mobCommentWindow.push(now);return send({command:'spawn',amount:1,user},'👾 '+user+' entrou como MOB')}
+function processLike(evt){const count=Math.max(1,+evt?.count||1),user='@'+String(evt?.user||'viewer').replace(/^@/,'');liveLikeTotal+=count;if($('likeTotal'))$('likeTotal').textContent=liveLikeTotal;add('❤️ '+user+' +'+count+' curtidas');if(!$('liveEnabled').checked)return;const now=Date.now();if(now<likeShieldCooldownUntil)return;likeShieldProgress+=count;if($('likeProgress'))$('likeProgress').textContent=Math.min(likeShieldProgress,10)+'/10';if(likeShieldProgress>=10){send({command:'invincible',seconds:3,user},'🛡 '+user+' · 10 curtidas → escudo 3s');likeShieldProgress=0;likeShieldCooldownUntil=now+13000;if($('likeProgress'))$('likeProgress').textContent='0/10'}}
+function processGift(evt){"""
+s = s.replace(marker, support, 1)
+
+marker = "if(d.type==='gift'){processGift({gift:d.gift,count:d.count,user:'@'+(d.user||'viewer'),giftId:d.giftId});cloudState('🎁 @'+(d.user||'viewer')+' enviou '+d.count+'× '+d.gift,'ok')}if(d.type==='chat')"
+assert marker in s, 'cloud gift/chat marker missing'
+replacement = "if(d.type==='like'){processLike(d);cloudState('❤️ @'+(d.user||'viewer')+' +'+d.count+' curtidas','ok')}if(d.type==='gift'){processGift({gift:d.gift,count:d.count,user:'@'+(d.user||'viewer'),giftId:d.giftId});cloudState('🎁 @'+(d.user||'viewer')+' enviou '+d.count+'× '+d.gift,'ok')}if(d.type==='chat')"
+s = s.replace(marker, replacement, 1)
+
+old = "if(!$('liveEnabled').checked)return;const now=Date.now();for(const r of rules){"
+assert old in s, 'processComment marker missing'
+s = s.replace(old, "if(!$('liveEnabled').checked)return;if(norm(comment)==='mob'){spawnCommentMob(user);return}const now=Date.now();for(const r of rules){", 1)
+
+marker = "loadRules();cloudState('Cloud desconectado.');"
+assert marker in s, 'panel tail marker missing'
+bind = """loadRules();loadPanelVersion();loadMobProfile();
+$('mobPresetLow')?.addEventListener('click',()=>setMobProfile('poucos',400,20,false));
+$('mobPresetMedium')?.addEventListener('click',()=>setMobProfile('médio',1500,15,false));
+$('mobPresetHigh')?.addEventListener('click',()=>setMobProfile('muitos',3000,10,true));
+$('mobPresetMax')?.addEventListener('click',()=>setMobProfile('máximo',0,25,true));
+$('mobAdvancedSave')?.addEventListener('click',()=>setMobProfile('personalizado',Math.max(0,+$('mobCooldownInput').value||0)*1000,Math.max(1,+$('mobLimitInput').value||20),false));
+cloudState('Cloud desconectado.');"""
+s = s.replace(marker, bind, 1)
+write(p, s)
+
+# -----------------------------------------------------------------------------
+# PANEL CSS
+# -----------------------------------------------------------------------------
+p = 'src/styles/panel.css'
+s = read(p)
+s = s.replace('.topVersion{display:none}', '.topVersion{display:inline-flex}')
+s = s.replace('.topMeta{display:flex;align-items:center;gap:9px}', '.topMeta{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap}')
+extra = '''
+.syncBadge{display:inline-flex;align-items:center;justify-content:center;padding:6px 9px;border:1px solid #34405f;border-radius:999px;background:#0b1220;color:#93a0c2;font-size:8px;font-weight:950;white-space:nowrap}.syncBadge.ok{border-color:#276043;background:#0d1d17;color:#4ade80}.syncBadge.err{border-color:#733442;background:#281117;color:#fb7185}.chatGuard{margin:12px 0;padding:13px;border:1px solid #28324d;border-radius:16px;background:linear-gradient(145deg,#090f1c,#070b14)}.guardHead{display:flex;align-items:center;justify-content:space-between;gap:10px}.guardHead b{display:block;margin-top:3px;font-size:11px}.guardPresets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:9px}.guardPresets button,.guardAdvanced button{min-height:48px;border:1px solid #313b5b;border-radius:11px;color:#fff;font-size:9px;font-weight:900}.guardPresets small{display:block;margin-top:3px;color:#8a94b2;font-size:7px}.chatGuard details{margin-top:9px}.chatGuard summary{cursor:pointer;color:#8792b1;font-size:8px;font-weight:950}.guardAdvanced{display:grid;grid-template-columns:1fr 1fr auto;gap:7px;margin-top:8px}.guardAdvanced input{min-width:0;padding:10px;border:1px solid #303a58;border-radius:10px;background:#060a13;color:#fff}.guardAdvanced button{padding:0 13px;background:#171f34}.liveCounters{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}.liveCounters span{padding:7px 9px;border:1px solid #28324d;border-radius:10px;background:#080d18;color:#7f8aaa;font-size:8px;font-weight:850}.liveCounters b{color:#e8ebf7}.topVersion{border-color:#6b4ab2!important;color:#d8c9ff!important;background:#17102a!important}
+@media(max-width:620px){.topMeta{max-width:60%;gap:5px}.topVersion,.syncBadge{display:inline-flex!important;padding:5px 7px;font-size:7px}.openGame{font-size:8px}.guardPresets{grid-template-columns:repeat(2,1fr)}.guardAdvanced{grid-template-columns:1fr 1fr}.guardAdvanced button{grid-column:1/-1;min-height:42px}}
+'''
+if '.chatGuard{' not in s:
+    s += '\n' + extra
+write(p, s)
+
+# -----------------------------------------------------------------------------
+# PERMANENT VALIDATION
+# -----------------------------------------------------------------------------
+p = 'scripts/check-game.mjs'
+s = read(p)
+s = s.replace('src/game.js?v=01710', f'src/game.js?v={TAG}')
+s = s.replace('src/panel.js?v=01710', f'src/panel.js?v={TAG}')
+
+checks = '''
+if(panelHtml.includes('.topVersion{display:none}')) fail('versao do painel escondida no mobile');
+for(const id of ['panelVersion','versionSync','likeTotal','likeProgress','mobPresetLow','mobPresetMedium','mobPresetHigh','mobPresetMax','mobAdvancedSave']) if(!panelHtml.includes(`id="${id}"`)) fail('controle v0.17.11 ausente: '+id);
+if(!panel.includes("d.type==='like'")) fail('painel nao trata curtidas TikTok'); else ok('curtidas TikTok tratadas');
+if(!panel.includes("command:'boss',mob:r.mob,amount:v")) fail('quantidade de boss ignorada'); else ok('quantidade de boss enviada');
+if(!game.includes("const qty=Math.max(1,Math.min(20,+d.amount||1))")) fail('jogo nao aceita quantidade de boss'); else ok('quantidade de boss aplicada');
+if(!game.includes("if(running&&player.life<=0&&!deathState)")) fail('dano fatal admin sem morte'); else ok('dano fatal admin tratado');
+if(!panel.includes("norm(comment)==='mob'")) fail('anti-lag MOB ausente'); else ok('anti-lag MOB ativo');
+'''
+if 'curtidas TikTok tratadas' not in s:
+    s += '\n' + checks
+write(p, s)
+
+print('v0.17.11 patch prepared successfully')
