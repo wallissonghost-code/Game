@@ -1,6 +1,6 @@
 from pathlib import Path
 import re
-p=Path('game.js')
+p=Path('src/game.js')
 s=p.read_text()
 
 s=s.replace("const VERSION='0.16.9'","const VERSION='0.17.0'",1)
@@ -45,7 +45,7 @@ new_player="""  if(playerV2Ready){
       down:{x:0,y:-1,maxW:32,maxH:46},dr:{x:9,y:-5,maxW:54,maxH:34},right:{x:11,y:-4,maxW:58,maxH:31},ur:{x:8,y:-8,maxW:51,maxH:34},
       up:{x:0,y:-13,maxW:29,maxH:48},ul:{x:-8,y:-8,maxW:51,maxH:34},left:{x:-11,y:-4,maxW:58,maxH:31},dl:{x:-9,y:-5,maxW:54,maxH:34}
     };
-    const drawWeapon=()=>{if(!autoFire||!weaponV2Ready)return;const wa=playerWeaponFrames[dir]?.length?playerWeaponFrames[dir]:playerWeaponFrames.down,wi=wa[frame%wa.length]||wa[0];if(!wi)return;const q=weaponLayout[dir]||weaponLayout.down,ratio=(wi.naturalWidth&&wi.naturalHeight)?wi.naturalWidth/img.naturalHeight:1;let ww=q.maxW,wh=ww/Math.max(.05,ratio);if(wh>q.maxH){wh=q.maxH;ww=wh*ratio}ctx.save();ctx.imageSmoothingEnabled=true;ctx.drawImage(wi,q.x-ww/2,q.y-wh/2+bob,ww,wh);ctx.restore()};
+    const drawWeapon=()=>{if(!autoFire||!weaponV2Ready)return;const wa=playerWeaponFrames[dir]?.length?playerWeaponFrames[dir]:playerWeaponFrames.down,wi=wa[frame%wa.length]||wa[0];if(!wi)return;const q=weaponLayout[dir]||weaponLayout.down,ratio=(wi.naturalWidth&&wi.naturalHeight)?wi.naturalWidth/wi.naturalHeight:1;let ww=q.maxW,wh=ww/Math.max(.05,ratio);if(wh>q.maxH){wh=q.maxH;ww=wh*ratio}ctx.save();ctx.imageSmoothingEnabled=true;ctx.drawImage(wi,q.x-ww/2,q.y-wh/2+bob,ww,wh);ctx.restore()};
     const weaponBehind=autoFire&&['up','ur','ul'].includes(dir);
     if(weaponBehind)drawWeapon();
     ctx.save();ctx.imageSmoothingEnabled=true;ctx.drawImage(img,-w/2,bottom-h,w,h);ctx.restore();
@@ -56,11 +56,7 @@ new_player="""  if(playerV2Ready){
 s,n=old_player.subn(new_player,s,count=1)
 if n!=1: raise SystemExit(f'player block replace {n}')
 
-# Remove legacy ammo sprite rendering branch: projectiles remain lightweight procedural renderer.
 s=re.sub(r"if\(b\.ammo&&ammoReady&&ammoFrames\.length\)\{.*?ctx\.restore\(\);continue\}","",s,count=1,flags=re.S)
-
-# Fix accidental ratio typo in the newly inserted weapon renderer if present.
-s=s.replace("wi.naturalWidth/img.naturalHeight","wi.naturalWidth/wi.naturalHeight")
 
 p.write_text(s)
 print('patched',p,'version 0.17.0')
