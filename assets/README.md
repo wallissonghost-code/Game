@@ -20,3 +20,11 @@ Tomando o Colosso como referência de 100% (~149 px):
 - Colosso: ~149 px (100%)
 
 Essa régua serve como base para as próximas classes de mobs. A escala visual não altera hitbox, vida, dano ou velocidade.
+
+## Variantes raras de Boss · v0.17.18
+Bosses podem nascer em três variantes usando a mesma skin-base, com aura e identificação próprias:
+- Normal: 93% natural · 100% HP/dano/velocidade.
+- Elite: 6% natural · 175% HP · 125% dano · 105% velocidade · 175% XP.
+- Corrompido: 1% natural · 250% HP · 150% dano · 110% velocidade · 250% XP.
+
+O painel Admin permite forçar Normal, Elite ou Corrompido para teste. Sem força manual, vale a chance natural acima.
