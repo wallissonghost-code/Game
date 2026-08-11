@@ -88,3 +88,12 @@ if(!game.includes("bossVariantAura")) fail('aura de Boss raro ausente'); else ok
 if(!game.includes("· CORROMPIDO")||!game.includes("· ELITE")) fail('rotulo visual de Boss raro ausente'); else ok('rotulo Elite/Corrompido no Boss');
 if(!panelHtml.includes('id="bossTier"')) fail('seletor de tier do Boss ausente'); else ok('Admin controla tier do Boss');
 if(!panel.includes("b.dataset.cmd==='boss'?($('bossTier')?.value||null):undefined")) fail('painel nao envia tier de Boss'); else ok('painel envia tier de Boss');
+
+
+// v0.17.19 · Field map runtime
+const mapRuntime=read('src/map-runtime.js');
+if(!gameHtml.includes('src/map-runtime.js?v='+cacheTag)) fail('map-runtime sem cache sincronizado'); else ok('map-runtime cache '+cacheTag);
+if(!game.includes('window.CaosMap.init')) fail('game nao inicializa mapa'); else ok('mapa inicializado');
+if(!game.includes('window.CaosMap.resolveCollisions')) fail('colisao do mapa nao ligada'); else ok('colisao do mapa ligada');
+if(!mapRuntime.includes("name:'Campo / Pântano'")) fail('runtime Campo/Pantano ausente'); else ok('runtime Campo/Pantano');
+for(const f of ['assets/Map/field/tiles/dirt/dirt_01.png','assets/Map/field/tiles/moss/moss_01.png','assets/Map/field/tiles/swamp/swamp_01.png','assets/Map/field/tiles/water/water_01.png','assets/Map/field/obstacles/spike_fence_01.png','assets/Map/field/obstacles/stone_ruin_01.png','assets/Map/wasteland/obstacles/wrecked_car_01.png','assets/Map/wasteland/obstacles/barricade_01.png']) fs.existsSync(f)?ok('map asset '+f):fail('map asset ausente '+f);

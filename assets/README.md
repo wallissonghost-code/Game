@@ -4,6 +4,7 @@
 - [Mobs](./mobs/) — skins dos inimigos comuns.
 - [Player](./player/) — personagem principal.
 - [Weapons](./weapons/) — armas, cano, munição e efeitos relacionados.
+- [Map](./Map/) — tiles, obstáculos e cenários dos biomas.
 
 Cada categoria deve receber novos arquivos somente dentro da própria pasta.
 
@@ -28,3 +29,12 @@ Bosses podem nascer em três variantes usando a mesma skin-base, com aura e iden
 - Corrompido: 1% natural · 250% HP · 150% dano · 110% velocidade · 250% XP.
 
 O painel Admin permite forçar Normal, Elite ou Corrompido para teste. Sem força manual, vale a chance natural acima.
+
+
+## Mapa Campo / Pântano · v0.17.19
+- Chão procedural determinístico usando tiles de terra, musgo, pântano e água.
+- Objetos do Field Pack distribuídos por setores; cerca, ruína, totem e gaiola possuem colisão.
+- Ponte e fosso ritual são atravessáveis nesta primeira versão.
+- Carro destruído, barricada, árvore seca e pedras do pack extra entram como obstáculos raros, em versões otimizadas para mobile.
+- Decals extras são apenas visuais e não possuem colisão.
+- Projéteis continuam atravessando obstáculos nesta etapa.

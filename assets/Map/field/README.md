@@ -8,11 +8,11 @@ Pack normalizado a partir de `Campo.zip` e `Objetos do campo.zip`.
 - `manifest.json`: categorias e sugestão de colisão.
 
 ## Pastas
-- `assets/map/field/tiles/dirt`
-- `assets/map/field/tiles/moss`
-- `assets/map/field/tiles/swamp`
-- `assets/map/field/tiles/water`
-- `assets/map/field/tiles/transitions`
-- `assets/map/field/obstacles`
+- `assets/Map/field/tiles/dirt`
+- `assets/Map/field/tiles/moss`
+- `assets/Map/field/tiles/swamp`
+- `assets/Map/field/tiles/water`
+- `assets/Map/field/tiles/transitions`
+- `assets/Map/field/obstacles`
 
 **Importante:** 96×128 é o padrão nativo reconstruído destes assets. Forçar 128×128 deformaria os desenhos. A engine pode escalar a célula visualmente depois, mantendo a proporção.
