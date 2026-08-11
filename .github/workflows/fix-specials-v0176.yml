@@ -1,0 +1,77 @@
+name: Fix specials v0.17.6
+on:
+  push:
+    paths: ['.github/workflows/fix-specials-v0176.yml']
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch game and admin panel
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/game.js'); s=p.read_text()
+          s=s.replace("const VERSION='0.17.5'","const VERSION='0.17.6'")
+          # Special spawn chances: corrupted becomes possible much earlier.
+          old="function enemyTier(){const r=Math.random();if(level>=30&&r<.10)return 2;if(level>=15&&r<(level>=30?.32:.18))return 1;return 0}function makeEnemy(type,near=false){if(enemies.length>=MAX_ENEMIES)return;const c=types[type];if(!c)return;const a=Math.random()*Math.PI*2,dist=near?180+Math.random()*220:Math.max(W,H)*.7+Math.random()*260,tier=c.boss?3:enemyTier(),hpMult=tier===2?3.5:tier===1?2.2:1,dmgMult=tier===2?1.9:tier===1?1.45:1,xpMult=tier===2?4:tier===1?2.5:1;"
+          new="function enemyTier(){const r=Math.random(),corrupt=level>=30?.12:level>=20?.08:level>=10?.035:0,elite=level>=30?.24:level>=15?.18:level>=5?.10:0;if(r<corrupt)return 2;if(r<corrupt+elite)return 1;return 0}function makeEnemy(type,near=false,forcedTier=null){if(enemies.length>=MAX_ENEMIES)return;const c=types[type];if(!c)return;const a=Math.random()*Math.PI*2,dist=near?180+Math.random()*220:Math.max(W,H)*.7+Math.random()*260,tier=c.boss?3:(forcedTier===1||forcedTier===2?forcedTier:enemyTier()),hpMult=tier===2?5:tier===1?3:1,dmgMult=tier===2?2.2:tier===1?1.7:1,xpMult=tier===2?6:tier===1?3.5:1;"
+          if old not in s: raise SystemExit('enemyTier/makeEnemy block not found')
+          s=s.replace(old,new)
+          s=s.replace("function spawn(type){if(type)return makeEnemy(type,true);const pool=['wraith','reaper','infected','crawler','eye','brute'];makeEnemy(pool[Math.floor(Math.random()*pool.length)])}","function spawn(type,forcedTier=null){if(type)return makeEnemy(type,true,forcedTier);const pool=['wraith','reaper','infected','crawler','eye','brute'];makeEnemy(pool[Math.floor(Math.random()*pool.length)],false,forcedTier)}")
+          # Colossus: remove the old forced inversion.
+          oldswap="let dir=e.facing||'down';if(isBoss&&e.type==='colossus'){dir=dir==='up'?'down':dir==='down'?'up':dir==='left'?'right':dir==='right'?'left':dir}const arr=pack[dir]||pack.down||[];"
+          if oldswap not in s: raise SystemExit('colossus swap not found')
+          s=s.replace(oldswap,"let dir=e.facing||'down';const arr=pack[dir]||pack.down||[];")
+          # Aura must render over existing terrain but below the body sprite.
+          s=s.replace("ctx.globalCompositeOperation='destination-over';for(const [color,blur] of sets)","ctx.globalCompositeOperation='source-over';for(const [color,blur] of sets)")
+          s=s.replace("ctx.globalAlpha=.48*pulse;ctx.shadowColor=color;","ctx.globalAlpha=.40*pulse;ctx.shadowColor=color;")
+          # Narrow side/diagonal silhouettes while keeping height constant.
+          olddim="const h=isBoss?e.r*3.55:62,ratio=(img.naturalWidth&&img.naturalHeight)?img.naturalWidth/img.naturalHeight:1,w=h*ratio;if(!isBoss)tierAura(e,img,w,h,false);"
+          newdim="const h=isBoss?e.r*3.55:62,ratio=(img.naturalWidth&&img.naturalHeight)?img.naturalWidth/img.naturalHeight:1,sideScale=!isBoss?(dir==='left'||dir==='right'?.82:(dir==='ul'||dir==='ur'||dir==='dl'||dir==='dr'?.90:1)):1,w=h*ratio*sideScale;if(!isBoss)tierAura(e,img,w,h,false);"
+          if olddim not in s: raise SystemExit('ogre dimensions block not found')
+          s=s.replace(olddim,newdim)
+          # Admin spawn can force a tier.
+          oldcmd="if(c==='spawn')for(let i=0;i<Math.min(100,+d.amount||25);i++){const before=enemies.length;spawn(d.mob||null);if(enemies.length>before&&d.user)enemies[enemies.length-1].username=String(d.user).replace(/^@/,'')}"
+          newcmd="if(c==='spawn')for(let i=0;i<Math.min(100,+d.amount||25);i++){const before=enemies.length,tier=d.tier===2||d.tier==='2'||d.tier==='corrupted'?2:d.tier===1||d.tier==='1'||d.tier==='elite'?1:null;spawn(d.mob||null,tier);if(enemies.length>before&&d.user)enemies[enemies.length-1].username=String(d.user).replace(/^@/,'')}"
+          if oldcmd not in s: raise SystemExit('spawn command block not found')
+          s=s.replace(oldcmd,newcmd)
+          p.write_text(s)
+
+          p=Path('painel.html'); h=p.read_text()
+          h=h.replace('Caos Admin v0.17.5','Caos Admin v0.17.6').replace('>v0.17.5<','>v0.17.6<').replace('index.html?v=0175','index.html?v=0176').replace('src/panel.js?v=0175','src/panel.js?v=0176')
+          old='<div class="tools"><select id="mobType">'
+          new='<div class="tools"><select id="mobTier"><option value="">Normal / aleatório</option><option value="1">🟣 Forçar ELITE</option><option value="2">🔴⚫ Forçar CORROMPIDO</option></select><select id="mobType">'
+          if old not in h: raise SystemExit('mob tools start not found')
+          h=h.replace(old,new,1)
+          h=h.replace('<button id="spawn" class="btn" style="width:100%;margin-top:9px">ADICIONAR MOBS</button>','<button id="spawn" class="btn" style="width:100%;margin-top:9px">ADICIONAR MOBS</button><div class="grid" style="margin-top:9px"><button id="spawnElite" class="purple">🟣 SPAWN ELITE</button><button id="spawnCorrupted" class="danger">⚫🔴 SPAWN CORROMPIDO</button></div>')
+          p.write_text(h)
+
+          p=Path('src/panel.js'); j=p.read_text()
+          old="$ ('spawn')" # unused marker
+          target="$('spawn').onclick=()=>send({command:'spawn',amount:+$('mobAmount').value||25,mob:$('mobType').value||null},'Spawn de '+($('mobAmount').value||25)+' mobs');"
+          repl="$('spawn').onclick=()=>send({command:'spawn',amount:+$('mobAmount').value||25,mob:$('mobType').value||null,tier:$('mobTier')?.value||null},'Spawn de '+($('mobAmount').value||25)+' mobs');if($('spawnElite'))$('spawnElite').onclick=()=>send({command:'spawn',amount:1,mob:$('mobType').value||null,tier:1},'🟣 Spawn Elite');if($('spawnCorrupted'))$('spawnCorrupted').onclick=()=>send({command:'spawn',amount:1,mob:$('mobType').value||null,tier:2},'⚫🔴 Spawn Corrompido');"
+          if target not in j: raise SystemExit('panel spawn handler not found')
+          j=j.replace(target,repl)
+          p.write_text(j)
+
+          p=Path('version.json'); p.write_text('{\n  "version": "0.17.6",\n  "build": "specials-aura-boss-tier-fix"\n}\n')
+          p=Path('index.html'); x=p.read_text().replace('v0.17.5','v0.17.6').replace('game.js?v=0175','game.js?v=0176'); p.write_text(x)
+          PY
+      - name: Validate
+        run: |
+          node --check src/game.js
+          node --check src/panel.js
+          grep -q "VERSION='0.17.6'" src/game.js
+          grep -q "Forçar CORROMPIDO" painel.html
+          grep -q "source-over" src/game.js
+          grep -q "forcedTier" src/game.js
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/game.js src/panel.js painel.html index.html version.json
+          git commit -m 'fix: bosses special tiers auras and ogre proportions v0.17.6'
+          git push
