@@ -74,4 +74,8 @@ if(!game.includes("loadDirectPngSequence('./assets/mobs/Ogro Elite',32,ASSET_TAG
 if(!game.includes("e.tier===1&&eliteOgreReady?eliteOgreFrames:ogreFrames")) fail('Elite nao usa skin exclusiva'); else ok('tier Elite usa skin Ogro Elite');
 
 // v0.17.16 · Elite visual scale
-if(!game.includes("const h=isBoss?e.r*3.55:(e.tier===1?67:62),ratio=")) fail('escala visual do Elite divergente'); else ok('Elite visual 67px, normal 62px');
+if(game.includes("e.tier===1?67:62")) fail('escala visual legada 67px ainda ativa'); else ok('escala visual legada removida');
+
+// v0.17.17 · escala visual dos mobs
+if(!game.includes("MOB_VISUAL_HEIGHT={normal:62,elite:86,bossScale:3.55}")) fail('regua visual dos mobs ausente'); else ok('regua visual normal 62 / elite 86 / boss x3.55');
+if(!game.includes("e.tier===1?MOB_VISUAL_HEIGHT.elite:MOB_VISUAL_HEIGHT.normal")) fail('Elite nao usa regua visual'); else ok('Elite usa escala visual dedicada');
