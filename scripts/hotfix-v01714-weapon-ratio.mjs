@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+const p='src/game.js';
+let s=fs.readFileSync(p,'utf8');
+const old="const q=weaponLayout[dir]||weaponLayout.down,ratio=(wi.naturalWidth&&wi.naturalHeight)?wi.naturalWidth/wi.naturalHeight:1;let ww=q.maxW,wh=ww/Math.max(.05,ratio);";
+const next="const q=weaponLayout[dir]||weaponLayout.down,iw=wi.naturalWidth||wi.width||1,ih=wi.naturalHeight||wi.height||1,ratio=iw/Math.max(1,ih);let ww=q.maxW,wh=ww/Math.max(.05,ratio);";
+if(!s.includes(old)) throw new Error('weapon ratio trecho não encontrado');
+s=s.replace(old,next);
+fs.writeFileSync(p,s);
+let c=fs.readFileSync('scripts/check-game.mjs','utf8');
+if(!c.includes('weapon canvas ratio')) c+="\nif(!game.includes('iw=wi.naturalWidth||wi.width||1')) fail('weapon canvas ratio ausente'); else ok('weapon canvas ratio preservado');\n";
+fs.writeFileSync('scripts/check-game.mjs',c);
+console.log('weapon ratio hotfix aplicado');
