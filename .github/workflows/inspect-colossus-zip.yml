@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install Pillow
+        run: python3 -m pip install --user pillow
       - name: Inspect full ZIP
         run: |
           rm -rf /tmp/colossus debug/colossus-inspect
@@ -16,7 +18,7 @@ jobs:
           unzip -q assets/bosses/Ogroboss1.zip -d /tmp/colossus
           python3 - <<'PY'
           from pathlib import Path
-          from PIL import Image, ImageOps, ImageDraw
+          from PIL import Image, ImageDraw
           root=Path('/tmp/colossus')
           files=sorted([p for p in root.rglob('*') if p.suffix.lower()=='.png'], key=lambda p:str(p).lower())
           out=Path('debug/colossus-inspect')
