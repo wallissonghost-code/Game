@@ -1,0 +1,80 @@
+name: Fix Colossus and Admin telemetry v0.17.8
+on:
+  push:
+    paths: ['.github/workflows/fix-colossus-panel-v0178.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Patch game and panel
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          # GAME
+          p=Path('src/game.js'); s=p.read_text()
+          s=s.replace("const VERSION='0.17.7'","const VERSION='0.17.8'",1)
+          old="if(path.includes('Ogroboss1.zip')){target.down=ordered.slice(0,4);target.up=ordered.slice(4,8);target.left=ordered.slice(8,12);target.right=ordered.slice(12,16)}"
+          new="if(path.includes('Ogroboss1.zip')){target.up=ordered.slice(0,4);target.down=ordered.slice(4,8);target.left=ordered.slice(8,12);target.right=ordered.slice(12,16)}"
+          if old not in s: raise SystemExit('Colossus mapping pattern not found')
+          s=s.replace(old,new,1)
+          old_state="function state(){return{type:'state',version:VERSION,running,paused,health:Math.round(player.life*10)/10,maxHealth:player.maxLife,score,mobs:enemies.length,level,xp:Math.floor(xp),xpNeed,autoMode,hordeEnabled,autofire:autoFire,wave:waveCount,fps:Math.max(0,Math.round(window.caosCurrentFps||0)),skillLv:{...skillLv},room,ts:Date.now()}}"
+          new_state="function state(){const now=performance.now(),alive=enemies.filter(e=>!e.dead),elite=alive.filter(e=>e.tier===1).length,corrupted=alive.filter(e=>e.tier===2).length,bosses=alive.filter(e=>types[e.type]?.boss).length;return{type:'state',version:VERSION,running,paused,health:Math.round(player.life*10)/10,maxHealth:player.maxLife,score,mobs:alive.length,kills:killCount,elapsedMs:runStartedAt?Math.max(0,now-runStartedAt):0,elite,corrupted,bosses,level,xp:Math.floor(xp),xpNeed,autoMode,hordeEnabled,autofire:autoFire,wave:waveCount,fps:Math.max(0,Math.round(window.caosCurrentFps||0)),perfMode,skillLv:{...skillLv},room,ts:Date.now()}}"
+          if old_state not in s: raise SystemExit('state() pattern not found')
+          s=s.replace(old_state,new_state,1)
+          p.write_text(s)
+
+          # INDEX
+          p=Path('index.html'); s=p.read_text()
+          s=s.replace('<title>Caos Live v0.17.6</title>','<title>Caos Live v0.17.8</title>')
+          s=s.replace('v0.17.7 · COLOSSO CORRIGIDO','v0.17.8 · DIREÇÕES + TELEMETRIA')
+          s=s.replace('<span class="startVersion">v0.17.6</span>','<span class="startVersion">v0.17.8</span>')
+          s=s.replace('src/game.js?v=0177','src/game.js?v=0178')
+          p.write_text(s)
+
+          # VERSION
+          Path('version.json').write_text('{\n  "version": "0.17.8",\n  "build": "colossus-updown-admin-telemetry"\n}\n')
+
+          # PANEL HTML
+          p=Path('painel.html'); s=p.read_text()
+          s=s.replace('<title>Caos Admin v0.17.6</title>','<title>Caos Admin v0.17.8</title>')
+          s=s.replace('<span class="topVersion">v0.17.6</span>','<span class="topVersion">v0.17.8</span>')
+          s=s.replace('href="index.html?v=0176"','href="index.html?v=0178"')
+          old_cards='<div class="state"><div><span>VIDA</span><b id="health">—</b></div><div><span>LEVEL</span><b id="level">—</b></div><div><span>XP</span><b id="xp">—</b></div><div><span>PONTOS</span><b id="score">—</b></div><div><span>MOBS</span><b id="mobs">—</b></div><div><span>ESTADO</span><b id="gameState">—</b></div><div><span>AUTO</span><b id="autoState">OFF</b></div><div><span>FPS</span><b id="fpsState">—</b></div></div>'
+          new_cards='<div class="state"><div><span>VIDA</span><b id="health">—</b></div><div><span>LEVEL</span><b id="level">—</b></div><div><span>XP</span><b id="xp">—</b></div><div><span>FPS</span><b id="fpsState">—</b></div><div><span>MOBS VIVOS</span><b id="mobs">—</b></div><div><span>ABATES</span><b id="kills">—</b></div><div><span>TEMPO</span><b id="elapsed">00:00</b></div><div><span>HORDA</span><b id="wave">—</b></div><div><span>PONTOS</span><b id="score">—</b></div><div><span>ELITES</span><b id="eliteCount">—</b></div><div><span>CORROMPIDOS</span><b id="corruptedCount">—</b></div><div><span>BOSSES</span><b id="bossCount">—</b></div><div><span>ESTADO</span><b id="gameState">—</b></div><div><span>AUTO</span><b id="autoState">OFF</b></div><div><span>PERFORMANCE</span><b id="perfState">—</b></div></div>'
+          if old_cards not in s: raise SystemExit('panel state cards pattern not found')
+          s=s.replace(old_cards,new_cards,1)
+          s=s.replace('src/panel.js?v=0176','src/panel.js?v=0178')
+          p.write_text(s)
+
+          # PANEL JS
+          p=Path('src/panel.js'); s=p.read_text()
+          old="$('score').textContent=d.score;$('mobs').textContent=d.mobs;$('gameState').textContent=d.paused?'PAUSADO':d.running?'RODANDO':'PARADO';$('autoState').textContent=d.autoMode?'ON':'OFF';"
+          new="$('score').textContent=d.score;$('mobs').textContent=d.mobs;if($('kills'))$('kills').textContent=d.kills??0;if($('wave'))$('wave').textContent=d.wave??0;if($('eliteCount'))$('eliteCount').textContent=d.elite??0;if($('corruptedCount'))$('corruptedCount').textContent=d.corrupted??0;if($('bossCount'))$('bossCount').textContent=d.bosses??0;if($('elapsed')){const sec=Math.max(0,Math.floor((+d.elapsedMs||0)/1000)),mm=Math.floor(sec/60),ss=sec%60;$('elapsed').textContent=String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0')}if($('perfState'))$('perfState').textContent=(+d.perfMode||0)===2?'ECONÔMICO':(+d.perfMode||0)===1?'BALANCEADO':'QUALIDADE';$('gameState').textContent=d.paused?'PAUSADO':d.running?'RODANDO':'PARADO';$('autoState').textContent=d.autoMode?'ON':'OFF';"
+          if old not in s: raise SystemExit('panel data handler pattern not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Validate
+        run: |
+          node --check src/game.js
+          node --check src/panel.js
+          grep -q "const VERSION='0.17.8'" src/game.js
+          grep -q "target.up=ordered.slice(0,4);target.down=ordered.slice(4,8);target.left=ordered.slice(8,12);target.right=ordered.slice(12,16)" src/game.js
+          grep -q 'id="kills"' painel.html
+          grep -q 'id="elapsed"' painel.html
+          grep -q 'id="corruptedCount"' painel.html
+          grep -q 'src/game.js?v=0178' index.html
+      - name: Commit changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/game.js src/panel.js index.html painel.html version.json
+          git diff --cached --quiet || git commit -m 'fix: correct Colossus up-down and restore full admin telemetry'
+          git push
