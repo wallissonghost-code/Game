@@ -1,0 +1,34 @@
+name: Caos Live v0.17.13 Mob Folders
+on:
+  push:
+    paths:
+      - '.github/workflows/restructure-mobs-v01713.yml'
+permissions:
+  contents: write
+jobs:
+  restructure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Reorganize mob assets
+        run: node scripts/restructure-mobs-v01713.mjs
+      - name: Validate
+        run: |
+          node --check src/game.js
+          node --check src/panel.js
+          node scripts/check-game.mjs
+      - name: Commit migration
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m 'refactor: organize mobs into Ogro and Ogro Elite v0.17.13'
+          git push
