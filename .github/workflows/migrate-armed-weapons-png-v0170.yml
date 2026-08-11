@@ -14,16 +14,18 @@ jobs:
         with:
           python-version: '3.12'
       - run: python3 scripts/migrate-armed-weapons-png-v0170.py
-      - run: node --check game.js
+      - run: node --check src/game.js
       - run: |
           test $(find assets/player-armed -maxdepth 1 -name 'Posearma*.png' | wc -l) -eq 32
           test $(find assets/weapons -maxdepth 1 -name 'frame_*.png' | wc -l) -eq 32
-          grep -q "VERSION='0.17.0'" game.js
-          grep -q "player-armed" game.js
-          grep -q "WEAPON PNG READY 8DIR" game.js
+          grep -q "VERSION='0.17.0'" src/game.js
+          grep -q "player-armed" src/game.js
+          grep -q "WEAPON PNG READY 8DIR" src/game.js
+          ! grep -q "Arma3.zip" src/game.js
+          ! grep -q "Municao.zip" src/game.js
       - run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add game.js
+          git add src/game.js
           git commit -m 'feat: migrate armed player and weapon assets to direct PNG v0.17.0'
           git push
