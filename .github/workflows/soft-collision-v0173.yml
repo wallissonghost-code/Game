@@ -1,0 +1,27 @@
+name: Soft collision v0.17.3
+on:
+  push:
+    paths:
+      - '.github/workflows/soft-collision-v0173.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 scripts/soft-collision-v0173.py
+      - run: node --check src/game.js
+      - run: |
+          grep -q "VERSION='0.17.3'" src/game.js
+          grep -q "resolvePlayerMobCollisions" src/game.js
+          grep -q "src/game.js?v=0173" index.html
+      - run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/game.js index.html version.json
+          git commit -m 'feat: soft player mob collision and anti-trap v0.17.3'
+          git push
