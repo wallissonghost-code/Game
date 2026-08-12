@@ -101,3 +101,12 @@ if(fs.existsSync('assets/CAOS_LIVE_WORLDS_FINAL_CORRIGIDO.zip')) fail('ZIP de up
 const expectedWorlds=['cave-mines','dense-forest','desert-canyon','ruined-city','shadow-corruption','snow-frost'];
 const actualWorlds=fs.readdirSync('assets/Map',{withFileTypes:true}).filter(x=>x.isDirectory()).map(x=>x.name).sort();
 if(JSON.stringify(actualWorlds)!==JSON.stringify(expectedWorlds)) fail('pastas de mundos divergentes: '+actualWorlds.join(',')); else ok('6 mundos novos organizados');
+
+
+// v0.17.21 · Map Lab
+for(const f of ['map-lab.html','src/map-lab.js']) fs.existsSync(f)?ok('map lab '+f):fail('map lab ausente '+f);
+const labHtml=read('map-lab.html'),labJs=read('src/map-lab.js');
+if(!labHtml.includes('src/map-lab.js?v='+cacheTag)) fail('map lab cache dessincronizado'); else ok('map lab cache '+cacheTag);
+if(!labJs.includes('function maskFor')) fail('map lab sem autotile mask'); else ok('map lab autotile mask');
+if(!labJs.includes('TYPE.bridge')) fail('map lab sem ponte contextual'); else ok('map lab ponte contextual');
+if(!labJs.includes('assets/Map/dense-forest/tiles/')) fail('map lab nao usa assets reais'); else ok('map lab usa Dense Forest real');

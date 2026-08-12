@@ -37,3 +37,10 @@ O painel Admin permite forçar Normal, Elite ou Corrompido para teste. Sem forç
 - Mundo ativo para teste: **Dense Forest**.
 - O runtime recorta as bordas escuras dos tiles e usa sobreposição de 6 px para reduzir emendas visuais.
 - Decals não possuem colisão; obstáculos sólidos selecionados possuem colisão leve para player e mobs.
+
+
+## Map Lab · v0.17.21
+- Laboratório visual separado do jogo em `map-lab.html`.
+- Gera macro mapa de floresta, clareiras, água, trilhas e pontes por seed.
+- Calcula máscaras N/E/S/W (0–15) para diagnosticar as peças de autotile necessárias.
+- Mostra os 10 tiles e 21 obstáculos reais do Dense Forest sem alterar o mapa ativo do jogo.
