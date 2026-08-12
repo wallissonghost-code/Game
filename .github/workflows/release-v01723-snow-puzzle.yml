@@ -77,10 +77,27 @@ jobs:
           Path('version.json').write_text('{\n  "version": "0.17.23",\n  "build": "snow-frost-prebuilt-chunk-puzzle"\n}\n')
           PY
 
+      - name: Update validation contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/check-game.mjs')
+          s=p.read_text()
+          s=s.replace("if(!labJs.includes('assets/Map/snow-frost/tiles/')) fail('map lab nao usa assets Snow Frost reais'); else ok('map lab usa Snow Frost real');", "if(!labJs.includes('assets/Map/snow-frost/manifest.json')) fail('map lab nao usa manifest Snow Frost Puzzle'); else ok('map lab usa Snow Frost Puzzle real');")
+          marker='// v0.17.22 · Ice-first Map Lab'
+          if marker not in s:
+              raise SystemExit('marcador v0.17.22 nao encontrado no validador')
+          s=s.split(marker)[0]+'''// v0.17.23 · Snow Frost prebuilt chunk puzzle\nconst snowPuzzle=JSON.parse(read('assets/Map/snow-frost/manifest.json'));\nif(!labHtml.includes('Snow Frost · chunks 512×512')) fail('Map Lab sem modo chunks Snow Frost'); else ok('Map Lab em chunks Snow Frost');\nif(!labJs.includes('chooseVariant')) fail('Map Lab sem variacao de chunks'); else ok('variacoes de chunks ativas');\nif(!labJs.includes('validatePuzzle')) fail('Map Lab sem validacao de encaixes'); else ok('validacao N/E/S/W ativa');\nif(snowPuzzle.formatVersion!==3) fail('manifest Snow Frost Puzzle fora do formato 3'); else ok('manifest Snow Frost formato 3');\nif(!Array.isArray(snowPuzzle.chunks)||snowPuzzle.chunks.length!==32) fail('Snow Frost Puzzle precisa ter 32 chunks'); else ok('32 chunks Snow Frost');\nfor(let mask=0;mask<16;mask++){const rows=snowPuzzle.chunks.filter(x=>x.mask===mask);if(rows.length!==2) fail('mask '+mask+' sem 2 variacoes')}\nfor(const f of ['assets/Map/snow-frost/chunks/mask_00_closed_v01.png','assets/Map/snow-frost/chunks/mask_05_straight_ns_v02.png','assets/Map/snow-frost/chunks/mask_10_straight_ew_v02.png','assets/Map/snow-frost/chunks/mask_15_cross_v02.png']) fs.existsSync(f)?ok('snow puzzle '+f):fail('snow puzzle ausente '+f);\nif(fs.existsSync('CAOS_LIVE_SNOW_FROST_PUZZLE_FINAL.zip')) fail('ZIP Snow Frost ainda na raiz'); else ok('ZIP Snow Frost extraido e removido');\n'''
+          p.write_text(s)
+          PY
+
       - name: Validate JavaScript
         run: |
           node --check src/map-lab.js
           node --check src/game.js
+          node --check scripts/check-game.mjs
 
       - name: Validate project
         run: npm run check
