@@ -144,3 +144,9 @@ if(!gameHtml.includes('id="duoInviteBtn"')) fail('atalho P2 ausente no jogo'); e
 if(!mapRuntime.includes('cfg.extraPlayers?.()')) fail('colisao de players extras ausente'); else ok('P2 usa colisoes do mapa');
 if(!duoJs.includes("peer.connect('chaos-live-'+room.toLowerCase()")) fail('P2 nao usa mesma sala PeerJS'); else ok('P2 usa mesmo codigo da sala');
 if(process.exitCode) process.exit(process.exitCode);
+
+// v0.17.26 · duo aggro
+if(!game.includes('function duoEnemyTarget(e)')) fail('aggro nearest-player ausente'); else ok('aggro escolhe player mais proximo');
+if(!game.includes("toast('P2 CAIU · REVIVE 5s')")) fail('queda/revive P2 ausente'); else ok('P2 recebe dano e revive');
+if(!game.includes('chaseP=duoEnemyTarget(e)')) fail('mobs nao perseguem P2'); else ok('mobs perseguem P1/P2');
+if(process.exitCode) process.exit(process.exitCode);
