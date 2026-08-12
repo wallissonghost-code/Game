@@ -20,6 +20,17 @@ jobs:
           node-version: '24'
       - name: Apply legacy ranking migration patch
         run: python3 scripts/release-v01734-migrate-local-rank.py
+      - name: Update validator for cooperative admin damage
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/check-game.mjs')
+          s=p.read_text()
+          old='if(!game.includes("if(running&&player.life<=0&&!deathState)")) fail(\'dano fatal admin sem morte\'); else ok(\'dano fatal admin tratado\');'
+          new='if(!game.includes("knockDownPlayer(\'p1\'")||!game.includes("knockDownPlayer(\'p2\'")) fail(\'dano fatal admin sem down cooperativo\'); else ok(\'dano fatal admin tratado em P1/P2\');'
+          if old in s: s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
       - name: Validate JavaScript
         run: |
           node --check src/firebase-ranking.js
