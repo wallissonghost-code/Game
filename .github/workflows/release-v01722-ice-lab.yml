@@ -1,0 +1,34 @@
+name: Caos Live v0.17.22 Snow Frost Map Lab
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/release-v01722-ice-lab.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Apply Snow Frost Map Lab release
+        run: node scripts/release-v01722-ice-lab.mjs
+      - name: Validate Map Lab JavaScript
+        run: node --check src/map-lab.js
+      - name: Validate project
+        run: npm run check
+      - name: Commit release
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add map-lab.html src/map-lab.js src/game.js index.html painel.html painel-live.html version.json scripts/check-game.mjs
+          git commit -m "feat: Snow Frost first in Map Lab v0.17.22" || exit 0
+          git push
