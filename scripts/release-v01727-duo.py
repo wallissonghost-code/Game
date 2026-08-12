@@ -36,7 +36,8 @@ gamep.write_text(g)
 
 mp=Path('src/map-runtime.js')
 m=mp.read_text()
-m=need_replace(m,"const cs=nearbyCollisionDefs(),p=cfg.player();for(const c of cs)resolveCircle(p,p.r||18,c.x,c.y,c.r,false,c.key);for(const e of cfg.enemies())","const cs=nearbyCollisionDefs(),p=cfg.player();for(const c of cs)resolveCircle(p,p.r||18,c.x,c.y,c.r,false,c.key);for(const ep of(cfg.extraPlayers?.()||[]))for(const c of cs)resolveCircle(ep,ep.r||18,c.x,c.y,c.r,false,c.key);for(const e of cfg.enemies())",'map collision block')
+if 'cfg.extraPlayers?.()' not in m:
+    m=need_replace(m,"const p=cfg.player(),cs=nearbyCollisionDefs(p);for(const c of cs)resolveCircle(p,p.r||18,c.x,c.y,c.r,false,c.key);for(const e of cfg.enemies())","const p=cfg.player(),cs=nearbyCollisionDefs(p);for(const c of cs)resolveCircle(p,p.r||18,c.x,c.y,c.r,false,c.key);for(const q of(cfg.extraPlayers?.()||[])){if(!q||q.down)continue;const qs=nearbyCollisionDefs(q);for(const c of qs)resolveCircle(q,q.r||18,c.x,c.y,c.r,false,c.key)}for(const e of cfg.enemies())",'map collision block')
 mp.write_text(m)
 
 hp=Path('duo.html')
