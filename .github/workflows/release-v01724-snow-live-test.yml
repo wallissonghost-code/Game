@@ -1,0 +1,113 @@
+name: Caos Live v0.17.24 Snow Frost Puzzle Test
+
+on:
+  push:
+    paths:
+      - '.github/workflows/release-v01724-snow-live-test.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Snow Frost puzzle runtime
+        shell: bash
+        run: |
+          cat > src/map-runtime.js <<'JS'
+          (()=>{'use strict';
+          const API={ready:false,name:'Snow Frost Puzzle',active:'snow-frost',seed:'ICE-BMFSXT',version:'',init:null,drawGround:null,drawObjects:null,resolveCollisions:null};
+          window.CaosMap=API;
+          const N=1,E=2,S=4,W=8,CHUNK=512,MAP_N=6,DENSITY=.85,VARIANT=.32,ORIGIN=-MAP_N*CHUNK/2;
+          let cfg=null,loading=false,manifest=null;
+          const byMask=Array.from({length:16},()=>[]),images=new Map(),grid=[];
+          function hashStr(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+          function H(x,y,s=0){let h=hashStr(API.seed);h^=Math.imul(x+0x9e3779b9,0x85ebca6b);h^=Math.imul(y+0xc2b2ae35,0x27d4eb2d);h^=s;h=Math.imul(h^(h>>>16),0x7feb352d);h=Math.imul(h^(h>>>15),0x846ca68b);return ((h^(h>>>16))>>>0)/4294967296}
+          function idx(x,y){return y*MAP_N+x}function inside(x,y){return x>=0&&y>=0&&x<MAP_N&&y<MAP_N}function cell(x,y){return inside(x,y)?grid[idx(x,y)]:null}
+          function chooseVariant(mask,x,y){const list=byMask[mask]||[];if(!list.length)return null;if(list.length===1)return list[0];return H(x,y,991)<VARIANT?(list.find(a=>a.variant===2)||list[1]||list[0]):(list.find(a=>a.variant===1)||list[0])}
+          function buildGrid(){grid.length=MAP_N*MAP_N;for(let y=0;y<MAP_N;y++)for(let x=0;x<MAP_N;x++){let m=0,up=cell(x,y-1),left=cell(x-1,y);if(up&&(up.mask&S))m|=N;if(left&&(left.mask&E))m|=W;if(x<MAP_N-1&&H(x,y,101)<DENSITY)m|=E;if(y<MAP_N-1&&H(x,y,102)<DENSITY)m|=S;grid[idx(x,y)]={mask:m,def:chooseVariant(m,x,y)}}}
+          function loadImage(def){return new Promise(resolve=>{const im=new Image();im.onload=()=>{images.set(def.id,im);resolve(true)};im.onerror=()=>resolve(false);im.src='./assets/Map/snow-frost/'+def.file+'?v='+String(API.version||'map').replace(/\./g,'')})}
+          async function load(){if(loading)return;loading=true;try{const r=await fetch('./assets/Map/snow-frost/manifest.json?v='+String(API.version||'map').replace(/\./g,''),{cache:'no-store'});if(!r.ok)throw Error('manifest '+r.status);manifest=await r.json();for(const a of byMask)a.length=0;for(const d of manifest.chunks||[])if(Number.isInteger(d.mask)&&d.mask>=0&&d.mask<=15)byMask[d.mask].push(d);const defs=(manifest.chunks||[]).slice();const ok=await Promise.all(defs.map(loadImage));buildGrid();API.ready=defs.length===32&&ok.filter(Boolean).length===32&&grid.every(c=>c?.def);console.log('CAOS MAP SNOW FROST PUZZLE READY',{ready:API.ready,seed:API.seed,chunks:defs.length,grid:MAP_N+'x'+MAP_N})}catch(e){API.ready=false;console.warn('CAOS MAP SNOW FROST FALLBACK',e)}finally{loading=false}}
+          API.init=o=>{cfg=o;API.version=String(o?.version||'');load()};
+          function closedDef(cx,cy){const list=byMask[0]||[];if(!list.length)return null;return H(cx,cy,1991)<.5?(list.find(a=>a.variant===2)||list[1]||list[0]):(list.find(a=>a.variant===1)||list[0])}
+          function chunkDef(cx,cy){return inside(cx,cy)?cell(cx,cy)?.def:closedDef(cx,cy)}
+          function chunkWorld(cx,cy){return{x:ORIGIN+cx*CHUNK,y:ORIGIN+cy*CHUNK}}
+          API.drawGround=()=>{if(!API.ready||!cfg)return false;const {ctx}=cfg,p=cfg.player(),v=cfg.viewport(),minX=Math.floor((p.x-v.W/2-CHUNK-ORIGIN)/CHUNK),maxX=Math.ceil((p.x+v.W/2+CHUNK-ORIGIN)/CHUNK),minY=Math.floor((p.y-v.H/2-CHUNK-ORIGIN)/CHUNK),maxY=Math.ceil((p.y+v.H/2+CHUNK-ORIGIN)/CHUNK);ctx.fillStyle='#d8e8ef';ctx.fillRect(0,0,v.W,v.H);ctx.save();ctx.imageSmoothingEnabled=true;for(let cy=minY;cy<=maxY;cy++)for(let cx=minX;cx<=maxX;cx++){const def=chunkDef(cx,cy),im=def&&images.get(def.id);if(!im)continue;const w=chunkWorld(cx,cy),q=cfg.world(w.x,w.y);ctx.drawImage(im,q.x-1,q.y-1,CHUNK+2,CHUNK+2)}ctx.restore();ctx.fillStyle='rgba(110,170,196,.055)';ctx.fillRect(0,0,v.W,v.H);const g=ctx.createRadialGradient(v.W/2,v.H/2,100,v.W/2,v.H/2,Math.max(v.W,v.H)*.78);g.addColorStop(0,'rgba(230,248,255,0)');g.addColorStop(1,'rgba(33,73,94,.14)');ctx.fillStyle=g;ctx.fillRect(0,0,v.W,v.H);return true};
+          API.drawObjects=()=>{};
+          function resolveCircle(t,r,cx,cy,cr,slide,key){let dx=t.x-cx,dy=t.y-cy,d=Math.hypot(dx,dy),min=r+cr;if(d>=min)return;if(d<.001){const a=H(key,Math.floor(cy),1777)*Math.PI*2;dx=Math.cos(a);dy=Math.sin(a);d=1}const ux=dx/d,uy=dy/d,overlap=Math.min(28,min-d+.6);t.x+=ux*overlap;t.y+=uy*overlap;if(slide){const side=H(key,Math.floor(cx),1778)>.5?1:-1;t.x+=-uy*overlap*.16*side;t.y+=ux*overlap*.16*side}}
+          function nearbyCollisionDefs(){const p=cfg.player(),baseX=Math.floor((p.x-ORIGIN)/CHUNK),baseY=Math.floor((p.y-ORIGIN)/CHUNK),out=[];for(let cy=baseY-2;cy<=baseY+2;cy++)for(let cx=baseX-2;cx<=baseX+2;cx++){const def=chunkDef(cx,cy);if(!def||!Array.isArray(def.collision)||!def.collision.length)continue;const w=chunkWorld(cx,cy);for(const c of def.collision){if(c.type!=='circle')continue;out.push({x:w.x+c.x*CHUNK,y:w.y+c.y*CHUNK,r:c.r*CHUNK,key:cx*97+cy*131})}}return out}
+          API.resolveCollisions=()=>{if(!API.ready||!cfg)return;const cs=nearbyCollisionDefs(),p=cfg.player();for(const c of cs)resolveCircle(p,p.r||18,c.x,c.y,c.r,false,c.key);for(const e of cfg.enemies()){if(e.dead)continue;for(const c of cs)resolveCircle(e,e.r||16,c.x,c.y,c.r,true,c.key)}};
+          })();
+          JS
+
+      - name: Activate Snow Frost test and bump version
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          repl=[
+            ('index.html',[('0.17.23','0.17.24'),('01723','01724')]),
+            ('painel.html',[('0.17.23','0.17.24'),('01723','01724')]),
+            ('map-lab.html',[('0.17.23','0.17.24'),('01723','01724')]),
+            ('src/game.js',[("const VERSION='0.17.23'","const VERSION='0.17.24'"),("map:'dense-forest'","map:'snow-frost-puzzle'")]),
+            ('src/map-lab.js',[('01723','01724')]),
+          ]
+          for name,pairs in repl:
+            p=Path(name); s=p.read_text()
+            for a,b in pairs:s=s.replace(a,b)
+            p.write_text(s)
+          Path('version.json').write_text('{\n  "version": "0.17.24",\n  "build": "snow-frost-puzzle-live-test"\n}\n')
+          PY
+
+      - name: Update validation contract
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/check-game.mjs'); s=p.read_text()
+          s=s.replace("if(!game.includes(\"map:'dense-forest'\")) fail('telemetria do mapa divergente'); else ok('mapa ativo dense-forest');", "if(!game.includes(\"map:'snow-frost-puzzle'\")) fail('telemetria do mapa divergente'); else ok('mapa ativo snow-frost-puzzle');")
+          s=s.replace("if(!mapRuntime.includes(\"name:'Floresta Densa'\")) fail('runtime Floresta Densa ausente'); else ok('runtime Floresta Densa');", "if(!mapRuntime.includes(\"name:'Snow Frost Puzzle'\")) fail('runtime Snow Frost Puzzle ausente'); else ok('runtime Snow Frost Puzzle');")
+          s=s.replace("if(!mapRuntime.includes('BASE_TILE_INDEXES=[0,1,2,3,7,8]')) fail('selecao segura de tiles ausente'); else ok('tiles de base coesos');", "if(!mapRuntime.includes(\"seed:'ICE-BMFSXT'\")) fail('seed Snow Frost de teste divergente'); else ok('seed Snow Frost ICE-BMFSXT');")
+          marker="// v0.17.24 · Snow Frost puzzle no jogo"
+          if marker not in s:
+            s += "\n\n"+marker+"\n"
+            s += "if(!mapRuntime.includes('const N=1,E=2,S=4,W=8,CHUNK=512,MAP_N=6,DENSITY=.85,VARIANT=.32')) fail('runtime puzzle 6x6 divergente'); else ok('runtime puzzle 6x6 85/32');\n"
+            s += "if(!mapRuntime.includes('assets/Map/snow-frost/manifest.json')) fail('runtime nao carrega manifest Snow Frost'); else ok('runtime carrega manifest Snow Frost');\n"
+            s += "if(!mapRuntime.includes('def.collision')) fail('colisoes dos chunks nao integradas'); else ok('colisoes Snow Frost integradas');\n"
+          p.write_text(s)
+          PY
+
+      - name: Validate JavaScript
+        run: |
+          node --check src/map-runtime.js
+          node --check src/game.js
+          node --check src/map-lab.js
+
+      - name: Validate project
+        run: npm run check
+
+      - name: Commit release
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No changes to commit'
+          else
+            git commit -m 'feat: test Snow Frost puzzle in Caos Live v0.17.24'
+            git push
+          fi
