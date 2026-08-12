@@ -1,0 +1,43 @@
+name: Caos Live v0.17.29 True Coop
+on:
+  push:
+    paths:
+      - '.github/workflows/release-v01729-coop.yml'
+      - 'scripts/release-v01729-coop.py'
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Apply true coop patch
+        run: python3 scripts/release-v01729-coop.py
+      - name: Validate JavaScript
+        run: |
+          node --check src/game.js
+          node --check src/duo.js
+          node --check src/map-runtime.js
+          node --check src/panel.js
+      - name: Validate project
+        run: npm run check
+      - name: Validate coop contract
+        run: |
+          grep -q "REVIVE_RADIUS=68,REVIVE_MS=3000" src/game.js
+          grep -q "duo-skill-choice" src/game.js
+          grep -q "duo-skill-choice" src/duo.js
+          grep -q "setInterval(sendDuoSnapshot,125)" src/game.js
+          grep -q "slice(0,56)" src/game.js
+          grep -q "slice(0,28)" src/game.js
+          grep -q "mobile?.92:1.18" src/duo.js
+          grep -q -- "-webkit-user-select:none" duo.html
+      - name: Commit release
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/game.js src/duo.js src/map-runtime.js duo.html index.html painel.html map-lab.html src/panel.js src/map-lab.js version.json scripts/check-game.mjs
+          git commit -m 'feat: true cooperative duo revive progression v0.17.29'
+          git push
