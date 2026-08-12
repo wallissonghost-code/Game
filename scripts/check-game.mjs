@@ -36,7 +36,7 @@ for(const id of required) if(!panelHtml.includes(`id="${id}"`)) fail('ID do pain
 if(!panel.includes("d.type==='like'")) fail('painel nao trata curtidas TikTok'); else ok('curtidas TikTok tratadas');
 if(!panel.includes("command:'boss',mob:r.mob,amount:v")) fail('quantidade de boss ignorada'); else ok('quantidade de boss enviada');
 if(!game.includes("const qty=Math.max(1,Math.min(20,+d.amount||1))")) fail('jogo nao aceita quantidade de boss'); else ok('quantidade de boss aplicada');
-if(!game.includes("if(running&&player.life<=0&&!deathState)")) fail('dano fatal admin sem morte'); else ok('dano fatal admin tratado');
+if(!game.includes("knockDownPlayer('p1'")||!game.includes("knockDownPlayer('p2'")) fail('dano fatal admin sem down cooperativo'); else ok('dano fatal admin tratado em P1/P2');
 if(!panel.includes("norm(comment)==='mob'")) fail('anti-lag MOB ausente'); else ok('anti-lag MOB ativo');
 
 const cloud=read('cloud/connector-server.mjs');
@@ -196,3 +196,12 @@ if(!firebaseRank.includes('FieldValue.serverTimestamp()')) fail('ranking sem tim
 if(!game.includes('window.CaosRank.load(mode,40)')) fail('UI ainda nao consulta ranking global'); else ok('UI consulta Firestore');
 if(!game.includes('cloud.saveSolo')||!game.includes('cloud.saveDuo')) fail('fim da partida nao salva no Firestore'); else ok('partidas solo/duo gravadas globalmente');
 if(!duo33.includes('version:VERSION,name:nm,uid')) fail('P2 nao envia UID anonimo ao Host'); else ok('UID anonimo P2 sincronizado');
+
+// v0.17.34 · migrate legacy local ranking to Firebase
+const firebaseRank34=read('src/firebase-ranking.js');
+if(!firebaseRank34.includes("LOCAL_RANK_KEY='caos-rank-v1'")) fail('migracao nao le historico local antigo'); else ok('historico local antigo detectado');
+if(!firebaseRank34.includes('async function migrateLocalHistory()')) fail('migracao de ranking ausente'); else ok('migracao automatica presente');
+if(!firebaseRank34.includes("where('uid','==',u.uid)")) fail('deduplicacao solo ausente'); else ok('deduplicacao solo por UID');
+if(!firebaseRank34.includes("where('hostUid','==',u.uid)")) fail('deduplicacao duo ausente'); else ok('deduplicacao duo por Host UID');
+if(!firebaseRank34.includes("version:'legacy-0.17.32'")) fail('historico legado sem identificacao'); else ok('historico legado identificado');
+if(!firebaseRank34.includes('init().then(()=>migrateLocalHistory())')) fail('migracao nao inicia automaticamente'); else ok('migracao inicia ao abrir o jogo');
