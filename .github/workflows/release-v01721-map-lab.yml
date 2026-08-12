@@ -1,0 +1,35 @@
+name: Caos Live v0.17.21 Map Lab
+on:
+  push:
+    paths:
+      - 'scripts/release-v01721-map-lab.mjs'
+      - '.github/workflows/release-v01721-map-lab.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Apply Map Lab release
+        run: node scripts/release-v01721-map-lab.mjs
+      - name: Validate Map Lab JavaScript
+        run: node --check src/map-lab.js
+      - name: Validate project
+        run: npm run check
+      - name: Commit release
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add map-lab.html src/map-lab.js src/game.js index.html painel.html painel-live.html version.json scripts/check-game.mjs assets/README.md
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: add puzzle Map Lab v0.17.21"
+          git push
