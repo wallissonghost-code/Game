@@ -184,3 +184,15 @@ if(!game.includes('gunReady=weaponV2Ready||weaponReady')) fail('fallback de arma
 if(!game.includes("loadPngSequenceSafe('./assets/player',32")) fail('player base ainda usa carregamento fragil'); else ok('player base tolera falha individual');
 if(!game.includes("loadPngSequenceSafe('./assets/player-armed',32")) fail('player armado ainda usa carregamento fragil'); else ok('player armado tolera falha individual');
 if(!game.includes("loadPngSequenceSafe('./assets/weapons',32")) fail('weapon pack ainda usa carregamento fragil'); else ok('weapon pack tolera falha individual');
+
+// v0.17.33 · Firebase global ranking
+const firebaseRank=read('src/firebase-ranking.js'),duo33=read('src/duo.js');
+if(!gameHtml.includes('firebase-ranking.js?v='+cacheTag)) fail('Firebase ranking nao carregado no P1'); else ok('Firebase ranking carregado no P1');
+if(!read('duo.html').includes('firebase-ranking.js?v='+cacheTag)) fail('Firebase ranking nao carregado no P2'); else ok('Firebase ranking carregado no P2');
+if(!firebaseRank.includes("projectId:'caos-live'")) fail('Firebase project divergente'); else ok('Firebase caos-live configurado');
+if(!firebaseRank.includes('signInAnonymously')) fail('Auth anonimo ausente'); else ok('Auth anonimo ativo');
+if(!firebaseRank.includes("collection('ranking_solo')")||!firebaseRank.includes("collection('ranking_duo')")) fail('colecoes globais ausentes'); else ok('colecoes global solo/duo');
+if(!firebaseRank.includes('FieldValue.serverTimestamp()')) fail('ranking sem timestamp do servidor'); else ok('serverTimestamp no ranking');
+if(!game.includes('window.CaosRank.load(mode,40)')) fail('UI ainda nao consulta ranking global'); else ok('UI consulta Firestore');
+if(!game.includes('cloud.saveSolo')||!game.includes('cloud.saveDuo')) fail('fim da partida nao salva no Firestore'); else ok('partidas solo/duo gravadas globalmente');
+if(!duo33.includes('version:VERSION,name:nm,uid')) fail('P2 nao envia UID anonimo ao Host'); else ok('UID anonimo P2 sincronizado');
