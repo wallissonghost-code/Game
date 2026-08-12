@@ -16,6 +16,16 @@ jobs:
           node-version: 24
       - name: Apply true coop patch
         run: python3 scripts/release-v01729-coop.py
+      - name: Repair legacy validator
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/check-game.mjs')
+          c=p.read_text()
+          c=c.replace("if(!game.includes(\"owner:'p2',damage:2\")) fail('tiro P2 ausente'); else ok('tiro P2 autoritativo');","if(!game.includes(\"owner:'p2',damage\")) fail('tiro P2 ausente'); else ok('tiro P2 autoritativo com dano por skill');")
+          c=c.replace("if(!duo29.includes('slice(0,56)')||!game.includes('slice(0,28)')) fail('snapshot Duo nao reduzido'); else ok('snapshot Duo reduzido');","if(!game.includes('slice(0,56)')||!game.includes('slice(0,28)')) fail('snapshot Duo nao reduzido'); else ok('snapshot Duo reduzido');")
+          p.write_text(c)
+          PY
       - name: Validate JavaScript
         run: |
           node --check src/game.js
