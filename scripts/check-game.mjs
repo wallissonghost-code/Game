@@ -109,10 +109,16 @@ const labHtml=read('map-lab.html'),labJs=read('src/map-lab.js');
 if(!labHtml.includes('src/map-lab.js?v='+cacheTag)) fail('map lab cache dessincronizado'); else ok('map lab cache '+cacheTag);
 if(!labJs.includes('function maskFor')) fail('map lab sem autotile mask'); else ok('map lab autotile mask');
 if(!labJs.includes('TYPE.bridge')) fail('map lab sem ponte contextual'); else ok('map lab ponte contextual');
-if(!labJs.includes('assets/Map/snow-frost/tiles/')) fail('map lab nao usa assets Snow Frost reais'); else ok('map lab usa Snow Frost real');
+if(!labJs.includes('assets/Map/snow-frost/manifest.json')) fail('map lab nao usa manifest Snow Frost Puzzle'); else ok('map lab usa Snow Frost Puzzle real');
 
 
-// v0.17.22 · Ice-first Map Lab
-if(!labHtml.includes('Gelo / Neve')) fail('Map Lab sem bioma gelo'); else ok('Map Lab inicia em gelo');
-if(!labJs.includes("const NAMES=['neve','gelo','lago gelado','trilha','ponte de gelo']")) fail('semantica Snow Frost ausente'); else ok('semantica Snow Frost ativa');
-for(const f of ['assets/Map/snow-frost/tiles/tile_001.png','assets/Map/snow-frost/decals/decal_004.png','assets/Map/snow-frost/obstacles/obstacle_004.png']) fs.existsSync(f)?ok('snow asset '+f):fail('snow asset ausente '+f);
+// v0.17.23 · Snow Frost prebuilt chunk puzzle
+const snowPuzzle=JSON.parse(read('assets/Map/snow-frost/manifest.json'));
+if(!labHtml.includes('Snow Frost · chunks 512×512')) fail('Map Lab sem modo chunks Snow Frost'); else ok('Map Lab em chunks Snow Frost');
+if(!labJs.includes('chooseVariant')) fail('Map Lab sem variacao de chunks'); else ok('variacoes de chunks ativas');
+if(!labJs.includes('validatePuzzle')) fail('Map Lab sem validacao de encaixes'); else ok('validacao N/E/S/W ativa');
+if(snowPuzzle.formatVersion!==3) fail('manifest Snow Frost Puzzle fora do formato 3'); else ok('manifest Snow Frost formato 3');
+if(!Array.isArray(snowPuzzle.chunks)||snowPuzzle.chunks.length!==32) fail('Snow Frost Puzzle precisa ter 32 chunks'); else ok('32 chunks Snow Frost');
+for(let mask=0;mask<16;mask++){const rows=snowPuzzle.chunks.filter(x=>x.mask===mask);if(rows.length!==2) fail('mask '+mask+' sem 2 variacoes')}
+for(const f of ['assets/Map/snow-frost/chunks/mask_00_closed_v01.png','assets/Map/snow-frost/chunks/mask_05_straight_ns_v02.png','assets/Map/snow-frost/chunks/mask_10_straight_ew_v02.png','assets/Map/snow-frost/chunks/mask_15_cross_v02.png']) fs.existsSync(f)?ok('snow puzzle '+f):fail('snow puzzle ausente '+f);
+if(fs.existsSync('CAOS_LIVE_SNOW_FROST_PUZZLE_FINAL.zip')) fail('ZIP Snow Frost ainda na raiz'); else ok('ZIP Snow Frost extraido e removido');

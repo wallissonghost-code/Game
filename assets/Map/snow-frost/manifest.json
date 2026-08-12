@@ -1,32 +1,712 @@
 {
-  "id": "snow-frost",
-  "formatVersion": 2,
-  "engineReady": true,
-  "tileSize": [
-    128,
-    128
+  "id": "snow-frost-puzzle",
+  "formatVersion": 3,
+  "chunkSize": [
+    512,
+    512
   ],
-  "decalCanvas": [
-    192,
-    192
+  "logicalChunkTiles": [
+    4,
+    4
   ],
-  "obstacleCanvas": [
-    256,
-    256
+  "connectorOrder": [
+    "north",
+    "east",
+    "south",
+    "west"
   ],
-  "anchor": "bottom-center",
-  "folders": {
-    "tiles": "tiles",
-    "decals": "decals",
-    "obstacles": "obstacles"
+  "maskBits": {
+    "north": 1,
+    "east": 2,
+    "south": 4,
+    "west": 8
   },
-  "counts": {
-    "tiles": 1,
-    "decals": 4,
-    "obstacles": 4
-  },
+  "connectorTypes": [
+    "closed",
+    "path"
+  ],
+  "selectionRule": "Adjacent sides must have the same connector type. A path side only connects to path; closed only to closed.",
+  "origin": "top-left",
+  "renderMode": "single-composite-chunk",
+  "collisionCoordinates": "normalized 0..1 relative to chunk",
+  "chunks": [
+    {
+      "id": "mask_00_closed_v01",
+      "file": "chunks/mask_00_closed_v01.png",
+      "mask": 0,
+      "role": "closed",
+      "variant": 1,
+      "connectors": {
+        "north": "closed",
+        "east": "closed",
+        "south": "closed",
+        "west": "closed"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.1758,
+          "y": 0.834,
+          "r": 0.0447
+        }
+      ]
+    },
+    {
+      "id": "mask_00_closed_v02",
+      "file": "chunks/mask_00_closed_v02.png",
+      "mask": 0,
+      "role": "closed",
+      "variant": 2,
+      "connectors": {
+        "north": "closed",
+        "east": "closed",
+        "south": "closed",
+        "west": "closed"
+      },
+      "collision": []
+    },
+    {
+      "id": "mask_01_dead_end_n_v01",
+      "file": "chunks/mask_01_dead_end_n_v01.png",
+      "mask": 1,
+      "role": "dead_end_n",
+      "variant": 1,
+      "connectors": {
+        "north": "path",
+        "east": "closed",
+        "south": "closed",
+        "west": "closed"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.1855,
+          "y": 0.5098,
+          "r": 0.0482
+        },
+        {
+          "type": "circle",
+          "x": 0.8145,
+          "y": 0.5098,
+          "r": 0.0472
+        }
+      ]
+    },
+    {
+      "id": "mask_01_dead_end_n_v02",
+      "file": "chunks/mask_01_dead_end_n_v02.png",
+      "mask": 1,
+      "role": "dead_end_n",
+      "variant": 2,
+      "connectors": {
+        "north": "path",
+        "east": "closed",
+        "south": "closed",
+        "west": "closed"
+      },
+      "collision": []
+    },
+    {
+      "id": "mask_02_dead_end_e_v01",
+      "file": "chunks/mask_02_dead_end_e_v01.png",
+      "mask": 2,
+      "role": "dead_end_e",
+      "variant": 1,
+      "connectors": {
+        "north": "closed",
+        "east": "path",
+        "south": "closed",
+        "west": "closed"
+      },
+      "collision": []
+    },
+    {
+      "id": "mask_02_dead_end_e_v02",
+      "file": "chunks/mask_02_dead_end_e_v02.png",
+      "mask": 2,
+      "role": "dead_end_e",
+      "variant": 2,
+      "connectors": {
+        "north": "closed",
+        "east": "path",
+        "south": "closed",
+        "west": "closed"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.1758,
+          "y": 0.1855,
+          "r": 0.0482
+        },
+        {
+          "type": "circle",
+          "x": 0.1855,
+          "y": 0.5098,
+          "r": 0.0452
+        }
+      ]
+    },
+    {
+      "id": "mask_03_corner_ne_v01",
+      "file": "chunks/mask_03_corner_ne_v01.png",
+      "mask": 3,
+      "role": "corner_ne",
+      "variant": 1,
+      "connectors": {
+        "north": "path",
+        "east": "path",
+        "south": "closed",
+        "west": "closed"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.8242,
+          "y": 0.1855,
+          "r": 0.0427
+        },
+        {
+          "type": "circle",
+          "x": 0.8242,
+          "y": 0.834,
+          "r": 0.0452
+        }
+      ]
+    },
+    {
+      "id": "mask_03_corner_ne_v02",
+      "file": "chunks/mask_03_corner_ne_v02.png",
+      "mask": 3,
+      "role": "corner_ne",
+      "variant": 2,
+      "connectors": {
+        "north": "path",
+        "east": "path",
+        "south": "closed",
+        "west": "closed"
+      },
+      "collision": []
+    },
+    {
+      "id": "mask_04_dead_end_s_v01",
+      "file": "chunks/mask_04_dead_end_s_v01.png",
+      "mask": 4,
+      "role": "dead_end_s",
+      "variant": 1,
+      "connectors": {
+        "north": "closed",
+        "east": "closed",
+        "south": "path",
+        "west": "closed"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.1855,
+          "y": 0.5098,
+          "r": 0.0523
+        }
+      ]
+    },
+    {
+      "id": "mask_04_dead_end_s_v02",
+      "file": "chunks/mask_04_dead_end_s_v02.png",
+      "mask": 4,
+      "role": "dead_end_s",
+      "variant": 2,
+      "connectors": {
+        "north": "closed",
+        "east": "closed",
+        "south": "path",
+        "west": "closed"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.1758,
+          "y": 0.1855,
+          "r": 0.0548
+        }
+      ]
+    },
+    {
+      "id": "mask_05_straight_ns_v01",
+      "file": "chunks/mask_05_straight_ns_v01.png",
+      "mask": 5,
+      "role": "straight_ns",
+      "variant": 1,
+      "connectors": {
+        "north": "path",
+        "east": "closed",
+        "south": "path",
+        "west": "closed"
+      },
+      "collision": []
+    },
+    {
+      "id": "mask_05_straight_ns_v02",
+      "file": "chunks/mask_05_straight_ns_v02.png",
+      "mask": 5,
+      "role": "straight_ns",
+      "variant": 2,
+      "connectors": {
+        "north": "path",
+        "east": "closed",
+        "south": "path",
+        "west": "closed"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.1855,
+          "y": 0.5098,
+          "r": 0.0432
+        }
+      ]
+    },
+    {
+      "id": "mask_06_corner_es_v01",
+      "file": "chunks/mask_06_corner_es_v01.png",
+      "mask": 6,
+      "role": "corner_es",
+      "variant": 1,
+      "connectors": {
+        "north": "closed",
+        "east": "path",
+        "south": "path",
+        "west": "closed"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.1855,
+          "y": 0.5098,
+          "r": 0.0421
+        },
+        {
+          "type": "circle",
+          "x": 0.1758,
+          "y": 0.1855,
+          "r": 0.0472
+        }
+      ]
+    },
+    {
+      "id": "mask_06_corner_es_v02",
+      "file": "chunks/mask_06_corner_es_v02.png",
+      "mask": 6,
+      "role": "corner_es",
+      "variant": 2,
+      "connectors": {
+        "north": "closed",
+        "east": "path",
+        "south": "path",
+        "west": "closed"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.1758,
+          "y": 0.834,
+          "r": 0.0421
+        }
+      ]
+    },
+    {
+      "id": "mask_07_junction_nes_v01",
+      "file": "chunks/mask_07_junction_nes_v01.png",
+      "mask": 7,
+      "role": "junction_nes",
+      "variant": 1,
+      "connectors": {
+        "north": "path",
+        "east": "path",
+        "south": "path",
+        "west": "closed"
+      },
+      "collision": []
+    },
+    {
+      "id": "mask_07_junction_nes_v02",
+      "file": "chunks/mask_07_junction_nes_v02.png",
+      "mask": 7,
+      "role": "junction_nes",
+      "variant": 2,
+      "connectors": {
+        "north": "path",
+        "east": "path",
+        "south": "path",
+        "west": "closed"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.8242,
+          "y": 0.834,
+          "r": 0.0462
+        }
+      ]
+    },
+    {
+      "id": "mask_08_dead_end_w_v01",
+      "file": "chunks/mask_08_dead_end_w_v01.png",
+      "mask": 8,
+      "role": "dead_end_w",
+      "variant": 1,
+      "connectors": {
+        "north": "closed",
+        "east": "closed",
+        "south": "closed",
+        "west": "path"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.1758,
+          "y": 0.1855,
+          "r": 0.0401
+        }
+      ]
+    },
+    {
+      "id": "mask_08_dead_end_w_v02",
+      "file": "chunks/mask_08_dead_end_w_v02.png",
+      "mask": 8,
+      "role": "dead_end_w",
+      "variant": 2,
+      "connectors": {
+        "north": "closed",
+        "east": "closed",
+        "south": "closed",
+        "west": "path"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.8145,
+          "y": 0.5098,
+          "r": 0.0488
+        }
+      ]
+    },
+    {
+      "id": "mask_09_corner_wn_v01",
+      "file": "chunks/mask_09_corner_wn_v01.png",
+      "mask": 9,
+      "role": "corner_wn",
+      "variant": 1,
+      "connectors": {
+        "north": "path",
+        "east": "closed",
+        "south": "closed",
+        "west": "path"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.1758,
+          "y": 0.1855,
+          "r": 0.0442
+        },
+        {
+          "type": "circle",
+          "x": 0.1758,
+          "y": 0.834,
+          "r": 0.0513
+        }
+      ]
+    },
+    {
+      "id": "mask_09_corner_wn_v02",
+      "file": "chunks/mask_09_corner_wn_v02.png",
+      "mask": 9,
+      "role": "corner_wn",
+      "variant": 2,
+      "connectors": {
+        "north": "path",
+        "east": "closed",
+        "south": "closed",
+        "west": "path"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.8145,
+          "y": 0.5098,
+          "r": 0.0498
+        },
+        {
+          "type": "circle",
+          "x": 0.8242,
+          "y": 0.1855,
+          "r": 0.0538
+        }
+      ]
+    },
+    {
+      "id": "mask_10_straight_ew_v01",
+      "file": "chunks/mask_10_straight_ew_v01.png",
+      "mask": 10,
+      "role": "straight_ew",
+      "variant": 1,
+      "connectors": {
+        "north": "closed",
+        "east": "path",
+        "south": "closed",
+        "west": "path"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.8242,
+          "y": 0.834,
+          "r": 0.0437
+        }
+      ]
+    },
+    {
+      "id": "mask_10_straight_ew_v02",
+      "file": "chunks/mask_10_straight_ew_v02.png",
+      "mask": 10,
+      "role": "straight_ew",
+      "variant": 2,
+      "connectors": {
+        "north": "closed",
+        "east": "path",
+        "south": "closed",
+        "west": "path"
+      },
+      "collision": []
+    },
+    {
+      "id": "mask_11_junction_new_v01",
+      "file": "chunks/mask_11_junction_new_v01.png",
+      "mask": 11,
+      "role": "junction_new",
+      "variant": 1,
+      "connectors": {
+        "north": "path",
+        "east": "path",
+        "south": "closed",
+        "west": "path"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.8242,
+          "y": 0.834,
+          "r": 0.0543
+        }
+      ]
+    },
+    {
+      "id": "mask_11_junction_new_v02",
+      "file": "chunks/mask_11_junction_new_v02.png",
+      "mask": 11,
+      "role": "junction_new",
+      "variant": 2,
+      "connectors": {
+        "north": "path",
+        "east": "path",
+        "south": "closed",
+        "west": "path"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.8242,
+          "y": 0.834,
+          "r": 0.0508
+        }
+      ]
+    },
+    {
+      "id": "mask_12_corner_sw_v01",
+      "file": "chunks/mask_12_corner_sw_v01.png",
+      "mask": 12,
+      "role": "corner_sw",
+      "variant": 1,
+      "connectors": {
+        "north": "closed",
+        "east": "closed",
+        "south": "path",
+        "west": "path"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.5,
+          "y": 0.1953,
+          "r": 0.0442
+        },
+        {
+          "type": "circle",
+          "x": 0.8145,
+          "y": 0.5098,
+          "r": 0.0488
+        }
+      ]
+    },
+    {
+      "id": "mask_12_corner_sw_v02",
+      "file": "chunks/mask_12_corner_sw_v02.png",
+      "mask": 12,
+      "role": "corner_sw",
+      "variant": 2,
+      "connectors": {
+        "north": "closed",
+        "east": "closed",
+        "south": "path",
+        "west": "path"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.1758,
+          "y": 0.834,
+          "r": 0.0548
+        },
+        {
+          "type": "circle",
+          "x": 0.8242,
+          "y": 0.1855,
+          "r": 0.0452
+        }
+      ]
+    },
+    {
+      "id": "mask_13_junction_nsw_v01",
+      "file": "chunks/mask_13_junction_nsw_v01.png",
+      "mask": 13,
+      "role": "junction_nsw",
+      "variant": 1,
+      "connectors": {
+        "north": "path",
+        "east": "closed",
+        "south": "path",
+        "west": "path"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.8145,
+          "y": 0.5098,
+          "r": 0.0488
+        }
+      ]
+    },
+    {
+      "id": "mask_13_junction_nsw_v02",
+      "file": "chunks/mask_13_junction_nsw_v02.png",
+      "mask": 13,
+      "role": "junction_nsw",
+      "variant": 2,
+      "connectors": {
+        "north": "path",
+        "east": "closed",
+        "south": "path",
+        "west": "path"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.1758,
+          "y": 0.1855,
+          "r": 0.0508
+        }
+      ]
+    },
+    {
+      "id": "mask_14_junction_esw_v01",
+      "file": "chunks/mask_14_junction_esw_v01.png",
+      "mask": 14,
+      "role": "junction_esw",
+      "variant": 1,
+      "connectors": {
+        "north": "closed",
+        "east": "path",
+        "south": "path",
+        "west": "path"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.1758,
+          "y": 0.834,
+          "r": 0.0472
+        }
+      ]
+    },
+    {
+      "id": "mask_14_junction_esw_v02",
+      "file": "chunks/mask_14_junction_esw_v02.png",
+      "mask": 14,
+      "role": "junction_esw",
+      "variant": 2,
+      "connectors": {
+        "north": "closed",
+        "east": "path",
+        "south": "path",
+        "west": "path"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.1758,
+          "y": 0.834,
+          "r": 0.0391
+        }
+      ]
+    },
+    {
+      "id": "mask_15_cross_v01",
+      "file": "chunks/mask_15_cross_v01.png",
+      "mask": 15,
+      "role": "cross",
+      "variant": 1,
+      "connectors": {
+        "north": "path",
+        "east": "path",
+        "south": "path",
+        "west": "path"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.8242,
+          "y": 0.1855,
+          "r": 0.0543
+        }
+      ]
+    },
+    {
+      "id": "mask_15_cross_v02",
+      "file": "chunks/mask_15_cross_v02.png",
+      "mask": 15,
+      "role": "cross",
+      "variant": 2,
+      "connectors": {
+        "north": "path",
+        "east": "path",
+        "south": "path",
+        "west": "path"
+      },
+      "collision": [
+        {
+          "type": "circle",
+          "x": 0.1758,
+          "y": 0.834,
+          "r": 0.0548
+        }
+      ]
+    }
+  ],
   "notes": [
-    "Bioma de gelo/neve com solo congelado, lagos de gelo, rochas, árvores e barricadas nevadas.",
-    "Chão, decals e obstáculos pertencem à mesma paleta visual do bioma."
+    "32 pre-built chunks: all 16 N/E/S/W connector masks with 2 visual variants each.",
+    "Connectors meet at the exact center of each chunk edge.",
+    "Chunk borders share a canonical snow band to reduce visible seams.",
+    "Objects are baked into each composite; collision circles are supplied in metadata.",
+    "Do not randomize neighboring chunks without checking connector compatibility."
   ]
 }
