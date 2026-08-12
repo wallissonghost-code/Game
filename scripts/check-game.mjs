@@ -150,3 +150,14 @@ if(!game.includes('function duoEnemyTarget(e)')) fail('aggro nearest-player ause
 if(!game.includes("toast('P2 CAIU · REVIVE 5s')")) fail('queda/revive P2 ausente'); else ok('P2 recebe dano e revive');
 if(!game.includes('chaseP=duoEnemyTarget(e)')) fail('mobs nao perseguem P2'); else ok('mobs perseguem P1/P2');
 if(process.exitCode) process.exit(process.exitCode);
+
+// v0.17.27 · full visual parity in Duo
+const duoHtmlV27=read('duo.html'),duoJsV27=read('src/duo.js');
+if(!duoHtmlV27.includes('jszip@3.10.1')) fail('Duo sem JSZip para bosses'); else ok('Duo carrega JSZip');
+for(const token of ["loadFrames('assets/player',32","loadFrames('assets/player-armed',32","loadFrames('assets/weapons',32","loadFrames('assets/mobs/Ogro',32","loadFrames('assets/mobs/Ogro Elite',32"]) if(!duoJsV27.includes(token)) fail('Duo sem pack completo: '+token); else ok('Duo pack completo '+token);
+if(!game.includes('playerArmedReady=false')) fail('Host nao controla readiness armado'); else ok('Host espera player armado');
+if(!game.includes('playerV2Ready&&playerArmedReady&&weaponV2Ready')) fail('Host libera arena antes da arma'); else ok('Host espera arma antes de entrar');
+if(!game.includes('moving:player.moving,walk:player.walk,shotFlash:player.shotFlash')) fail('snapshot P1 sem animacao'); else ok('snapshot P1 com animacao');
+if(!game.includes('moving:duoPlayer.moving,walk:duoPlayer.walk,shotFlash:duoPlayer.shotFlash')) fail('snapshot P2 sem animacao'); else ok('snapshot P2 com animacao');
+if(!game.includes('t:e.t,speedMul:e.speedMul||1')) fail('snapshot mobs sem frame temporal'); else ok('snapshot mobs animado');
+if(!mapRuntime.includes('cfg.extraPlayers?.()')) fail('P2 sem colisao do mapa'); else ok('P2 usa colisao do mapa');
