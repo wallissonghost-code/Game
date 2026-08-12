@@ -20,6 +20,14 @@ jobs:
           node-version: '24'
       - name: Apply legacy ranking migration patch
         run: python3 scripts/release-v01734-migrate-local-rank.py
+      - name: Sync legacy Map Lab cache
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('map-lab.html')
+          s=p.read_text().replace('v0.17.31','v0.17.34').replace('v=01731','v=01734')
+          p.write_text(s)
+          PY
       - name: Update validator for cooperative admin damage
         run: |
           python3 - <<'PY'
