@@ -1,0 +1,39 @@
+name: Caos Live v0.17.32 Ranking + Admin Targets
+on:
+  push:
+    paths:
+      - '.github/workflows/release-v01732-ranking-admin-targets.yml'
+      - 'scripts/release-v01732-ranking-admin-targets.py'
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Apply ranking/admin patch
+        run: python3 scripts/release-v01732-ranking-admin-targets.py
+      - name: Validate JavaScript
+        run: |
+          node --check src/game.js
+          node --check src/duo.js
+          node --check src/panel.js
+          node --check src/map-runtime.js
+      - name: Validate feature contract
+        run: |
+          grep -q "caos-rank-v1" src/game.js
+          grep -q "saveMatchHistory" src/game.js
+          grep -q "saveplayer" src/game.js
+          grep -q "playerTarget" painel.html
+          grep -q "duoName" duo.html
+          grep -q "playerName" index.html
+      - name: Commit release
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html duo.html painel.html src/game.js src/duo.js src/panel.js src/map-runtime.js src/map-lab.js version.json
+          git commit -m 'feat: player names rank history and admin targets v0.17.32'
+          git push
