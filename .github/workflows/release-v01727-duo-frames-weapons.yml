@@ -1,0 +1,139 @@
+name: Caos Live v0.17.27 Duo Frames Weapons
+on:
+  push:
+    paths:
+      - '.github/workflows/release-v01727-duo-frames-weapons.yml'
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Patch full duo visuals and weapon readiness
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, json
+
+          gamep=Path('src/game.js')
+          g=gamep.read_text()
+
+          old="let playerV2Ready=false,weaponV2Ready=false;"
+          new="let playerV2Ready=false,playerArmedReady=false,weaponV2Ready=false;"
+          if old not in g: raise SystemExit('player readiness declaration not found')
+          g=g.replace(old,new,1)
+
+          old="if(playerV2Ready){b.disabled=false;b.textContent='ENTRAR NA ARENA';b.style.opacity='1'}"
+          new="if(playerV2Ready&&playerArmedReady&&weaponV2Ready){b.disabled=false;b.textContent='ENTRAR NA ARENA';b.style.opacity='1'}"
+          if old not in g: raise SystemExit('start readiness condition not found')
+          g=g.replace(old,new,1)
+
+          old="loadNamedPngSequence('./assets/player-armed','Posearma',32,ASSET_TAG).then(armed=>{mapPlayer32(armed,playerArmedFrames);console.log('PLAYER ARMED BACKGROUND READY',armed.length)})"
+          new="loadNamedPngSequence('./assets/player-armed','Posearma',32,ASSET_TAG).then(armed=>{mapPlayer32(armed,playerArmedFrames);playerArmedReady=playerArmedFrames.down.length===4&&playerArmedFrames.up.length===4&&playerArmedFrames.left.length===4&&playerArmedFrames.right.length===4;syncStartButton();console.log('PLAYER ARMED BACKGROUND READY',armed.length,playerArmedReady)})"
+          if old not in g: raise SystemExit('armed loader not found')
+          g=g.replace(old,new,1)
+
+          old="loadDirectPngSequence('./assets/weapons',32,ASSET_TAG).then(weap=>{mapPlayer32(weap,playerWeaponFrames);weaponV2Ready=playerWeaponFrames.down.length===4&&playerWeaponFrames.up.length===4&&playerWeaponFrames.left.length===4&&playerWeaponFrames.right.length===4;console.log('WEAPON BACKGROUND READY',weap.length)})"
+          new="loadDirectPngSequence('./assets/weapons',32,ASSET_TAG).then(weap=>{mapPlayer32(weap,playerWeaponFrames);weaponV2Ready=playerWeaponFrames.down.length===4&&playerWeaponFrames.up.length===4&&playerWeaponFrames.left.length===4&&playerWeaponFrames.right.length===4;syncStartButton();console.log('WEAPON BACKGROUND READY',weap.length,weaponV2Ready)})"
+          if old not in g: raise SystemExit('weapon loader not found')
+          g=g.replace(old,new,1)
+
+          # Increase weapon visual size and keep a fallback image if the directional pack is late.
+          for a,b in {
+            "down:{x:2,y:-1,maxW:30,maxH:50":"down:{x:2,y:-1,maxW:38,maxH:58",
+            "dr:{x:14,y:-6,maxW:52,maxH:31":"dr:{x:16,y:-6,maxW:62,maxH:38",
+            "right:{x:17,y:-5,maxW:56,maxH:28":"right:{x:20,y:-5,maxW:70,maxH:34",
+            "ur:{x:13,y:-12,maxW:50,maxH:31":"ur:{x:15,y:-13,maxW:60,maxH:38",
+            "up:{x:0,y:-18,maxW:30,maxH:50":"up:{x:0,y:-19,maxW:38,maxH:58",
+            "ul:{x:-13,y:-12,maxW:50,maxH:31":"ul:{x:-15,y:-13,maxW:60,maxH:38",
+            "left:{x:-17,y:-5,maxW:56,maxH:28":"left:{x:-20,y:-5,maxW:70,maxH:34",
+            "dl:{x:-14,y:-6,maxW:52,maxH:31":"dl:{x:-16,y:-6,maxW:62,maxH:38",
+          }.items():
+            g=g.replace(a,b)
+
+          old="const drawWeapon=()=>{if(!autoFire||!weaponV2Ready)return;const wa=playerWeaponFrames[dir]?.length?playerWeaponFrames[dir]:playerWeaponFrames.down,wi=wa[frame%wa.length]||wa[0];if(!wi)return;"
+          new="const drawWeapon=()=>{if(!autoFire)return;const wa=playerWeaponFrames[dir]?.length?playerWeaponFrames[dir]:playerWeaponFrames.down,wi=wa[frame%Math.max(1,wa.length)]||wa[0]||weaponSprite;if(!wi||(!(wi.naturalWidth||wi.width)))return;"
+          if old not in g: raise SystemExit('P1 weapon renderer not found')
+          g=g.replace(old,new,1)
+
+          # Replace host-side P2 renderer with animated body + separate weapon + muzzle flash.
+          start=g.find('function drawDuoPlayer(){')
+          end=g.find('function duoSnapshot(){',start)
+          if start<0 or end<0: raise SystemExit('drawDuoPlayer block not found')
+          new_duo_draw=r'''function drawDuoPlayer(){if(!duoPlayer.connected)return;const q=world(duoPlayer.x,duoPlayer.y),dir=playerFacing(duoPlayer.aim),frame=duoPlayer.moving?Math.floor(duoPlayer.walk)%4:0,pack=playerArmedReady?playerArmedFrames:playerBaseFrames,arr=(pack[dir]?.length?pack[dir]:pack.down)||[],img=arr.length?arr[frame%arr.length]:null,bob=duoPlayer.moving?Math.sin(duoPlayer.walk*Math.PI*.5)*.8:0;ctx.save();ctx.translate(q.x,q.y);ctx.fillStyle='#0009';ctx.beginPath();ctx.ellipse(0,24,22,7,0,0,Math.PI*2);ctx.fill();const wl={down:{x:2,y:-1,maxW:34,maxH:54,flip:false},dr:{x:15,y:-6,maxW:58,maxH:36,flip:false},right:{x:19,y:-5,maxW:66,maxH:32,flip:true},ur:{x:14,y:-12,maxW:57,maxH:36,flip:false},up:{x:0,y:-18,maxW:34,maxH:54,flip:false},ul:{x:-14,y:-12,maxW:57,maxH:36,flip:false},left:{x:-19,y:-5,maxW:66,maxH:32,flip:false},dl:{x:-15,y:-6,maxW:58,maxH:36,flip:false}};const drawW=()=>{const wa=playerWeaponFrames[dir]?.length?playerWeaponFrames[dir]:playerWeaponFrames.down,wi=wa[frame%Math.max(1,wa.length)]||wa[0]||weaponSprite;if(!wi||(!(wi.naturalWidth||wi.width)))return;const z=wl[dir]||wl.down,iw=wi.naturalWidth||wi.width||1,ih=wi.naturalHeight||wi.height||1,ratio=iw/Math.max(1,ih);let ww=z.maxW,wh=ww/Math.max(.05,ratio);if(wh>z.maxH){wh=z.maxH;ww=wh*ratio}ctx.save();ctx.translate(z.x,z.y+bob);if(z.flip)ctx.scale(-1,1);ctx.drawImage(wi,-ww/2,-wh/2,ww,wh);ctx.restore()};const behind=['up','ur','ul'].includes(dir);ctx.globalAlpha=duoPlayer.down?.35:1;if(behind)drawW();if(img){const h=72,ratio=(img.naturalWidth||img.width||1)/Math.max(1,img.naturalHeight||img.height||1),w=Math.min(72,h*ratio);ctx.drawImage(img,-w/2,35+bob-h,w,h)}else{ctx.fillStyle='#38bdf8';ctx.beginPath();ctx.arc(0,0,17,0,7);ctx.fill()}if(!behind)drawW();ctx.globalAlpha=1;if(duoPlayer.shotFlash>0){const m=muzzleLocal(dir);ctx.save();ctx.globalCompositeOperation='screen';ctx.fillStyle='#fff7b2';ctx.shadowColor='#f59e0b';ctx.shadowBlur=14;ctx.beginPath();ctx.arc(m.x,m.y+bob,4.2,0,Math.PI*2);ctx.fill();ctx.restore()}ctx.fillStyle='#a5f3fc';ctx.font='900 9px sans-serif';ctx.textAlign='center';ctx.fillText('P2',0,-44);ctx.restore()}
+'''
+          g=g[:start]+new_duo_draw+g[end:]
+
+          old=".map(e=>({x:e.x,y:e.y,r:e.r,type:e.type,tier:e.tier,hp:e.hp,max:e.max,facing:e.facing}))"
+          new=".map(e=>({x:e.x,y:e.y,r:e.r,type:e.type,tier:e.tier,hp:e.hp,max:e.max,facing:e.facing,t:e.t,speedMul:e.speedMul||1}))"
+          if old not in g: raise SystemExit('enemy snapshot mapping not found')
+          g=g.replace(old,new,1)
+
+          old="p1:{x:player.x,y:player.y,life:player.life,maxLife:player.maxLife,aim:player.aim,down:false},p2:{x:duoPlayer.x,y:duoPlayer.y,life:duoPlayer.life,maxLife:duoPlayer.maxLife,aim:duoPlayer.aim,down:duoPlayer.down}"
+          new="p1:{x:player.x,y:player.y,life:player.life,maxLife:player.maxLife,aim:player.aim,down:false,moving:player.moving,walk:player.walk,shotFlash:player.shotFlash},p2:{x:duoPlayer.x,y:duoPlayer.y,life:duoPlayer.life,maxLife:duoPlayer.maxLife,aim:duoPlayer.aim,down:duoPlayer.down,moving:duoPlayer.moving,walk:duoPlayer.walk,shotFlash:duoPlayer.shotFlash}"
+          if old not in g: raise SystemExit('player snapshot mapping not found')
+          g=g.replace(old,new,1)
+          gamep.write_text(g)
+
+          # P2 also collides with Snow Frost obstacles on the authoritative host.
+          mp=Path('src/map-runtime.js')
+          m=mp.read_text()
+          old="const cs=nearbyCollisionDefs(),p=cfg.player();for(const c of cs)resolveCircle(p,p.r||18,c.x,c.y,c.r,false,c.key);for(const e of cfg.enemies())"
+          new="const cs=nearbyCollisionDefs(),p=cfg.player();for(const c of cs)resolveCircle(p,p.r||18,c.x,c.y,c.r,false,c.key);for(const ep of(cfg.extraPlayers?.()||[]))for(const c of cs)resolveCircle(ep,ep.r||18,c.x,c.y,c.r,false,c.key);for(const e of cfg.enemies())"
+          if old not in m: raise SystemExit('map collision block not found')
+          mp.write_text(m.replace(old,new,1))
+
+          # JSZip is required on the P2 page to render the same boss animation packs.
+          hp=Path('duo.html'); h=hp.read_text()
+          if 'jszip@3.10.1' not in h:
+            h=h.replace('<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>','<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>')
+          hp.write_text(h)
+
+          # Sequential synchronized release.
+          files=['index.html','painel.html','map-lab.html','duo.html','src/game.js','src/panel.js','src/map-lab.js','src/duo.js']
+          for name in files:
+            p=Path(name)
+            if not p.exists(): continue
+            s=p.read_text().replace('0.17.26','0.17.27').replace('01726','01727')
+            p.write_text(s)
+          Path('version.json').write_text(json.dumps({'version':'0.17.27','build':'duo-full-frames-weapons'},indent=2,ensure_ascii=False)+'\n')
+
+          # Extend CI contract so this regression cannot silently return.
+          cp=Path('scripts/check-game.mjs'); c=cp.read_text()
+          checks=r'''
+// v0.17.27 · full visual parity in Duo
+const duoHtml=read('duo.html'),duoJs=read('src/duo.js');
+if(!duoHtml.includes('jszip@3.10.1')) fail('Duo sem JSZip para bosses'); else ok('Duo carrega JSZip');
+for(const token of ["loadFrames('assets/player',32","loadFrames('assets/player-armed',32","loadFrames('assets/weapons',32","loadFrames('assets/mobs/Ogro',32","loadFrames('assets/mobs/Ogro Elite',32"]) if(!duoJs.includes(token)) fail('Duo sem pack completo: '+token); else ok('Duo pack completo '+token);
+if(!game.includes('playerArmedReady=false')) fail('Host nao controla readiness armado'); else ok('Host espera player armado');
+if(!game.includes('playerV2Ready&&playerArmedReady&&weaponV2Ready')) fail('Host libera arena antes da arma'); else ok('Host espera arma antes de entrar');
+if(!game.includes('moving:player.moving,walk:player.walk,shotFlash:player.shotFlash')) fail('snapshot P1 sem animacao'); else ok('snapshot P1 com animacao');
+if(!game.includes('moving:duoPlayer.moving,walk:duoPlayer.walk,shotFlash:duoPlayer.shotFlash')) fail('snapshot P2 sem animacao'); else ok('snapshot P2 com animacao');
+if(!game.includes('t:e.t,speedMul:e.speedMul||1')) fail('snapshot mobs sem frame temporal'); else ok('snapshot mobs animado');
+if(!mapRuntime.includes('cfg.extraPlayers?.()')) fail('P2 sem colisao do mapa'); else ok('P2 usa colisao do mapa');
+'''
+          if '// v0.17.27 · full visual parity in Duo' not in c:
+            c += checks
+          cp.write_text(c)
+          PY
+      - name: Validate JavaScript
+        run: |
+          node --check src/game.js
+          node --check src/duo.js
+          node --check src/map-runtime.js
+          node --check src/panel.js
+      - name: Validate project
+        run: npm run check
+      - name: Commit release
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/game.js src/duo.js src/map-runtime.js duo.html index.html painel.html map-lab.html src/panel.js src/map-lab.js version.json scripts/check-game.mjs
+          git commit -m 'fix: full duo frames mobs and weapons v0.17.27'
+          git push
