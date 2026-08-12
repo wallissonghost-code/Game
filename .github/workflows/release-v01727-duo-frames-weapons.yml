@@ -4,6 +4,7 @@ on:
     paths:
       - '.github/workflows/release-v01727-duo-frames-weapons.yml'
       - 'scripts/release-v01727-duo.py'
+      - 'scripts/fix-v01727-check.py'
 permissions:
   contents: write
 jobs:
@@ -16,6 +17,8 @@ jobs:
           node-version: 24
       - name: Apply visual parity patch
         run: python3 scripts/release-v01727-duo.py
+      - name: Repair validation names
+        run: python3 scripts/fix-v01727-check.py
       - name: Validate JavaScript
         run: |
           node --check src/game.js
