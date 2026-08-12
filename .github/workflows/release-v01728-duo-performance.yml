@@ -40,3 +40,4 @@ jobs:
           git add src/game.js src/duo.js src/map-runtime.js index.html painel.html map-lab.html duo.html src/panel.js src/map-lab.js version.json
           git commit -m 'perf: smooth and lighten Duo client v0.17.28'
           git push
+# rerun after validator optimization
