@@ -1,0 +1,42 @@
+name: Caos Live v0.17.28 Duo Performance
+on:
+  push:
+    paths:
+      - '.github/workflows/release-v01728-duo-performance.yml'
+      - 'scripts/release-v01728-duo-performance.py'
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Apply Duo performance patch
+        run: python3 scripts/release-v01728-duo-performance.py
+      - name: Validate JavaScript
+        run: |
+          node --check src/game.js
+          node --check src/duo.js
+          node --check src/map-runtime.js
+          node --check src/panel.js
+      - name: Validate project
+        run: npm run check
+      - name: Validate performance contract
+        run: |
+          grep -q "bufferedAmount>32768" src/game.js
+          grep -q "setInterval(sendDuoSnapshot,100)" src/game.js
+          grep -q "lite:true" src/duo.js
+          grep -q "camera.x+=input.dx\*255\*dt" src/duo.js
+          grep -q "slice(0,72)" src/game.js
+          grep -q "slice(0,48)" src/game.js
+          grep -q "mobile?1.08:1.30" src/duo.js
+      - name: Commit release
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/game.js src/duo.js src/map-runtime.js index.html painel.html map-lab.html duo.html src/panel.js src/map-lab.js version.json
+          git commit -m 'perf: smooth and lighten Duo client v0.17.28'
+          git push
