@@ -1,0 +1,100 @@
+name: Caos Live v0.17.23 Snow Frost Puzzle
+
+on:
+  push:
+    paths:
+      - '.github/workflows/release-v01723-snow-puzzle.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Replace old Snow Frost with puzzle chunks
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f CAOS_LIVE_SNOW_FROST_PUZZLE_FINAL.zip
+          rm -rf .tmp-snow-puzzle
+          mkdir -p .tmp-snow-puzzle
+          unzip -q CAOS_LIVE_SNOW_FROST_PUZZLE_FINAL.zip -d .tmp-snow-puzzle
+          test -d .tmp-snow-puzzle/snow-frost-puzzle/chunks
+          rm -rf assets/Map/snow-frost
+          mkdir -p assets/Map/snow-frost
+          cp -R .tmp-snow-puzzle/snow-frost-puzzle/chunks assets/Map/snow-frost/chunks
+          cp .tmp-snow-puzzle/snow-frost-puzzle/manifest.json assets/Map/snow-frost/manifest.json
+          cp .tmp-snow-puzzle/snow-frost-puzzle/README.txt assets/Map/snow-frost/README.txt
+          rm -rf .tmp-snow-puzzle
+          rm -f CAOS_LIVE_SNOW_FROST_PUZZLE_FINAL.zip
+
+      - name: Validate puzzle pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find assets/Map/snow-frost/chunks -maxdepth 1 -name '*.png' | wc -l)" -eq 32
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const m=JSON.parse(fs.readFileSync('assets/Map/snow-frost/manifest.json','utf8'));
+          if(m.formatVersion!==3) throw new Error('formatVersion != 3');
+          if(!Array.isArray(m.chunks)||m.chunks.length!==32) throw new Error('manifest precisa ter 32 chunks');
+          for(let mask=0;mask<16;mask++){
+            const rows=m.chunks.filter(x=>x.mask===mask);
+            if(rows.length!==2) throw new Error(`mask ${mask} precisa ter 2 variacoes`);
+            for(const row of rows){
+              if(!fs.existsSync('assets/Map/snow-frost/'+row.file)) throw new Error('arquivo ausente '+row.file);
+              const bits=(row.connectors.north==='path'?1:0)|(row.connectors.east==='path'?2:0)|(row.connectors.south==='path'?4:0)|(row.connectors.west==='path'?8:0);
+              if(bits!==mask) throw new Error(`conectores divergentes em ${row.id}`);
+            }
+          }
+          console.log('Snow Frost Puzzle OK: 16 masks x 2 variacoes');
+          NODE
+
+      - name: Bump synchronized version
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          files=['index.html','painel.html','map-lab.html','src/game.js','src/map-lab.js']
+          for name in files:
+              p=Path(name)
+              s=p.read_text()
+              s=s.replace('0.17.22','0.17.23').replace('01722','01723')
+              p.write_text(s)
+          Path('version.json').write_text('{\n  "version": "0.17.23",\n  "build": "snow-frost-prebuilt-chunk-puzzle"\n}\n')
+          PY
+
+      - name: Validate JavaScript
+        run: |
+          node --check src/map-lab.js
+          node --check src/game.js
+
+      - name: Validate project
+        run: npm run check
+
+      - name: Commit release
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No changes to commit'
+          else
+            git commit -m 'feat: integrate Snow Frost prebuilt puzzle v0.17.23'
+            git push
+          fi
