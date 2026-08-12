@@ -1,0 +1,72 @@
+name: Caos Live v0.17.26 Duo Aggro
+
+on:
+  push:
+    paths:
+      - '.github/workflows/release-v01726-duo-aggro.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: 24}
+      - name: Add nearest-player aggro and P2 damage
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/game.js'); s=p.read_text()
+          a='function duoNearestTarget(){'
+          b="function duoEnemyTarget(e){if(!duoPlayer.connected||duoPlayer.down)return player;const d1=(e.x-player.x)*(e.x-player.x)+(e.y-player.y)*(e.y-player.y),d2=(e.x-duoPlayer.x)*(e.x-duoPlayer.x)+(e.y-duoPlayer.y)*(e.y-duoPlayer.y);return d2<d1?duoPlayer:player}\nfunction duoNearestTarget(){"
+          if a not in s: raise SystemExit('duo helper anchor missing')
+          s=s.replace(a,b,1)
+          a='const dxp=player.x-e.x,dyp=player.y-e.y,dist2=dxp*dxp+dyp*dyp,near2=420*420'
+          b='const chaseP=duoEnemyTarget(e),dxp=chaseP.x-e.x,dyp=chaseP.y-e.y,dist2=dxp*dxp+dyp*dyp,near2=420*420'
+          if a not in s: raise SystemExit('enemy chase anchor missing')
+          s=s.replace(a,b,1)
+          a="{const hitDist=Math.hypot(e.x-player.x,e.y-player.y),attackRange=player.r+e.r+(e.max>=100?58:38);if(hitDist<attackRange){const now=performance.now();if(now>=(e.attackAt||0)&&player.inv<=0&&now>invincibleUntil){e.attackAt=now+(e.max>=100?1100:900);e.attackFlash=.18;lastDamageAt=performance.now();player.life=Math.max(0,player.life-Math.max(1,e.damage*(1-player.armorReduction)));player.inv=.28;const kx=e.x-player.x,ky=e.y-player.y,kd=Math.hypot(kx,ky)||1;e.x+=kx/kd*8;e.y+=ky/kd*8;if(player.life<=0){if(!tryPhoenix())beginDeath(e)}}}}"
+          b="{const targetP=duoEnemyTarget(e),isP1=targetP===player,hitDist=Math.hypot(e.x-targetP.x,e.y-targetP.y),attackRange=(targetP.r||18)+e.r+(e.max>=100?58:38);if(hitDist<attackRange){const now=performance.now(),targetInv=isP1?player.inv:0,targetShield=isP1?invincibleUntil:0;if(now>=(e.attackAt||0)&&targetInv<=0&&now>targetShield){e.attackAt=now+(e.max>=100?1100:900);e.attackFlash=.18;if(isP1){lastDamageAt=performance.now();player.life=Math.max(0,player.life-Math.max(1,e.damage*(1-player.armorReduction)));player.inv=.28}else{duoPlayer.life=Math.max(0,duoPlayer.life-Math.max(1,e.damage))}const kx=e.x-targetP.x,ky=e.y-targetP.y,kd=Math.hypot(kx,ky)||1;e.x+=kx/kd*8;e.y+=ky/kd*8;if(targetP.life<=0){if(isP1){if(!tryPhoenix())beginDeath(e)}else{duoPlayer.down=true;duoPlayer.downUntil=now+5000;duoPlayer.life=0;duoInput.dx=duoInput.dy=0;toast('P2 CAIU · REVIVE 5s')}}}}}"
+          if a not in s: raise SystemExit('enemy attack anchor missing')
+          s=s.replace(a,b,1)
+          p.write_text(s)
+          PY
+      - name: Bump synchronized version
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          for name in ['index.html','painel.html','map-lab.html','duo.html','src/game.js','src/panel.js','src/map-lab.js','src/duo.js']:
+              p=Path(name); s=p.read_text().replace('0.17.25','0.17.26').replace('01725','01726'); p.write_text(s)
+          Path('version.json').write_text('{\n  "version": "0.17.26",\n  "build": "duo-multiplayer-nearest-player-aggro"\n}\n')
+          PY
+      - name: Extend validation
+        shell: bash
+        run: |
+          cat >> scripts/check-game.mjs <<'JS'
+
+          // v0.17.26 · duo aggro
+          if(!game.includes('function duoEnemyTarget(e)')) fail('aggro nearest-player ausente'); else ok('aggro escolhe player mais proximo');
+          if(!game.includes("toast('P2 CAIU · REVIVE 5s')")) fail('queda/revive P2 ausente'); else ok('P2 recebe dano e revive');
+          if(!game.includes('chaseP=duoEnemyTarget(e)')) fail('mobs nao perseguem P2'); else ok('mobs perseguem P1/P2');
+          if(process.exitCode) process.exit(process.exitCode);
+          JS
+      - name: Validate
+        run: |
+          node --check src/game.js
+          node --check src/duo.js
+          npm run check
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat: add nearest-player aggro to duo v0.17.26'
+          git push
