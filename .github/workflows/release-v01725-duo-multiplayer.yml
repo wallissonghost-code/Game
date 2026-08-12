@@ -1,0 +1,157 @@
+name: Caos Live v0.17.25 Duo Multiplayer
+
+on:
+  push:
+    paths:
+      - '.github/workflows/release-v01725-duo-multiplayer.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Create Player 2 client
+        shell: bash
+        run: |
+          cat > duo.html <<'HTML'
+          <!doctype html>
+          <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#071018"><title>Caos Live Duo v0.17.25</title>
+          <style>
+          *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#071018;color:#eef8ff;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.app{position:relative;width:100%;height:100%;background:#071018}.hud{position:absolute;z-index:5;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:flex-start;padding:max(12px,env(safe-area-inset-top)) 14px 10px;pointer-events:none;text-shadow:0 2px 7px #001}.brand{font-weight:950;letter-spacing:.09em}.brand b{color:#67e8f9}.meta{font-size:11px;color:#b8d3e2;margin-top:4px}.life{background:#07121ed9;border:1px solid #35546b;border-radius:12px;padding:8px 11px;text-align:right}.life b{font-size:18px}.status{position:absolute;z-index:6;left:50%;top:max(15px,env(safe-area-inset-top));transform:translateX(-50%);background:#07121edb;border:1px solid #35546b;border-radius:999px;padding:7px 12px;font-size:11px;white-space:nowrap}.game{width:100%;height:100%;display:block;touch-action:none}.join{position:absolute;z-index:20;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#12314b 0,#071018 55%,#03080d 100%);padding:20px}.join.hide{display:none}.card{width:min(420px,100%);background:#081522ed;border:1px solid #36556b;border-radius:22px;padding:24px;box-shadow:0 24px 80px #0009}.eyebrow{font-size:11px;letter-spacing:.12em;color:#67e8f9;font-weight:900}.card h1{margin:8px 0 7px;font-size:28px}.card p{color:#a9c1cf;font-size:13px}.card input{width:100%;background:#0d2232;border:1px solid #385c73;color:#fff;border-radius:13px;padding:14px;font-size:20px;text-transform:uppercase;letter-spacing:.16em;text-align:center;font-weight:900}.card button{width:100%;margin-top:10px;border:0;border-radius:13px;padding:14px;font-weight:950;color:white;background:linear-gradient(135deg,#0891b2,#2563eb)}.hint{font-size:11px;color:#809cab;margin-top:12px}.down{display:none;position:absolute;z-index:9;inset:0;place-items:center;background:#02070db0;font-weight:950;font-size:22px;text-align:center}.down.show{display:grid}.joy{position:absolute;z-index:4;left:20px;bottom:max(22px,env(safe-area-inset-bottom));width:112px;height:112px;border:1px solid #8bdcf044;border-radius:50%;background:#0a243260;pointer-events:none}.joy:after{content:'';position:absolute;width:42px;height:42px;border-radius:50%;background:#8be8ff55;border:1px solid #b7f2ff88;left:34px;top:34px}
+          </style></head><body><div class="app"><canvas id="canvas" class="game"></canvas><div class="hud"><div><div class="brand">CAOS <b>DUO</b></div><div class="meta" id="roomLabel">SALA -------- · P2</div><div class="meta">v0.17.25 · SNOW FROST</div></div><div class="life"><small>VIDA P2</small><br><b id="life">100/100</b><div class="meta" id="level">LV 1</div></div></div><div class="status" id="status">AGUARDANDO SALA</div><div class="joy"></div><div class="down" id="down">P2 CAIU<br><small>aguardando host…</small></div><section class="join" id="join"><div class="card"><span class="eyebrow">MULTIPLAYER · PLAYER 2</span><h1>Entrar na dupla</h1><p>Digite o mesmo código de 8 caracteres que aparece no Caos Live / Painel ADM.</p><input id="room" maxlength="8" placeholder="AB7K9P2X" autocomplete="off"><button id="connect">ENTRAR COMO P2</button><div class="hint">O Player 1 é o Host. O painel ADM pode continuar conectado na mesma sala.</div></div></section></div><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script><script src="src/map-runtime.js?v=01725"></script><script src="src/duo.js?v=01725"></script></body></html>
+          HTML
+          cat > src/duo.js <<'JS'
+          (()=>{'use strict';
+          const VERSION='0.17.25',$=id=>document.getElementById(id),canvas=$('canvas'),ctx=canvas.getContext('2d',{alpha:false});let W=0,H=0,dpr=1,peer=null,conn=null,retry=null,room='',snapshotAt=0;const keys={},input={dx:0,dy:0},me={x:84,y:0,r:18,life:100,maxLife:100,aim:0,down:false},host={x:0,y:0,life:100,maxLife:100,aim:0},enemies=[],bullets=[];let level=1,pointer=null;
+          const playerImg=new Image(),ogreImg=new Image(),eliteImg=new Image();playerImg.src='assets/player-armed/Posearma1.png?v=01725';ogreImg.src='assets/mobs/Ogro/frame_001.png?v=01725';eliteImg.src='assets/mobs/Ogro Elite/frame_001.png?v=01725';
+          function resize(){const r=canvas.getBoundingClientRect();W=Math.max(320,r.width|0);H=Math.max(320,r.height|0);dpr=Math.min(devicePixelRatio||1,1.6);canvas.width=Math.floor(W*dpr);canvas.height=Math.floor(H*dpr)}addEventListener('resize',resize,{passive:true});resize();
+          function world(x,y){return{x:x-me.x+W/2,y:y-me.y+H/2}}function hash(x,y,s=0){let n=Math.imul(x,374761393)+Math.imul(y,668265263)+Math.imul(s,1442695041);n^=n>>>13;n=Math.imul(n,1274126177);return((n^(n>>>16))>>>0)/4294967295}
+          if(window.CaosMap)window.CaosMap.init({version:VERSION,ctx,viewport:()=>({W,H}),player:()=>me,enemies:()=>enemies,hash,world});
+          function setStatus(t,ok=false){$('status').textContent=t;$('status').style.borderColor=ok?'#22c55e':'#35546b'}
+          function sanitize(v){return String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8)}
+          function connectRoom(code){room=sanitize(code);if(room.length!==8){setStatus('CÓDIGO INVÁLIDO');return}$('room').value=room;$('roomLabel').textContent='SALA '+room+' · P2';sessionStorage.setItem('caos-duo-room',room);clearTimeout(retry);try{conn?.close();peer?.destroy()}catch{}setStatus('CONECTANDO…');peer=new Peer(undefined,{debug:0});peer.on('open',()=>{conn=peer.connect('chaos-live-'+room.toLowerCase(),{reliable:true});conn.on('open',()=>{setStatus('P2 CONECTADO',true);$('join').classList.add('hide');conn.send({type:'duo-hello',role:'player2',version:VERSION})});conn.on('data',onData);conn.on('close',()=>retryConnect());conn.on('error',()=>retryConnect())});peer.on('error',()=>retryConnect())}
+          function retryConnect(){setStatus('RECONECTANDO…');clearTimeout(retry);retry=setTimeout(()=>room&&connectRoom(room),2400)}
+          function onData(d){if(!d||d.type!=='duo-snapshot')return;snapshotAt=performance.now();if(d.p2)Object.assign(me,d.p2);if(d.p1)Object.assign(host,d.p1);enemies.length=0;for(const e of d.enemies||[])enemies.push(e);bullets.length=0;for(const b of d.bullets||[])bullets.push(b);level=d.level||1;$('life').textContent=Math.max(0,Math.round(me.life))+'/'+Math.round(me.maxLife||100);$('level').textContent='LV '+level;$('down').classList.toggle('show',!!me.down)}
+          function readInput(){let dx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),dy=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);if(pointer){dx=pointer.x-W/2;dy=pointer.y-H/2;if(Math.hypot(dx,dy)<18)dx=dy=0}const n=Math.hypot(dx,dy)||1;input.dx=dx/n;input.dy=dy/n;if(!dx&&!dy)input.dx=input.dy=0}
+          addEventListener('keydown',e=>keys[e.key.toLowerCase()]=1);addEventListener('keyup',e=>keys[e.key.toLowerCase()]=0);function pos(e){const r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}canvas.onpointerdown=e=>{pointer=pos(e);canvas.setPointerCapture(e.pointerId);e.preventDefault()};canvas.onpointermove=e=>{if(pointer){pointer=pos(e);e.preventDefault()}};canvas.onpointerup=canvas.onpointercancel=()=>pointer=null;
+          setInterval(()=>{readInput();if(conn?.open)try{conn.send({type:'duo-input',dx:input.dx,dy:input.dy,ts:Date.now()})}catch{}},33);
+          function drawSoldier(p,label,center=false){const q=center?{x:W/2,y:H/2}:world(p.x,p.y);ctx.save();ctx.translate(q.x,q.y);if(playerImg.complete&&playerImg.naturalWidth){const h=68,w=h*playerImg.naturalWidth/playerImg.naturalHeight;ctx.globalAlpha=p.down?.38:1;ctx.drawImage(playerImg,-w/2,-h*.70,w,h)}else{ctx.fillStyle=label==='P2'?'#38bdf8':'#a78bfa';ctx.beginPath();ctx.arc(0,0,17,0,7);ctx.fill()}ctx.globalAlpha=1;ctx.font='900 10px sans-serif';ctx.textAlign='center';ctx.fillStyle=label==='P2'?'#a5f3fc':'#ddd6fe';ctx.fillText(label,0,-42);ctx.restore()}
+          function drawEnemy(e){const q=world(e.x,e.y),boss=e.max>=100,img=e.tier===1?eliteImg:ogreImg,h=boss?112:e.tier===1?78:58;if(q.x<-130||q.y<-130||q.x>W+130||q.y>H+130)return;ctx.save();ctx.translate(q.x,q.y);if(!boss&&img.complete&&img.naturalWidth){const w=h*img.naturalWidth/img.naturalHeight;ctx.drawImage(img,-w/2,-h*.72,w,h)}else{ctx.fillStyle=boss?'#991b1b':e.tier===2?'#ef4444':'#475569';ctx.beginPath();ctx.arc(0,0,boss?38:18,0,7);ctx.fill()}if(e.hp<e.max||boss){ctx.fillStyle='#24080d';ctx.fillRect(-28,-45,56,5);ctx.fillStyle='#fb7185';ctx.fillRect(-28,-45,56*Math.max(0,e.hp/e.max),5)}ctx.restore()}
+          function draw(){ctx.setTransform(dpr,0,0,dpr,0,0);if(!(window.CaosMap&&window.CaosMap.drawGround&&window.CaosMap.drawGround())){ctx.fillStyle='#d8e8ef';ctx.fillRect(0,0,W,H)}for(const b of bullets){const q=world(b.x,b.y);ctx.fillStyle=b.owner==='p2'?'#67e8f9':'#fef08a';ctx.beginPath();ctx.arc(q.x,q.y,3,0,7);ctx.fill()}for(const e of enemies)drawEnemy(e);drawSoldier(host,'P1');drawSoldier(me,'P2',true);if(performance.now()-snapshotAt>1500&&conn?.open)setStatus('SINAL DO HOST LENTO');requestAnimationFrame(draw)}requestAnimationFrame(draw);
+          $('connect').onclick=()=>connectRoom($('room').value);$('room').addEventListener('keydown',e=>{if(e.key==='Enter')connectRoom($('room').value)});const params=new URLSearchParams(location.search),initial=sanitize(params.get('sala')||params.get('duo')||sessionStorage.getItem('caos-duo-room')||'');if(initial){$('room').value=initial;connectRoom(initial)}
+          })();
+          JS
+
+      - name: Patch host multiplayer
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/game.js'); s=p.read_text()
+          def rep(a,b,name):
+              global s
+              if a not in s: raise SystemExit('missing patch anchor: '+name)
+              s=s.replace(a,b,1)
+          rep("const MAX_ENEMIES=320,GRID=64,CHUNK=640;", "const duoPlayer={x:84,y:0,r:18,speed:255,life:100,maxLife:100,moving:false,walk:0,aim:0,shotFlash:0,connected:false,down:false,downUntil:0};const duoInput={dx:0,dy:0};let duoConn=null,duoShotTimer=.05;const MAX_ENEMIES=320,GRID=64,CHUNK=640;", 'duo state')
+          rep("if(window.CaosMap)window.CaosMap.init({version:VERSION,ctx,viewport:()=>({W,H}),player:()=>player,enemies:()=>enemies,hash,world:(x,y)=>world(x,y)});", "if(window.CaosMap)window.CaosMap.init({version:VERSION,ctx,viewport:()=>({W,H}),player:()=>player,extraPlayers:()=>duoPlayer.connected?[duoPlayer]:[],enemies:()=>enemies,hash,world:(x,y)=>world(x,y)});", 'map extra players')
+          anchor="function resize(){"
+          helpers=r'''function duoNearestTarget(){let t=null,b=460*460;for(const e of enemies){if(e.dead)continue;const dx=e.x-duoPlayer.x,dy=e.y-duoPlayer.y,q=dx*dx+dy*dy;if(q<b){b=q;t=e}}return t}
+          function duoShoot(){if(!duoPlayer.connected||duoPlayer.down)return;const t=duoNearestTarget();if(!t)return;duoPlayer.aim=Math.atan2(t.y-duoPlayer.y,t.x-duoPlayer.x);duoPlayer.shotFlash=.10;const dir=playerFacing(duoPlayer.aim),m=muzzleLocal(dir);bullets.push({x:duoPlayer.x+m.x,y:duoPlayer.y+m.y,vx:Math.cos(duoPlayer.aim)*610,vy:Math.sin(duoPlayer.aim)*610,r:4,dead:false,ammo:1,born:performance.now(),pierceLeft:0,hits:[],owner:'p2',damage:2})}
+          function updateDuo(dt){if(!duoPlayer.connected)return;duoPlayer.shotFlash=Math.max(0,duoPlayer.shotFlash-dt);if(duoPlayer.down){if(performance.now()>=(duoPlayer.downUntil||0)){duoPlayer.down=false;duoPlayer.life=Math.max(1,duoPlayer.maxLife*.6)}return}let dx=Number(duoInput.dx)||0,dy=Number(duoInput.dy)||0,n=Math.hypot(dx,dy);duoPlayer.moving=n>.05;if(duoPlayer.moving){dx/=n;dy/=n;duoPlayer.x+=dx*duoPlayer.speed*dt;duoPlayer.y+=dy*duoPlayer.speed*dt;duoPlayer.walk+=dt*9}const t=duoNearestTarget();if(t)duoPlayer.aim=Math.atan2(t.y-duoPlayer.y,t.x-duoPlayer.x);duoShotTimer-=dt;if(duoShotTimer<=0){duoShoot();duoShotTimer=.28}}
+          function drawDuoPlayer(){if(!duoPlayer.connected)return;const q=world(duoPlayer.x,duoPlayer.y),dir=playerFacing(duoPlayer.aim),arr=(playerArmedFrames[dir]?.length?playerArmedFrames[dir]:playerBaseFrames[dir])||[],img=arr.length?arr[Math.floor(duoPlayer.walk)%arr.length]:null;ctx.save();ctx.translate(q.x,q.y);if(img){const h=70,ratio=(img.naturalWidth||img.width||1)/Math.max(1,img.naturalHeight||img.height||1),w=h*ratio;ctx.globalAlpha=duoPlayer.down?.35:1;ctx.drawImage(img,-w/2,-h*.70,w,h)}else{ctx.fillStyle='#38bdf8';ctx.beginPath();ctx.arc(0,0,17,0,7);ctx.fill()}ctx.globalAlpha=1;ctx.fillStyle='#a5f3fc';ctx.font='900 9px sans-serif';ctx.textAlign='center';ctx.fillText('P2',0,-43);ctx.restore()}
+          function duoSnapshot(){const near=enemies.filter(e=>!e.dead&&Math.hypot(e.x-duoPlayer.x,e.y-duoPlayer.y)<1100).slice(0,120).map(e=>({x:e.x,y:e.y,r:e.r,type:e.type,tier:e.tier,hp:e.hp,max:e.max,facing:e.facing})),bs=bullets.filter(b=>!b.flash&&!b.dead&&Math.hypot(b.x-duoPlayer.x,b.y-duoPlayer.y)<1200).slice(0,100).map(b=>({x:b.x,y:b.y,owner:b.owner||'p1'}));return{type:'duo-snapshot',version:VERSION,map:'snow-frost-puzzle',seed:'ICE-BMFSXT',level,p1:{x:player.x,y:player.y,life:player.life,maxLife:player.maxLife,aim:player.aim,down:false},p2:{x:duoPlayer.x,y:duoPlayer.y,life:duoPlayer.life,maxLife:duoPlayer.maxLife,aim:duoPlayer.aim,down:duoPlayer.down},enemies:near,bullets:bs,ts:Date.now()}}
+          function sendDuoSnapshot(){if(duoConn?.open)try{duoConn.send(duoSnapshot())}catch{}}
+          function duoStatus(on){const el=$('duoMini');if(el){el.textContent=on?'DUO: P2 CONECTADO':'DUO: AGUARDANDO P2';el.style.color=on?'#67e8f9':'#8aa3b5'}}
+          '''
+          if anchor not in s: raise SystemExit('missing resize anchor')
+          s=s.replace(anchor,helpers+anchor,1)
+          rep("if(!autoMode&&gameplayMode==='hardcore')", "updateDuo(dt);if(!autoMode&&gameplayMode==='hardcore')", 'update duo')
+          rep("e.hp-=player.damage;addDamageFx(e,player.damage,b.hits&&b.hits.length?'pierce':'normal');", "const dmg=b.damage||player.damage;e.hp-=dmg;addDamageFx(e,dmg,b.hits&&b.hits.length?'pierce':'normal');", 'p2 bullet damage')
+          rep("drawDamageFx();drawPlayer();", "drawDamageFx();drawDuoPlayer();drawPlayer();", 'draw p2')
+          rep("for(const k in skillLv)skillLv[k]=0;", "if(duoPlayer.connected)Object.assign(duoPlayer,{x:84,y:0,life:100,maxLife:100,moving:false,walk:0,aim:0,shotFlash:0,down:false,downUntil:0});duoShotTimer=.05;for(const k in skillLv)skillLv[k]=0;", 'reset p2')
+          rep("$('roomCode').textContent=room;", "$('roomCode').textContent=room;duoStatus(false);const duoLink=$('duoInviteBtn');if(duoLink)duoLink.href='duo.html?sala='+encodeURIComponent(room);", 'duo room link')
+          rep("c.on('data',d=>{if(gen===peerGeneration&&d?.type==='command')command(d)})", "c.on('data',d=>{if(gen!==peerGeneration)return;if(d?.type==='duo-hello'){if(duoConn&&duoConn!==c&&duoConn.open){try{c.send({type:'duo-busy'})}catch{};return}duoConn=c;duoPlayer.connected=true;duoPlayer.x=player.x+84;duoPlayer.y=player.y;duoPlayer.life=duoPlayer.maxLife;duoInput.dx=duoInput.dy=0;duoStatus(true);sendDuoSnapshot();return}if(c===duoConn&&d?.type==='duo-input'){duoInput.dx=Math.max(-1,Math.min(1,Number(d.dx)||0));duoInput.dy=Math.max(-1,Math.min(1,Number(d.dy)||0));return}if(d?.type==='command')command(d)})", 'peer duo data')
+          rep("c.on('close',()=>{connections.delete(c);if(gen===peerGeneration&&connections.size===0)status('AGUARDANDO PAINEL')})", "c.on('close',()=>{connections.delete(c);if(c===duoConn){duoConn=null;duoPlayer.connected=false;duoInput.dx=duoInput.dy=0;duoStatus(false)}if(gen===peerGeneration&&connections.size===0)status('AGUARDANDO PAINEL')})", 'peer duo close')
+          rep("setInterval(broadcast,500);openPeer();", "setInterval(broadcast,500);setInterval(sendDuoSnapshot,80);openPeer();", 'duo snapshot interval')
+          p.write_text(s)
+
+          p=Path('src/map-runtime.js'); m=p.read_text()
+          a="function nearbyCollisionDefs(){const p=cfg.player(),baseX=Math.floor((p.x-ORIGIN)/CHUNK),baseY=Math.floor((p.y-ORIGIN)/CHUNK),out=[];"
+          b="function nearbyCollisionDefs(p=cfg.player()){const baseX=Math.floor((p.x-ORIGIN)/CHUNK),baseY=Math.floor((p.y-ORIGIN)/CHUNK),out=[];"
+          if a not in m: raise SystemExit('missing map collision anchor')
+          m=m.replace(a,b,1)
+          a="API.resolveCollisions=()=>{if(!API.ready||!cfg)return;const cs=nearbyCollisionDefs(),p=cfg.player();for(const c of cs)resolveCircle(p,p.r||18,c.x,c.y,c.r,false,c.key);for(const e of cfg.enemies()){if(e.dead)continue;for(const c of cs)resolveCircle(e,e.r||16,c.x,c.y,c.r,true,c.key)}};"
+          b="API.resolveCollisions=()=>{if(!API.ready||!cfg)return;const p=cfg.player(),cs=nearbyCollisionDefs(p);for(const c of cs)resolveCircle(p,p.r||18,c.x,c.y,c.r,false,c.key);for(const q of (cfg.extraPlayers?.()||[])){if(!q||q.down)continue;const qs=nearbyCollisionDefs(q);for(const c of qs)resolveCircle(q,q.r||18,c.x,c.y,c.r,false,c.key)}for(const e of cfg.enemies()){if(e.dead)continue;for(const c of cs)resolveCircle(e,e.r||16,c.x,c.y,c.r,true,c.key)}};"
+          if a not in m: raise SystemExit('missing resolve collision anchor')
+          p.write_text(m.replace(a,b,1))
+
+          p=Path('index.html'); h=p.read_text()
+          h=h.replace('<canvas id="canvas"></canvas><div class="ghost" id="connectionMini">PAINEL: DESCONECTADO</div>', '<canvas id="canvas"></canvas><div class="ghost" id="connectionMini">PAINEL: DESCONECTADO</div><div id="duoMini" style="position:absolute;z-index:4;left:12px;bottom:48px;font-size:10px;font-weight:800;color:#8aa3b5;text-shadow:0 2px 6px #000">DUO: AGUARDANDO P2</div>')
+          h=h.replace('<button class="btn" id="resumeBtn">CONTINUAR</button>', '<a class="btn" id="duoInviteBtn" href="duo.html" style="display:block;text-align:center;text-decoration:none;margin-bottom:8px">ABRIR ENTRADA PLAYER 2</a><small style="display:block;margin-bottom:12px">O mesmo código conecta ADM e P2.</small><button class="btn" id="resumeBtn">CONTINUAR</button>')
+          p.write_text(h)
+          PY
+
+      - name: Bump synchronized version
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          files=['index.html','painel.html','map-lab.html','src/game.js','src/panel.js','src/map-lab.js']
+          for name in files:
+              p=Path(name); s=p.read_text(); s=s.replace('0.17.24','0.17.25').replace('01724','01725'); p.write_text(s)
+          Path('version.json').write_text('{\n  "version": "0.17.25",\n  "build": "duo-multiplayer-host-authoritative-mvp"\n}\n')
+          PY
+
+      - name: Extend validation contract
+        shell: bash
+        run: |
+          cat >> scripts/check-game.mjs <<'JS'
+
+          // v0.17.25 · multiplayer duo MVP
+          for(const f of ['duo.html','src/duo.js']) fs.existsSync(f)?ok('duo '+f):fail('duo ausente '+f);
+          const duoHtml=read('duo.html'),duoJs=read('src/duo.js');
+          if(!duoHtml.includes(`v${version}`)) fail('duo HTML sem versao atual'); else ok('duo HTML versionado');
+          if(!duoHtml.includes(`src/duo.js?v=${cacheTag}`)) fail('cache duo.js divergente'); else ok('cache duo.js '+cacheTag);
+          if(!duoHtml.includes(`src/map-runtime.js?v=${cacheTag}`)) fail('cache map runtime no duo divergente'); else ok('duo usa map runtime sincronizado');
+          if(!game.includes('const duoPlayer=')) fail('estado P2 ausente no host'); else ok('estado P2 no host');
+          if(!game.includes("d?.type==='duo-hello'")) fail('handshake P2 ausente'); else ok('handshake P2');
+          if(!game.includes("d?.type==='duo-input'")) fail('input P2 ausente'); else ok('input P2');
+          if(!game.includes('sendDuoSnapshot')) fail('snapshot P2 ausente'); else ok('snapshot P2');
+          if(!game.includes("owner:'p2',damage:2")) fail('tiro P2 ausente'); else ok('tiro P2 autoritativo');
+          if(!gameHtml.includes('id="duoInviteBtn"')) fail('atalho P2 ausente no jogo'); else ok('atalho P2 no jogo');
+          if(!mapRuntime.includes('cfg.extraPlayers?.()')) fail('colisao de players extras ausente'); else ok('P2 usa colisoes do mapa');
+          if(!duoJs.includes("peer.connect('chaos-live-'+room.toLowerCase()")) fail('P2 nao usa mesma sala PeerJS'); else ok('P2 usa mesmo codigo da sala');
+          if(process.exitCode) process.exit(process.exitCode);
+          JS
+
+      - name: Validate JavaScript
+        run: |
+          node --check src/game.js
+          node --check src/duo.js
+          node --check src/map-runtime.js
+
+      - name: Validate project
+        run: npm run check
+
+      - name: Commit release
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat: add two-player multiplayer v0.17.25'
+          git push
