@@ -1,0 +1,40 @@
+name: Caos Live v0.17.30 Player Loader Resilience
+on:
+  push:
+    paths:
+      - '.github/workflows/release-v01730-player-loader-resilience.yml'
+      - 'scripts/release-v01730-player-loader-resilience.py'
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Apply resilient player loader
+        run: python3 scripts/release-v01730-player-loader-resilience.py
+      - name: Validate JavaScript
+        run: |
+          node --check src/game.js
+          node --check src/duo.js
+          node --check src/map-runtime.js
+          node --check src/panel.js
+      - name: Validate project
+        run: npm run check
+      - name: Validate loader contract
+        run: |
+          grep -q "loadPngSequenceSafe('./assets/player',32" src/game.js
+          grep -q "loadPngSequenceSafe('./assets/player-armed',32" src/game.js
+          grep -q "loadPngSequenceSafe('./assets/weapons',32" src/game.js
+          grep -q "skinReady=playerArmedReady||playerV2Ready||soldierReady" src/game.js
+          grep -q "gunReady=weaponV2Ready||weaponReady" src/game.js
+      - name: Commit release
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/game.js src/duo.js src/map-runtime.js src/panel.js src/map-lab.js index.html painel.html duo.html map-lab.html version.json scripts/check-game.mjs
+          git commit -m 'fix: resilient P1 skin loading v0.17.30'
+          git push
