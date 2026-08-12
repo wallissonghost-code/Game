@@ -1,0 +1,39 @@
+name: Caos Live v0.17.31 Skill Shield
+on:
+  push:
+    paths:
+      - '.github/workflows/release-v01731-skill-shield.yml'
+      - 'scripts/release-v01731-skill-shield.py'
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Apply skill shield patch
+        run: python3 scripts/release-v01731-skill-shield.py
+      - name: Validate JavaScript
+        run: |
+          node --check src/game.js
+          node --check src/duo.js
+          node --check src/map-runtime.js
+          node --check src/panel.js
+      - name: Validate shield contract
+        run: |
+          grep -q 'function skillShieldP1' src/game.js
+          grep -q 'function skillShieldP2' src/game.js
+          grep -q 'choiceProtected' src/game.js
+          grep -q 'skillShield:skillShieldP1()' src/game.js
+          grep -q 'skillShield:skillShieldP2()' src/game.js
+          grep -q 'ESCUDO DE SKILL' src/duo.js
+      - name: Commit release
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/game.js src/duo.js src/map-runtime.js src/panel.js src/map-lab.js index.html painel.html duo.html map-lab.html version.json
+          git commit -m 'feat: skill selection shield v0.17.31'
+          git push
