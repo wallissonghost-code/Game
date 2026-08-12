@@ -13,15 +13,15 @@ button,input,select{font:inherit;color:inherit}button,select,input[type=text]{ba
 </head>
 <body>
 <div class="app">
-<header class="top"><div class="brand">CAOS <b>MAP LAB</b></div><span class="badge" id="version">v0.17.21</span><span class="badge">Laboratório · não altera o jogo</span><span class="badge" id="status">carregando assets…</span></header>
+<header class="top"><div class="brand">CAOS <b>MAP LAB</b></div><span class="badge" id="version">v0.17.22</span><span class="badge">Laboratório · não altera o jogo</span><span class="badge" id="status">carregando assets…</span></header>
 <div class="main">
 <aside class="side">
   <div class="section"><h3>Gerador</h3>
-    <div class="row"><label>Bioma</label><select id="world"><option value="dense-forest">Floresta Densa</option></select></div>
-    <div class="row"><label>Seed</label><input id="seed" type="text" value="CAOS-001"></div>
+    <div class="row"><label>Bioma</label><select id="world"><option value="snow-frost" selected>Gelo / Neve</option><option value="dense-forest">Floresta Densa</option></select></div>
+    <div class="row"><label>Seed</label><input id="seed" type="text" value="GELO-001"></div>
     <div class="row"><label>Tamanho</label><select id="size"><option>24</option><option selected>32</option><option>40</option><option>48</option></select></div>
-    <div class="row"><label>Água</label><input id="water" type="range" min="0" max="35" value="14"><b id="waterV">14%</b></div>
-    <div class="row"><label>Clareiras</label><input id="clearings" type="range" min="0" max="30" value="12"><b id="clearV">12%</b></div>
+    <div class="row"><label>Lagos gelados</label><input id="water" type="range" min="0" max="35" value="14"><b id="waterV">14%</b></div>
+    <div class="row"><label>Gelo exposto</label><input id="clearings" type="range" min="0" max="30" value="12"><b id="clearV">12%</b></div>
     <div class="row"><label>Trilhas</label><input id="trails" type="range" min="1" max="4" value="2"><b id="trailV">2</b></div>
     <div class="row"><label>Objetos</label><input id="density" type="range" min="0" max="45" value="18"><b id="densityV">18%</b></div>
     <div class="row"><button class="primary" id="generate" style="flex:1">GERAR MAPA</button><button id="random">🎲</button></div>
@@ -34,14 +34,14 @@ button,input,select{font:inherit;color:inherit}button,select,input[type=text]{ba
     <label class="toggle"><input id="objects" type="checkbox" checked> Objetos</label>
     <label class="toggle"><input id="art" type="checkbox"> Arte atual</label>
   </div></div>
-  <div class="section"><h3>Assets atuais · Dense Forest</h3><div class="tiles" id="tileLibrary"></div><p class="help">Esses são os <b>10 tiles atuais</b>. O Lab vai mostrar quantos formatos de encaixe o mapa realmente pede.</p></div>
+  <div class="section"><h3>Assets atuais · Snow Frost</h3><div class="tiles" id="tileLibrary"></div><p class="help">O pack de gelo atual tem <b>1 tile base</b>. O Lab mostra exatamente quais bordas, cantos e transições precisam ser produzidos para virar um autotile de verdade.</p></div>
 </aside>
-<main class="canvasWrap" id="wrap"><canvas id="canvas"></canvas><div class="floatbar"><button id="zin">＋</button><button id="zout">−</button><button id="reset">⌂</button></div><div class="legend"><span><i class="dot" style="background:#315f2b"></i>floresta</span><span><i class="dot" style="background:#7b5a32"></i>terra</span><span><i class="dot" style="background:#277089"></i>água</span><span><i class="dot" style="background:#b78a48"></i>trilha</span><span><i class="dot" style="background:#8d6b43"></i>ponte</span></div></main>
+<main class="canvasWrap" id="wrap"><canvas id="canvas"></canvas><div class="floatbar"><button id="zin">＋</button><button id="zout">−</button><button id="reset">⌂</button></div><div class="legend"><span><i class="dot" style="background:#dcecf3"></i>neve</span><span><i class="dot" style="background:#9ed7e8"></i>gelo</span><span><i class="dot" style="background:#3f8fb2"></i>lago gelado</span><span><i class="dot" style="background:#c9d7df"></i>trilha</span><span><i class="dot" style="background:#8ec8dc"></i>ponte de gelo</span></div></main>
 <aside class="side right">
   <div class="section"><h3>Diagnóstico do quebra-cabeça</h3><div class="statGrid"><div class="stat"><strong id="cells">0</strong><small>células</small></div><div class="stat"><strong id="roles">0</strong><small>encaixes usados</small></div><div class="stat"><strong id="missing">0</strong><small>peças especiais</small></div><div class="stat"><strong id="score">0%</strong><small>cobertura atual</small></div></div><div id="issues"></div></div>
   <div class="section"><h3>Máscaras necessárias</h3><div class="maskList" id="maskList"></div></div>
   <div class="section"><h3>Como ler</h3><p class="help">Cada célula recebe uma máscara N/E/S/W. Ex.: <b>5 = norte + sul</b> (reta vertical), <b>3 = norte + leste</b> (curva), <b>15 = conectado nos quatro lados</b> (centro). Bordas vermelhas indicam peças que o pack atual ainda não classifica como autotile.</p></div>
 </aside>
 </div></div>
-<script src="src/map-lab.js?v=01721"></script>
+<script src="src/map-lab.js?v=01722"></script>
 </body></html>

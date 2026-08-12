@@ -109,4 +109,10 @@ const labHtml=read('map-lab.html'),labJs=read('src/map-lab.js');
 if(!labHtml.includes('src/map-lab.js?v='+cacheTag)) fail('map lab cache dessincronizado'); else ok('map lab cache '+cacheTag);
 if(!labJs.includes('function maskFor')) fail('map lab sem autotile mask'); else ok('map lab autotile mask');
 if(!labJs.includes('TYPE.bridge')) fail('map lab sem ponte contextual'); else ok('map lab ponte contextual');
-if(!labJs.includes('assets/Map/dense-forest/tiles/')) fail('map lab nao usa assets reais'); else ok('map lab usa Dense Forest real');
+if(!labJs.includes('assets/Map/snow-frost/tiles/')) fail('map lab nao usa assets Snow Frost reais'); else ok('map lab usa Snow Frost real');
+
+
+// v0.17.22 · Ice-first Map Lab
+if(!labHtml.includes('Gelo / Neve')) fail('Map Lab sem bioma gelo'); else ok('Map Lab inicia em gelo');
+if(!labJs.includes("const NAMES=['neve','gelo','lago gelado','trilha','ponte de gelo']")) fail('semantica Snow Frost ausente'); else ok('semantica Snow Frost ativa');
+for(const f of ['assets/Map/snow-frost/tiles/tile_001.png','assets/Map/snow-frost/decals/decal_004.png','assets/Map/snow-frost/obstacles/obstacle_004.png']) fs.existsSync(f)?ok('snow asset '+f):fail('snow asset ausente '+f);
