@@ -1,0 +1,49 @@
+name: Caos Live v0.17.20 Dense Forest
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'assets/CAOS_LIVE_WORLDS_FINAL_CORRIGIDO.zip'
+      - 'scripts/release-v01720-dense-forest.mjs'
+      - '.github/workflows/release-v01720-dense-forest.yml'
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Replace old map library
+        run: |
+          test -f assets/CAOS_LIVE_WORLDS_FINAL_CORRIGIDO.zip
+          rm -rf assets/Map
+          mkdir -p assets/Map
+          unzip -q assets/CAOS_LIVE_WORLDS_FINAL_CORRIGIDO.zip -d assets/Map
+          rm assets/CAOS_LIVE_WORLDS_FINAL_CORRIGIDO.zip
+          test -f assets/Map/dense-forest/tiles/tile_001.png
+          test -f assets/Map/dense-forest/obstacles/obstacle_021.png
+      - name: Apply Dense Forest release
+        run: node scripts/release-v01720-dense-forest.mjs
+      - name: Remove legacy map automation
+        run: |
+          rm -f scripts/prepare-map-upload.mjs scripts/release-v01719-map.mjs
+          rm -f .github/workflows/organize-map-upload.yml .github/workflows/release-v01719-map.yml
+      - name: Validate JavaScript
+        run: |
+          node --check src/map-runtime.js
+          node --check src/game.js
+          node --check src/panel.js
+      - name: Validate project
+        run: node scripts/check-game.mjs
+      - name: Commit release
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "feat: replace old map with cohesive Dense Forest v0.17.20"
+          git push
