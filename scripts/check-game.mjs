@@ -89,11 +89,15 @@ if(!game.includes("· CORROMPIDO")||!game.includes("· ELITE")) fail('rotulo vis
 if(!panelHtml.includes('id="bossTier"')) fail('seletor de tier do Boss ausente'); else ok('Admin controla tier do Boss');
 if(!panel.includes("b.dataset.cmd==='boss'?($('bossTier')?.value||null):undefined")) fail('painel nao envia tier de Boss'); else ok('painel envia tier de Boss');
 
-
-// v0.17.19 · Field map runtime
+// v0.17.20 · Dense Forest cohesive map
 const mapRuntime=read('src/map-runtime.js');
 if(!gameHtml.includes('src/map-runtime.js?v='+cacheTag)) fail('map-runtime sem cache sincronizado'); else ok('map-runtime cache '+cacheTag);
-if(!game.includes('window.CaosMap.init')) fail('game nao inicializa mapa'); else ok('mapa inicializado');
-if(!game.includes('window.CaosMap.resolveCollisions')) fail('colisao do mapa nao ligada'); else ok('colisao do mapa ligada');
-if(!mapRuntime.includes("name:'Campo / Pântano'")) fail('runtime Campo/Pantano ausente'); else ok('runtime Campo/Pantano');
-for(const f of ['assets/Map/field/tiles/dirt/dirt_01.png','assets/Map/field/tiles/moss/moss_01.png','assets/Map/field/tiles/swamp/swamp_01.png','assets/Map/field/tiles/water/water_01.png','assets/Map/field/obstacles/spike_fence_01.png','assets/Map/field/obstacles/stone_ruin_01.png','assets/Map/wasteland/obstacles/wrecked_car_01.png','assets/Map/wasteland/obstacles/barricade_01.png']) fs.existsSync(f)?ok('map asset '+f):fail('map asset ausente '+f);
+if(!game.includes("map:'dense-forest'")) fail('telemetria do mapa divergente'); else ok('mapa ativo dense-forest');
+if(!mapRuntime.includes("name:'Floresta Densa'")) fail('runtime Floresta Densa ausente'); else ok('runtime Floresta Densa');
+if(!mapRuntime.includes('BASE_TILE_INDEXES=[0,1,2,3,7,8]')) fail('selecao segura de tiles ausente'); else ok('tiles de base coesos');
+for(const f of ['assets/Map/dense-forest/tiles/tile_001.png','assets/Map/dense-forest/tiles/tile_010.png','assets/Map/dense-forest/decals/decal_015.png','assets/Map/dense-forest/obstacles/obstacle_021.png']) fs.existsSync(f)?ok('map asset '+f):fail('map asset ausente '+f);
+for(const d of ['field','wasteland','extras-uploaded']) if(fs.existsSync('assets/Map/'+d)) fail('mapa antigo ainda existe: '+d); else ok('mapa antigo removido: '+d);
+if(fs.existsSync('assets/CAOS_LIVE_WORLDS_FINAL_CORRIGIDO.zip')) fail('ZIP de upload ainda na pasta assets'); else ok('ZIP extraido e removido');
+const expectedWorlds=['cave-mines','dense-forest','desert-canyon','ruined-city','shadow-corruption','snow-frost'];
+const actualWorlds=fs.readdirSync('assets/Map',{withFileTypes:true}).filter(x=>x.isDirectory()).map(x=>x.name).sort();
+if(JSON.stringify(actualWorlds)!==JSON.stringify(expectedWorlds)) fail('pastas de mundos divergentes: '+actualWorlds.join(',')); else ok('6 mundos novos organizados');

@@ -1,0 +1,32 @@
+{
+  "id": "dense-forest",
+  "formatVersion": 2,
+  "engineReady": true,
+  "tileSize": [
+    128,
+    128
+  ],
+  "decalCanvas": [
+    192,
+    192
+  ],
+  "obstacleCanvas": [
+    256,
+    256
+  ],
+  "anchor": "bottom-center",
+  "folders": {
+    "tiles": "tiles",
+    "decals": "decals",
+    "obstacles": "obstacles"
+  },
+  "counts": {
+    "tiles": 10,
+    "decals": 15,
+    "obstacles": 21
+  },
+  "notes": [
+    "Floresta fechada com terra, musgo, vegetação, troncos, rochas e estruturas.",
+    "Arquivos finais separados individualmente; nenhum sheet/preview é necessário pela engine."
+  ]
+}

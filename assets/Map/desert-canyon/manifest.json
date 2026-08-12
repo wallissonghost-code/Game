@@ -1,0 +1,32 @@
+{
+  "id": "desert-canyon",
+  "formatVersion": 2,
+  "engineReady": true,
+  "tileSize": [
+    128,
+    128
+  ],
+  "decalCanvas": [
+    192,
+    192
+  ],
+  "obstacleCanvas": [
+    256,
+    256
+  ],
+  "anchor": "bottom-center",
+  "folders": {
+    "tiles": "tiles",
+    "decals": "decals",
+    "obstacles": "obstacles"
+  },
+  "counts": {
+    "tiles": 1,
+    "decals": 4,
+    "obstacles": 4
+  },
+  "notes": [
+    "Bioma desértico/cânion com solo seco, areia, pedras, cactos, carroça e barricadas.",
+    "Chão, decals e obstáculos pertencem à mesma paleta visual do bioma."
+  ]
+}

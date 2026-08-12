@@ -1,0 +1,32 @@
+{
+  "id": "cave-mines",
+  "formatVersion": 2,
+  "engineReady": true,
+  "tileSize": [
+    128,
+    128
+  ],
+  "decalCanvas": [
+    192,
+    192
+  ],
+  "obstacleCanvas": [
+    256,
+    256
+  ],
+  "anchor": "bottom-center",
+  "folders": {
+    "tiles": "tiles",
+    "decals": "decals",
+    "obstacles": "obstacles"
+  },
+  "counts": {
+    "tiles": 10,
+    "decals": 15,
+    "obstacles": 16
+  },
+  "notes": [
+    "Caverna/minas com rocha, madeira, estruturas de mineração e cristais.",
+    "Assets individuais e normalizados para o mesmo padrão dos demais mundos."
+  ]
+}

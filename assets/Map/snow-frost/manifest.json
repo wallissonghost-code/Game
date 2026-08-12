@@ -1,0 +1,32 @@
+{
+  "id": "snow-frost",
+  "formatVersion": 2,
+  "engineReady": true,
+  "tileSize": [
+    128,
+    128
+  ],
+  "decalCanvas": [
+    192,
+    192
+  ],
+  "obstacleCanvas": [
+    256,
+    256
+  ],
+  "anchor": "bottom-center",
+  "folders": {
+    "tiles": "tiles",
+    "decals": "decals",
+    "obstacles": "obstacles"
+  },
+  "counts": {
+    "tiles": 1,
+    "decals": 4,
+    "obstacles": 4
+  },
+  "notes": [
+    "Bioma de gelo/neve com solo congelado, lagos de gelo, rochas, árvores e barricadas nevadas.",
+    "Chão, decals e obstáculos pertencem à mesma paleta visual do bioma."
+  ]
+}

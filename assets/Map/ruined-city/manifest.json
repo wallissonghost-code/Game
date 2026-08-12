@@ -1,0 +1,32 @@
+{
+  "id": "ruined-city",
+  "formatVersion": 2,
+  "engineReady": true,
+  "tileSize": [
+    128,
+    128
+  ],
+  "decalCanvas": [
+    192,
+    192
+  ],
+  "obstacleCanvas": [
+    256,
+    256
+  ],
+  "anchor": "bottom-center",
+  "folders": {
+    "tiles": "tiles",
+    "decals": "decals",
+    "obstacles": "obstacles"
+  },
+  "counts": {
+    "tiles": 8,
+    "decals": 3,
+    "obstacles": 14
+  },
+  "notes": [
+    "Cidade destruída com concreto/asfalto, barreiras, sucata e veículo abandonado.",
+    "Título e elementos do preview foram removidos; somente assets de jogo permanecem."
+  ]
+}

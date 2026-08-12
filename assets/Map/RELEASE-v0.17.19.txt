@@ -1,7 +1,0 @@
-CAOS LIVE v0.17.19
-Build: field-swamp-map-runtime
-
-Mapa Campo/Pantano conectado ao jogo.
-Tiles: dirt, moss, swamp, water.
-Objetos Field com colisao seletiva.
-Extras otimizados: wrecked car, barricade, dead tree, rock cluster e decals.

@@ -30,11 +30,10 @@ Bosses podem nascer em três variantes usando a mesma skin-base, com aura e iden
 
 O painel Admin permite forçar Normal, Elite ou Corrompido para teste. Sem força manual, vale a chance natural acima.
 
-
-## Mapa Campo / Pântano · v0.17.19
-- Chão procedural determinístico usando tiles de terra, musgo, pântano e água.
-- Objetos do Field Pack distribuídos por setores; cerca, ruína, totem e gaiola possuem colisão.
-- Ponte e fosso ritual são atravessáveis nesta primeira versão.
-- Carro destruído, barricada, árvore seca e pedras do pack extra entram como obstáculos raros, em versões otimizadas para mobile.
-- Decals extras são apenas visuais e não possuem colisão.
-- Projéteis continuam atravessando obstáculos nesta etapa.
+## Biblioteca de Mundos · v0.17.20
+- O mapa Campo/Pântano e os extras Wasteland antigos foram removidos.
+- A biblioteca atual veio exclusivamente de `CAOS_LIVE_WORLDS_FINAL_CORRIGIDO.zip`.
+- Mundos disponíveis: Dense Forest, Cave Mines, Ruined City, Snow Frost, Shadow Corruption e Desert Canyon.
+- Mundo ativo para teste: **Dense Forest**.
+- O runtime recorta as bordas escuras dos tiles e usa sobreposição de 6 px para reduzir emendas visuais.
+- Decals não possuem colisão; obstáculos sólidos selecionados possuem colisão leve para player e mobs.
