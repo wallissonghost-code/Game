@@ -1,4 +1,4 @@
 {
-  "version": "0.17.24",
-  "build": "snow-frost-puzzle-live-test"
+  "version": "0.17.25",
+  "build": "duo-multiplayer-host-authoritative-mvp"
 }

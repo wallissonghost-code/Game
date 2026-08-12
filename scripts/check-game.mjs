@@ -128,3 +128,19 @@ if(fs.existsSync('CAOS_LIVE_SNOW_FROST_PUZZLE_FINAL.zip')) fail('ZIP Snow Frost 
 if(!mapRuntime.includes('const N=1,E=2,S=4,W=8,CHUNK=512,MAP_N=6,DENSITY=.85,VARIANT=.32')) fail('runtime puzzle 6x6 divergente'); else ok('runtime puzzle 6x6 85/32');
 if(!mapRuntime.includes('assets/Map/snow-frost/manifest.json')) fail('runtime nao carrega manifest Snow Frost'); else ok('runtime carrega manifest Snow Frost');
 if(!mapRuntime.includes('def.collision')) fail('colisoes dos chunks nao integradas'); else ok('colisoes Snow Frost integradas');
+
+// v0.17.25 · multiplayer duo MVP
+for(const f of ['duo.html','src/duo.js']) fs.existsSync(f)?ok('duo '+f):fail('duo ausente '+f);
+const duoHtml=read('duo.html'),duoJs=read('src/duo.js');
+if(!duoHtml.includes(`v${version}`)) fail('duo HTML sem versao atual'); else ok('duo HTML versionado');
+if(!duoHtml.includes(`src/duo.js?v=${cacheTag}`)) fail('cache duo.js divergente'); else ok('cache duo.js '+cacheTag);
+if(!duoHtml.includes(`src/map-runtime.js?v=${cacheTag}`)) fail('cache map runtime no duo divergente'); else ok('duo usa map runtime sincronizado');
+if(!game.includes('const duoPlayer=')) fail('estado P2 ausente no host'); else ok('estado P2 no host');
+if(!game.includes("d?.type==='duo-hello'")) fail('handshake P2 ausente'); else ok('handshake P2');
+if(!game.includes("d?.type==='duo-input'")) fail('input P2 ausente'); else ok('input P2');
+if(!game.includes('sendDuoSnapshot')) fail('snapshot P2 ausente'); else ok('snapshot P2');
+if(!game.includes("owner:'p2',damage:2")) fail('tiro P2 ausente'); else ok('tiro P2 autoritativo');
+if(!gameHtml.includes('id="duoInviteBtn"')) fail('atalho P2 ausente no jogo'); else ok('atalho P2 no jogo');
+if(!mapRuntime.includes('cfg.extraPlayers?.()')) fail('colisao de players extras ausente'); else ok('P2 usa colisoes do mapa');
+if(!duoJs.includes("peer.connect('chaos-live-'+room.toLowerCase()")) fail('P2 nao usa mesma sala PeerJS'); else ok('P2 usa mesmo codigo da sala');
+if(process.exitCode) process.exit(process.exitCode);
