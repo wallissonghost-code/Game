@@ -1,0 +1,56 @@
+name: Caos Live v0.17.33 Firebase Global Ranking
+on:
+  push:
+    paths:
+      - 'scripts/release-v01733-firebase-global-ranking.py'
+      - '.github/workflows/release-v01733-firebase-global-ranking.yml'
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Apply Firebase global ranking patch
+        run: python3 scripts/release-v01733-firebase-global-ranking.py
+      - name: Validate JavaScript
+        run: |
+          node --check src/game.js
+          node --check src/duo.js
+          node --check src/firebase-ranking.js
+          node --check src/panel.js
+          node --check src/map-runtime.js
+      - name: Validate Firebase contract
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const g=fs.readFileSync('src/game.js','utf8');
+          const d=fs.readFileSync('src/duo.js','utf8');
+          const f=fs.readFileSync('src/firebase-ranking.js','utf8');
+          const h=fs.readFileSync('index.html','utf8');
+          const dh=fs.readFileSync('duo.html','utf8');
+          const v=JSON.parse(fs.readFileSync('version.json','utf8'));
+          const need=(ok,msg)=>{if(!ok)throw Error(msg)};
+          need(v.version==='0.17.33','version');
+          need(h.includes('firebase-ranking.js?v=01733'),'host firebase script');
+          need(dh.includes('firebase-ranking.js?v=01733'),'duo firebase script');
+          need(f.includes("projectId:'caos-live'"),'firebase project');
+          need(f.includes('signInAnonymously'),'anonymous auth');
+          need(f.includes("'ranking_solo'",0)&&f.includes("'ranking_duo'",0),'collections');
+          need(f.includes('FieldValue.serverTimestamp()'),'server timestamp');
+          need(g.includes('cloud.saveSolo')&&g.includes('cloud.saveDuo'),'cloud saves');
+          need(g.includes('window.CaosRank.load(mode,40)'),'global load');
+          need(d.includes('version:VERSION,name:nm,uid'),'duo uid');
+          console.log('Firebase global ranking contract OK');
+          NODE
+      - name: Commit release
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html duo.html painel.html map-lab.html src/game.js src/duo.js src/panel.js src/map-runtime.js src/map-lab.js src/firebase-ranking.js scripts/check-game.mjs version.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'release: v0.17.33 Firebase global ranking'
+          git push
