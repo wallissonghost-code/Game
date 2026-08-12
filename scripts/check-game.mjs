@@ -150,7 +150,7 @@ const duoHtmlV27=read('duo.html'),duoJsV27=read('src/duo.js');
 if(!duoHtmlV27.includes('jszip@3.10.1')) fail('Duo sem JSZip para bosses'); else ok('Duo carrega JSZip');
 for(const token of ["loadFrames('assets/player-armed',32","loadFrames('assets/weapons',32","loadFrames('assets/mobs/Ogro',32","loadFrames('assets/mobs/Ogro Elite',32"]) if(!duoJsV27.includes(token)) fail('Duo sem pack necessario: '+token); else ok('Duo pack necessario '+token);
 if(!game.includes('playerArmedReady=false')) fail('Host nao controla readiness armado'); else ok('Host espera player armado');
-if(!game.includes('playerV2Ready&&playerArmedReady&&weaponV2Ready')) fail('Host libera arena antes da arma'); else ok('Host espera arma antes de entrar');
+if(!game.includes('skinReady=playerArmedReady||playerV2Ready||soldierReady')||!game.includes('gunReady=weaponV2Ready||weaponReady')) fail('Host libera arena sem skin/arma valida'); else ok('Host exige skin e arma com fallback resiliente');
 if(!game.includes('moving:player.moving,walk:player.walk,shotFlash:player.shotFlash')) fail('snapshot P1 sem animacao'); else ok('snapshot P1 com animacao');
 if(!game.includes('moving:duoPlayer.moving,walk:duoPlayer.walk,shotFlash:duoPlayer.shotFlash')) fail('snapshot P2 sem animacao'); else ok('snapshot P2 com animacao');
 if(!game.includes('t:e.t,speedMul:e.speedMul||1')) fail('snapshot mobs sem frame temporal'); else ok('snapshot mobs animado');
@@ -176,3 +176,11 @@ if(!duo29.includes('mobile?.92:1.18')) fail('DPR Duo mobile nao otimizado'); els
 if(!duo29.includes('lite:true')) fail('Duo nao usa mapa lite'); else ok('mapa lite no P2');
 if(!mapRuntime.includes("if(!cfg?.lite)")) fail('runtime nao remove efeitos no lite'); else ok('efeitos pesados removidos no P2');
 if(process.exitCode) process.exit(process.exitCode);
+
+// v0.17.30 · resilient player asset loader
+if(!game.includes('async function loadPngSequenceSafe(')) fail('loader resiliente do player ausente'); else ok('loader resiliente do player ativo');
+if(!game.includes('skinReady=playerArmedReady||playerV2Ready||soldierReady')) fail('fallback de skin do P1 ausente'); else ok('fallback de skin P1 ativo');
+if(!game.includes('gunReady=weaponV2Ready||weaponReady')) fail('fallback de arma do P1 ausente'); else ok('fallback de arma P1 ativo');
+if(!game.includes("loadPngSequenceSafe('./assets/player',32")) fail('player base ainda usa carregamento fragil'); else ok('player base tolera falha individual');
+if(!game.includes("loadPngSequenceSafe('./assets/player-armed',32")) fail('player armado ainda usa carregamento fragil'); else ok('player armado tolera falha individual');
+if(!game.includes("loadPngSequenceSafe('./assets/weapons',32")) fail('weapon pack ainda usa carregamento fragil'); else ok('weapon pack tolera falha individual');
