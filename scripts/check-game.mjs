@@ -133,7 +133,7 @@ if(!game.includes('const duoPlayer=')) fail('estado P2 ausente no host'); else o
 if(!game.includes("d?.type==='duo-hello'")) fail('handshake P2 ausente'); else ok('handshake P2');
 if(!game.includes("d?.type==='duo-input'")) fail('input P2 ausente'); else ok('input P2');
 if(!game.includes('sendDuoSnapshot')) fail('snapshot P2 ausente'); else ok('snapshot P2');
-if(!game.includes("owner:'p2',damage:2")) fail('tiro P2 ausente'); else ok('tiro P2 autoritativo');
+if(!game.includes("owner:'p2',damage")) fail('tiro P2 ausente'); else ok('tiro P2 autoritativo com dano por skill');
 if(!gameHtml.includes('id="duoInviteBtn"')) fail('atalho P2 ausente no jogo'); else ok('atalho P2 no jogo');
 if(!mapRuntime.includes('cfg.extraPlayers?.()')) fail('colisao de players extras ausente'); else ok('P2 usa colisoes do mapa');
 if(!duoJs.includes("peer.connect('chaos-live-'+room.toLowerCase()")) fail('P2 nao usa mesma sala PeerJS'); else ok('P2 usa mesmo codigo da sala');
@@ -141,7 +141,7 @@ if(process.exitCode) process.exit(process.exitCode);
 
 // v0.17.26 · duo aggro
 if(!game.includes('function duoEnemyTarget(e)')) fail('aggro nearest-player ausente'); else ok('aggro escolhe player mais proximo');
-if(!game.includes("toast('P2 CAIU · REVIVE 5s')")) fail('queda/revive P2 ausente'); else ok('P2 recebe dano e revive');
+if(!game.includes("knockDownPlayer('p2'")) fail('queda cooperativa P2 ausente'); else ok('P2 entra em DOWNED cooperativo');
 if(!game.includes('chaseP=duoEnemyTarget(e)')) fail('mobs nao perseguem P2'); else ok('mobs perseguem P1/P2');
 if(process.exitCode) process.exit(process.exitCode);
 
@@ -155,3 +155,24 @@ if(!game.includes('moving:player.moving,walk:player.walk,shotFlash:player.shotFl
 if(!game.includes('moving:duoPlayer.moving,walk:duoPlayer.walk,shotFlash:duoPlayer.shotFlash')) fail('snapshot P2 sem animacao'); else ok('snapshot P2 com animacao');
 if(!game.includes('t:e.t,speedMul:e.speedMul||1')) fail('snapshot mobs sem frame temporal'); else ok('snapshot mobs animado');
 if(!mapRuntime.includes('cfg.extraPlayers?.()')) fail('P2 sem colisao do mapa'); else ok('P2 usa colisao do mapa');
+
+
+// v0.17.29 · true cooperative duo
+const duo29=read('src/duo.js'),duoHtml29=read('duo.html');
+if(!game.includes('REVIVE_RADIUS=68,REVIVE_MS=3000')) fail('revive cooperativo 3s ausente'); else ok('revive cooperativo 3s');
+if(!game.includes("knockDownPlayer('p1'")) fail('P1 ainda morre direto'); else ok('P1 usa estado DOWNED');
+if(game.includes('duoPlayer.downUntil')) fail('auto-revive antigo do P2 ainda ativo'); else ok('auto-revive antigo removido');
+if(!game.includes("onKill(e,b.owner==='p2'?'p2':'p1')")) fail('XP nao atribuido ao dono do tiro'); else ok('XP por dono do tiro');
+if(!game.includes('duoLevel=1,duoXp=0,duoXpNeed=60')) fail('progressao P2 independente ausente'); else ok('level/xp P2 independentes');
+if(!game.includes("d?.type==='duo-skill-choice'")) fail('P2 nao envia escolha de skill'); else ok('skills P2 autoritativas');
+if(!game.includes('duoPendingSkill')) fail('fila de skill P2 ausente'); else ok('skill choices P2 independentes');
+if(!game.includes('reviveP1Ms')||!game.includes('reviveP2Ms')) fail('progresso de resgate ausente'); else ok('progresso de resgate bilateral');
+if(!duoHtml29.includes('-webkit-user-select:none')) fail('P2 ainda permite selecao de tela'); else ok('selecao de tela P2 bloqueada');
+for(const id of ['fpsHud','level','xp','life','xpFill','skillPick','skillChoices','downNotice']) if(!duoHtml29.includes(`id="${id}"`)) fail('HUD Duo ausente: '+id);
+if(!game.includes('slice(0,56)')||!game.includes('slice(0,28)')) fail('snapshot Duo nao reduzido'); else ok('snapshot Duo reduzido');
+if(!game.includes('bufferedAmount>24576')) fail('backpressure Duo v29 ausente'); else ok('backpressure Duo v29');
+if(!game.includes('setInterval(sendDuoSnapshot,125)')) fail('cadencia Duo v29 incorreta'); else ok('snapshot Duo 8Hz');
+if(!duo29.includes('mobile?.92:1.18')) fail('DPR Duo mobile nao otimizado'); else ok('DPR Duo otimizado');
+if(!duo29.includes('lite:true')) fail('Duo nao usa mapa lite'); else ok('mapa lite no P2');
+if(!mapRuntime.includes("if(!cfg?.lite)")) fail('runtime nao remove efeitos no lite'); else ok('efeitos pesados removidos no P2');
+if(process.exitCode) process.exit(process.exitCode);
