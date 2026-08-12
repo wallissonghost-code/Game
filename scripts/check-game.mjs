@@ -92,9 +92,9 @@ if(!panel.includes("b.dataset.cmd==='boss'?($('bossTier')?.value||null):undefine
 // v0.17.20 · Dense Forest cohesive map
 const mapRuntime=read('src/map-runtime.js');
 if(!gameHtml.includes('src/map-runtime.js?v='+cacheTag)) fail('map-runtime sem cache sincronizado'); else ok('map-runtime cache '+cacheTag);
-if(!game.includes("map:'dense-forest'")) fail('telemetria do mapa divergente'); else ok('mapa ativo dense-forest');
-if(!mapRuntime.includes("name:'Floresta Densa'")) fail('runtime Floresta Densa ausente'); else ok('runtime Floresta Densa');
-if(!mapRuntime.includes('BASE_TILE_INDEXES=[0,1,2,3,7,8]')) fail('selecao segura de tiles ausente'); else ok('tiles de base coesos');
+if(!game.includes("map:'snow-frost-puzzle'")) fail('telemetria do mapa divergente'); else ok('mapa ativo snow-frost-puzzle');
+if(!mapRuntime.includes("name:'Snow Frost Puzzle'")) fail('runtime Snow Frost Puzzle ausente'); else ok('runtime Snow Frost Puzzle');
+if(!mapRuntime.includes("seed:'ICE-BMFSXT'")) fail('seed Snow Frost de teste divergente'); else ok('seed Snow Frost ICE-BMFSXT');
 for(const f of ['assets/Map/dense-forest/tiles/tile_001.png','assets/Map/dense-forest/tiles/tile_010.png','assets/Map/dense-forest/decals/decal_015.png','assets/Map/dense-forest/obstacles/obstacle_021.png']) fs.existsSync(f)?ok('map asset '+f):fail('map asset ausente '+f);
 for(const d of ['field','wasteland','extras-uploaded']) if(fs.existsSync('assets/Map/'+d)) fail('mapa antigo ainda existe: '+d); else ok('mapa antigo removido: '+d);
 if(fs.existsSync('assets/CAOS_LIVE_WORLDS_FINAL_CORRIGIDO.zip')) fail('ZIP de upload ainda na pasta assets'); else ok('ZIP extraido e removido');
@@ -122,3 +122,9 @@ if(!Array.isArray(snowPuzzle.chunks)||snowPuzzle.chunks.length!==32) fail('Snow 
 for(let mask=0;mask<16;mask++){const rows=snowPuzzle.chunks.filter(x=>x.mask===mask);if(rows.length!==2) fail('mask '+mask+' sem 2 variacoes')}
 for(const f of ['assets/Map/snow-frost/chunks/mask_00_closed_v01.png','assets/Map/snow-frost/chunks/mask_05_straight_ns_v02.png','assets/Map/snow-frost/chunks/mask_10_straight_ew_v02.png','assets/Map/snow-frost/chunks/mask_15_cross_v02.png']) fs.existsSync(f)?ok('snow puzzle '+f):fail('snow puzzle ausente '+f);
 if(fs.existsSync('CAOS_LIVE_SNOW_FROST_PUZZLE_FINAL.zip')) fail('ZIP Snow Frost ainda na raiz'); else ok('ZIP Snow Frost extraido e removido');
+
+
+// v0.17.24 · Snow Frost puzzle no jogo
+if(!mapRuntime.includes('const N=1,E=2,S=4,W=8,CHUNK=512,MAP_N=6,DENSITY=.85,VARIANT=.32')) fail('runtime puzzle 6x6 divergente'); else ok('runtime puzzle 6x6 85/32');
+if(!mapRuntime.includes('assets/Map/snow-frost/manifest.json')) fail('runtime nao carrega manifest Snow Frost'); else ok('runtime carrega manifest Snow Frost');
+if(!mapRuntime.includes('def.collision')) fail('colisoes dos chunks nao integradas'); else ok('colisoes Snow Frost integradas');
