@@ -19,7 +19,7 @@ function safeTarget(e){return e?.target instanceof Element&&!!e.target.closest('
 function fmtTime(ms){const s=Math.max(0,Math.floor((ms||0)/1000)),m=Math.floor(s/60);return String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
 function setNet(text,ok=false){ui.status.textContent=text;ui.status.classList.toggle('ok',ok)}
 function setLoad(pct,text){loader.progress=Math.max(loader.progress,Math.min(100,Math.round(pct)));if(text)loader.text=text;ui.loadingPct.textContent=loader.progress+'%';ui.loadingFill.style.width=loader.progress+'%';ui.loadingText.textContent=loader.text}
-function serverWs(){const raw=params.get('server')||location.origin;const u=new URL(raw,location.href);u.protocol=u.protocol==='https:'?'wss:':'ws:';u.pathname='/game';u.search='';u.hash='';return u.toString()}
+function serverWs(){const raw='https://caos-live-game-server-va.onrender.com';const u=new URL(raw);u.protocol='wss:';u.pathname='/game';u.search='';u.hash='';return u.toString()}
 function send(o){if(ws?.readyState===WebSocket.OPEN)try{ws.send(JSON.stringify(o))}catch{}}
 function showJoin(){ui.join.classList.add('show');ui.lobby.classList.remove('show');ui.menu.classList.remove('show');ui.startCover.classList.remove('show')}
 function showLobby(){ui.join.classList.remove('show');ui.lobby.classList.add('show');ui.menu.classList.remove('show');ui.startCover.classList.remove('show')}
