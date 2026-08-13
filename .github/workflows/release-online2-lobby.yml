@@ -1,4 +1,4 @@
-name: Caos Live Multiplayer Online.6 Collision Prediction
+name: Caos Live Multiplayer Online.7 Movement Overhaul
 on:
   push:
     paths: ['.github/workflows/release-online2-lobby.yml']
@@ -12,55 +12,82 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Patch client collision prediction
+      - name: Rebuild local movement and animation
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path('src/multiplayer.js'); s=p.read_text()
-          s=s.replace("const ONLINE_VERSION='0.17.37-online.5'","const ONLINE_VERSION='0.17.37-online.6'",1)
-          s=s.replace("TAG='01737o5'","TAG='01737o6'",1)
-          s=s.replace("const map={cells:[],images:new Map(),ready:false,chunkSize:512,gridSize:6,info:null};","const map={cells:[],collisions:[],images:new Map(),ready:false,chunkSize:512,gridSize:6,info:null};",1)
-          s=s.replace("map.cells=info.cells||[];map.images.clear();map.ready=false;","map.cells=info.cells||[];map.collisions=info.collisions||[];map.images.clear();map.ready=false;",1)
-          marker="function drawMap(cx,cy){"
-          helper="function resolveLocalPlayer(p){const r=p.r||18;p.x=Math.min(world.width-r,Math.max(r,p.x));p.y=Math.min(world.height-r,Math.max(r,p.y));for(let pass=0;pass<2;pass++)for(const c of map.collisions||[]){let dx=p.x-c.x,dy=p.y-c.y,d=Math.hypot(dx,dy),min=r+c.r;if(d>0&&d<min){const k=(min-d)/d;p.x+=dx*k;p.y+=dy*k}else if(d===0)p.x+=min}p.x=Math.min(world.width-r,Math.max(r,p.x));p.y=Math.min(world.height-r,Math.max(r,p.y))}\n"
-          if marker not in s: raise SystemExit('drawMap marker not found')
-          s=s.replace(marker,helper+marker,1)
-          old="p.x+=input.dx*255*(1+((p.skills?.speed||0)*.10))*dt;p.y+=input.dy*255*(1+((p.skills?.speed||0)*.10))*dt}continue"
-          new="p.x+=input.dx*255*(1+((p.skills?.speed||0)*.10))*dt;p.y+=input.dy*255*(1+((p.skills?.speed||0)*.10))*dt;resolveLocalPlayer(p)}continue"
-          if old not in s: raise SystemExit('simulate block not found')
+          s=s.replace("const ONLINE_VERSION='0.17.37-online.6'","const ONLINE_VERSION='0.17.37-online.7'",1)
+          s=s.replace("TAG='01737o6'","TAG='01737o7'",1)
+          old="skillKey='',skillPendingKey='',skillPendingUntil=0;"
+          new="skillKey='',skillPendingKey='',skillPendingUntil=0,localWalk=0;"
+          if old not in s: raise SystemExit('localWalk declaration anchor not found')
           s=s.replace(old,new,1)
-          s=s.replace("const stopped=Math.hypot(input.dx,input.dy)<.02,k=stopped?.18:.07;","const stopped=Math.hypot(input.dx,input.dy)<.02,k=stopped?.20:.05;",1)
+          old="if(d>150){p.x=s.x;p.y=s.y}else if(d>3){const stopped=Math.hypot(input.dx,input.dy)<.02,k=stopped?.20:.05;p.x+=dx*k;p.y+=dy*k}"
+          new="if(d>180){p.x=s.x;p.y=s.y}else if(Math.hypot(input.dx,input.dy)<.02&&d>1){p.x+=dx*.32;p.y+=dy*.32}"
+          if old not in s: raise SystemExit('snapshot reconciliation anchor not found')
+          s=s.replace(old,new,1)
+          old="moving=Math.hypot(p.vx||0,p.vy||0)>3,frame=moving?Math.floor(p.walk||0)%4:0"
+          new="moving=me?Math.hypot(input.dx,input.dy)>.08:Math.hypot(p.vx||0,p.vy||0)>3,animWalk=me?localWalk:(p.walk||0),frame=moving?Math.floor(animWalk)%4:0"
+          if old not in s: raise SystemExit('drawPlayer movement anchor not found')
+          s=s.replace(old,new,1)
+          old="bob=moving?Math.sin((p.walk||0)*Math.PI*.5)*.8:0"
+          new="bob=moving?Math.sin(animWalk*Math.PI*.5)*.8:0"
+          if old not in s: raise SystemExit('drawPlayer bob anchor not found')
+          s=s.replace(old,new,1)
+          old="if(p.id===myId){if(started&&!p.down&&!p.choices){computeInput();p.x+=input.dx*255*(1+((p.skills?.speed||0)*.10))*dt;p.y+=input.dy*255*(1+((p.skills?.speed||0)*.10))*dt;resolveLocalPlayer(p)}continue}"
+          new="if(p.id===myId){if(started&&!p.down&&!p.choices){computeInput();const mag=Math.hypot(input.dx,input.dy),sp=255*(1+((p.skills?.speed||0)*.10));if(mag>.08){p.x+=input.dx*sp*dt;p.y+=input.dy*sp*dt;localWalk=(localWalk+dt*9)%4096;resolveLocalPlayer(p)}else if(Number.isFinite(p.tx)&&Number.isFinite(p.ty)){const k=Math.min(1,dt*12);p.x+=(p.tx-p.x)*k;p.y+=(p.ty-p.y)*k;resolveLocalPlayer(p)}}continue}"
+          if old not in s: raise SystemExit('simulate local player anchor not found')
+          s=s.replace(old,new,1)
+          old="function updateTouch(e){const max=52,dx=e.clientX-touch.sx,dy=e.clientY-touch.sy,n=Math.hypot(dx,dy);if(n>max){touch.dx=dx/n;touch.dy=dy/n}else{touch.dx=dx/max;touch.dy=dy/max}}"
+          new="function updateTouch(e){const dx=e.clientX-touch.sx,dy=e.clientY-touch.sy,n=Math.hypot(dx,dy),dead=8;if(n<=dead){touch.dx=0;touch.dy=0;return}touch.dx=dx/n;touch.dy=dy/n}"
+          if old not in s: raise SystemExit('touch controller anchor not found')
+          s=s.replace(old,new,1)
           p.write_text(s)
           PY
-      - name: Send map collisions from server
+      - name: Expand authoritative world and soften collision snagging
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path('cloud/game-server-v2.mjs'); s=p.read_text()
-          s=s.replace("ONLINE_VERSION='0.17.37-online.5'","ONLINE_VERSION='0.17.37-online.6'",1)
-          old="map:{seed:MAP.seed,chunkSize:MAP.chunkSize,gridSize:MAP.gridSize,cells:MAP.cells}"
-          new="map:{seed:MAP.seed,chunkSize:MAP.chunkSize,gridSize:MAP.gridSize,cells:MAP.cells,collisions:MAP.collisions}"
-          if old not in s: raise SystemExit('map payload not found')
+          s=s.replace("ONLINE_VERSION='0.17.37-online.6'","ONLINE_VERSION='0.17.37-online.7'",1)
+          old="const WORLD={width:3072,height:3072},PLAYER_RADIUS=18"
+          new="const WORLD={width:6144,height:6144},PLAYER_RADIUS=18"
+          if old not in s: raise SystemExit('WORLD anchor not found')
+          s=s.replace(old,new,1)
+          old="const CHUNK_SIZE=512,MAP_N=6,MAP_SEED='ICE-BMFSXT';"
+          new="const CHUNK_SIZE=512,MAP_N=12,MAP_SEED='ICE-BMFSXT';"
+          if old not in s: raise SystemExit('MAP_N anchor not found')
+          s=s.replace(old,new,1)
+          old="r:c.r*CHUNK_SIZE})"
+          new="r:c.r*CHUNK_SIZE*.82})"
+          if old not in s: raise SystemExit('collision radius anchor not found')
           s=s.replace(old,new,1)
           p.write_text(s)
           PY
-      - name: Bump HTML cache
+      - name: Bump multiplayer cache
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('multiplayer.html'); s=p.read_text().replace('ONLINE 0.17.37-online.5','ONLINE 0.17.37-online.6').replace('ONLINE.5','ONLINE.6').replace('/src/multiplayer.js?v=01737o5','/src/multiplayer.js?v=01737o6'); p.write_text(s)
+          p=Path('multiplayer.html'); s=p.read_text()
+          s=s.replace('ONLINE 0.17.37-online.6','ONLINE 0.17.37-online.7').replace('ONLINE.6','ONLINE.7').replace('/src/multiplayer.js?v=01737o6','/src/multiplayer.js?v=01737o7')
+          p.write_text(s)
           PY
-      - name: Validate
+      - name: Validate movement release
         run: |
           node --check src/multiplayer.js
           node --check cloud/game-server-v2.mjs
-          grep -q 'function resolveLocalPlayer' src/multiplayer.js
-          grep -q 'collisions:MAP.collisions' cloud/game-server-v2.mjs
+          grep -q "online.7" src/multiplayer.js
+          grep -q "online.7" cloud/game-server-v2.mjs
+          grep -q "localWalk" src/multiplayer.js
+          grep -q "dead=8" src/multiplayer.js
+          grep -q "width:6144,height:6144" cloud/game-server-v2.mjs
+          grep -q "MAP_N=12" cloud/game-server-v2.mjs
           npm run check
-      - name: Commit
+      - name: Commit online.7
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add src/multiplayer.js cloud/game-server-v2.mjs multiplayer.html
-          git commit -m 'fix: predict multiplayer map collisions locally'
+          git commit -m 'feat: rebuild multiplayer movement and expand world'
           git push
