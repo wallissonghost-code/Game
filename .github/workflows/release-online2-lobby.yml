@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: npm ci
+      - run: npm install --ignore-scripts --no-audit --no-fund
       - name: Validate server syntax and room grace
         run: |
           node --check cloud/game-server-v2.mjs
