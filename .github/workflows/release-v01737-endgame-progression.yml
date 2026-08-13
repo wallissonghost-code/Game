@@ -1,0 +1,51 @@
+name: Caos Live v0.17.37 Endgame Progression
+
+on:
+  push:
+    paths:
+      - '.github/workflows/release-v01737-endgame-progression.yml'
+      - 'scripts/release-v01737-endgame-progression.py'
+      - 'scripts/fix-v01737-validator.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Apply endgame progression patch
+        run: python3 scripts/release-v01737-endgame-progression.py
+      - name: Align validators
+        run: python3 scripts/fix-v01737-validator.py
+      - name: Validate JavaScript
+        run: |
+          node --check src/game.js
+          node --check src/duo.js
+      - name: Validate project
+        run: npm run check
+      - name: Validate endgame contract
+        run: |
+          test -f 'assets/mobs/Ogro Elite II/.gitkeep'
+          test -f 'assets/mobs/Ogro Corrompido II/.gitkeep'
+          grep -q "'version': '0.17.37'\|\"version\": \"0.17.37\"" version.json
+          grep -q 'function enemyEvolution(tier)' src/game.js
+          grep -q 'corrupted2:{hp:7,dmg:2.75,speed:1.16,xp:6.5,hitbox:1.20}' src/game.js
+          grep -q 'function xpNeedFor(lv)' src/game.js
+          grep -q 'evolution:e.evolution||1' src/game.js
+      - name: Commit release
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No changes to commit.'
+          else
+            git commit -m 'feat: endgame progression v0.17.37'
+            git push
+          fi
