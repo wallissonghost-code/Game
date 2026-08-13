@@ -1,0 +1,48 @@
+name: Caos Live Online 0.17.37-online.2 Lobby
+
+on:
+  push:
+    paths:
+      - '.github/workflows/release-online2-lobby.yml'
+      - 'scripts/patch-online2-lobby.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Apply multiplayer lobby patch
+        run: python3 scripts/patch-online2-lobby.py
+      - name: Validate multiplayer JavaScript
+        run: |
+          node --check src/multiplayer.js
+          node --check cloud/game-server-v2.mjs
+      - name: Validate lobby contract
+        run: |
+          grep -q "ONLINE_VERSION='0.17.37-online.2'" cloud/game-server-v2.mjs
+          grep -q "m.type==='ready'" cloud/game-server-v2.mjs
+          grep -q "m.type==='start-match'" cloud/game-server-v2.mjs
+          grep -q "r.status!=='running'" cloud/game-server-v2.mjs
+          grep -q "id=\"lobby\"" multiplayer.html
+          grep -q "ONLINE_VERSION='0.17.37-online.2'" src/multiplayer.js
+          grep -q "send({type:'ready',ready:true" src/multiplayer.js
+      - name: Validate Solo unchanged
+        run: npm run check
+      - name: Commit server release
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add cloud/game-server-v2.mjs
+          if git diff --cached --quiet; then
+            echo 'No server changes to commit.'
+          else
+            git commit -m 'feat: multiplayer preload lobby online.2'
+            git push
+          fi
