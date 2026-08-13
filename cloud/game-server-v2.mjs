@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { WebSocketServer, WebSocket } from 'ws';
 
 const PORT=Number(process.env.PORT||10000),HOST='0.0.0.0';
-const TICK_RATE=30,SNAPSHOT_RATE=20,ONLINE_VERSION='0.17.37-online.4',BASE_SOLO_VERSION='0.17.37';
+const TICK_RATE=30,SNAPSHOT_RATE=20,ONLINE_VERSION='0.17.37-online.5',BASE_SOLO_VERSION='0.17.37';
 const WORLD={width:3072,height:3072},PLAYER_RADIUS=18,INPUT_TIMEOUT_MS=450,RECONNECT_GRACE_MS=600000,MAX_MESSAGE_BYTES=12288,MAX_ENEMIES=180,MAX_BULLETS=260;
 const CHUNK_SIZE=512,MAP_N=6,MAP_SEED='ICE-BMFSXT';
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
