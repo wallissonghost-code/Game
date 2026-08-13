@@ -68,14 +68,14 @@ if(!game.includes('iw=wi.naturalWidth||wi.width||1')) fail('weapon canvas ratio 
 for(let i=1;i<=32;i++){const n=String(i).padStart(3,'0');const f=`assets/mobs/Ogro Elite/frame_${n}.png`;if(!fs.existsSync(f)) fail('asset Elite ausente '+f)}
 if(!game.includes('eliteOgreFrames={up:[],down:[],right:[],left:[]}')) fail('pack Ogro Elite ausente'); else ok('pack Ogro Elite configurado');
 if(!game.includes("loadDirectPngSequence('./assets/mobs/Ogro Elite',32,ASSET_TAG)")) fail('loader Ogro Elite ausente'); else ok('32 frames Elite carregados');
-if(!game.includes("e.tier===1&&eliteOgreReady?eliteOgreFrames:ogreFrames")) fail('Elite nao usa skin exclusiva'); else ok('tier Elite usa skin Ogro Elite');
+if(!game.includes("eliteOgreReady?eliteOgreFrames:ogreFrames")) fail('Elite nao usa skin exclusiva'); else ok('tier Elite usa skin Ogro Elite');
 
 // v0.17.16 · Elite visual scale
 if(game.includes("e.tier===1?67:62")) fail('escala visual legada 67px ainda ativa'); else ok('escala visual legada removida');
 
 // v0.17.17 · escala visual dos mobs
-if(!game.includes("MOB_VISUAL_HEIGHT={normal:62,elite:86,bossScale:3.55}")) fail('regua visual dos mobs ausente'); else ok('regua visual normal 62 / elite 86 / boss x3.55');
-if(!game.includes("e.tier===1?MOB_VISUAL_HEIGHT.elite:MOB_VISUAL_HEIGHT.normal")) fail('Elite nao usa regua visual'); else ok('Elite usa escala visual dedicada');
+if(!game.includes("MOB_VISUAL_HEIGHT={normal:62,elite:86,elite2:94,corrupted:108,corrupted2:118,bossScale:3.55}")) fail('regua visual dos mobs ausente'); else ok('regua visual normal 62 / elite 86 / boss x3.55');
+if(!game.includes("e.tier===2?(stage===2?MOB_VISUAL_HEIGHT.corrupted2:MOB_VISUAL_HEIGHT.corrupted):e.tier===1?(stage===2?MOB_VISUAL_HEIGHT.elite2:MOB_VISUAL_HEIGHT.elite):MOB_VISUAL_HEIGHT.normal")) fail('Elite nao usa regua visual'); else ok('Elite usa escala visual dedicada');
 
 // v0.17.18 · variantes raras de Boss
 if(!game.includes("BOSS_VARIANTS={normal:{hp:1,dmg:1,speed:1,xp:1},elite:{hp:1.75,dmg:1.25,speed:1.05,xp:1.75},corrupted:{hp:2.5,dmg:1.5,speed:1.10,xp:2.5}}")) fail('multiplicadores de Boss divergentes'); else ok('Boss Elite/Corrompido balanceados');
@@ -224,6 +224,20 @@ if(!firebase35.includes('if(r.ranked===false){skipped++;continue}')) fail('migra
 // v0.17.36 · dedicated corrupted ogre skin
 const corruptGame=read('src/game.js'),corruptDuo=read('src/duo.js');
 if(!corruptGame.includes("./assets/mobs/Ogro Corrompido")) fail('skin Corrompido ausente no Host'); else ok('Host carrega skin Ogro Corrompido');
-if(!corruptGame.includes('e.tier===2&&corruptedOgreReady?corruptedOgreFrames')) fail('tier 2 nao usa skin Corrompido no Host'); else ok('tier 2 usa skin Corrompido no Host');
+if(!corruptGame.includes('corruptedOgreReady?corruptedOgreFrames')) fail('tier 2 nao usa skin Corrompido no Host'); else ok('tier 2 usa skin Corrompido no Host');
 if(!corruptDuo.includes("assets/mobs/Ogro Corrompido")) fail('skin Corrompido ausente no P2'); else ok('P2 carrega skin Ogro Corrompido');
-if(!corruptDuo.includes('e.tier===2&&corruptedReady?corruptedOgreFrames')) fail('tier 2 nao usa skin Corrompido no P2'); else ok('tier 2 usa skin Corrompido no P2');
+if(!corruptDuo.includes('corruptedReady?corruptedOgreFrames')) fail('tier 2 nao usa skin Corrompido no P2'); else ok('tier 2 usa skin Corrompido no P2');
+
+
+// v0.17.37 · endgame rage progression
+for(const d of ['assets/mobs/Ogro Elite II','assets/mobs/Ogro Corrompido II']) if(!fs.existsSync(d+'/.gitkeep')) fail('pasta futura ausente '+d); else ok('pasta futura pronta '+d);
+if(!game.includes('function enemyEvolution(tier)')) fail('subtier II ausente'); else ok('Elite II / Corrompido II ativos');
+if(!game.includes('level>=40')||!game.includes('level>=60')) fail('unlocks de endgame ausentes'); else ok('unlocks LV40/LV60 ativos');
+if(!game.includes("elite2:{hp:4.2,dmg:2.05,speed:1.10,xp:4.2,hitbox:1.08}")) fail('stats Elite II divergentes'); else ok('stats Elite II');
+if(!game.includes("corrupted2:{hp:7,dmg:2.75,speed:1.16,xp:6.5,hitbox:1.20}")) fail('stats Corrompido II divergentes'); else ok('stats Corrompido II');
+if(!game.includes('function xpNeedFor(lv)')) fail('curva XP endgame ausente'); else ok('curva XP endgame ativa');
+if(!game.includes("./assets/mobs/Ogro Elite II")||!game.includes("./assets/mobs/Ogro Corrompido II")) fail('fallback skins II host ausente'); else ok('fallback skins II host');
+if(!game.includes('evolution:e.evolution||1')) fail('snapshot sem subtier'); else ok('subtier sincronizado ao P2');
+const duo37=read('src/duo.js');
+if(!duo37.includes("assets/mobs/Ogro Elite II")||!duo37.includes("assets/mobs/Ogro Corrompido II")) fail('fallback skins II P2 ausente'); else ok('fallback skins II P2');
+if(!game.includes('corrupted:108,corrupted2:118')) fail('Corrompido nao e maior que Elite'); else ok('escala Corrompido > Elite');
