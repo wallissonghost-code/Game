@@ -1,4 +1,4 @@
-name: Caos Live Multiplayer Online.5 Camera Fix
+name: Caos Live Multiplayer Online.6 Collision Prediction
 on:
   push:
     paths: ['.github/workflows/release-online2-lobby.yml']
@@ -12,39 +12,55 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Patch camera and touch input
+      - name: Patch client collision prediction
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path('src/multiplayer.js'); s=p.read_text()
-          s=s.replace("const ONLINE_VERSION='0.17.37-online.4'","const ONLINE_VERSION='0.17.37-online.5'",1)
-          s=s.replace("TAG='01737o4'","TAG='01737o5'",1)
-          old="const me=players.get(myId),cx=me?.x??world.width/2,cy=me?.y??world.height/2;ctx.setTransform"
-          new="const me=players.get(myId),hw=Math.min(innerWidth/2,world.width/2),hh=Math.min(innerHeight/2,world.height/2),cx=Math.min(world.width-hw,Math.max(hw,me?.x??world.width/2)),cy=Math.min(world.height-hh,Math.max(hh,me?.y??world.height/2));ctx.setTransform"
-          if old not in s: raise SystemExit('camera block not found')
+          s=s.replace("const ONLINE_VERSION='0.17.37-online.5'","const ONLINE_VERSION='0.17.37-online.6'",1)
+          s=s.replace("TAG='01737o5'","TAG='01737o6'",1)
+          s=s.replace("const map={cells:[],images:new Map(),ready:false,chunkSize:512,gridSize:6,info:null};","const map={cells:[],collisions:[],images:new Map(),ready:false,chunkSize:512,gridSize:6,info:null};",1)
+          s=s.replace("map.cells=info.cells||[];map.images.clear();map.ready=false;","map.cells=info.cells||[];map.collisions=info.collisions||[];map.images.clear();map.ready=false;",1)
+          marker="function drawMap(cx,cy){"
+          helper="function resolveLocalPlayer(p){const r=p.r||18;p.x=Math.min(world.width-r,Math.max(r,p.x));p.y=Math.min(world.height-r,Math.max(r,p.y));for(let pass=0;pass<2;pass++)for(const c of map.collisions||[]){let dx=p.x-c.x,dy=p.y-c.y,d=Math.hypot(dx,dy),min=r+c.r;if(d>0&&d<min){const k=(min-d)/d;p.x+=dx*k;p.y+=dy*k}else if(d===0)p.x+=min}p.x=Math.min(world.width-r,Math.max(r,p.x));p.y=Math.min(world.height-r,Math.max(r,p.y))}\n"
+          if marker not in s: raise SystemExit('drawMap marker not found')
+          s=s.replace(marker,helper+marker,1)
+          old="p.x+=input.dx*255*(1+((p.skills?.speed||0)*.10))*dt;p.y+=input.dy*255*(1+((p.skills?.speed||0)*.10))*dt}continue"
+          new="p.x+=input.dx*255*(1+((p.skills?.speed||0)*.10))*dt;p.y+=input.dy*255*(1+((p.skills?.speed||0)*.10))*dt;resolveLocalPlayer(p)}continue"
+          if old not in s: raise SystemExit('simulate block not found')
           s=s.replace(old,new,1)
-          old="canvas.addEventListener('pointermove',e=>{if(touch.active&&e.pointerId===touch.id){updateTouch(e);sendInput(false);e.preventDefault()}});"
-          new="canvas.addEventListener('pointermove',e=>{if(touch.active&&e.pointerId===touch.id){updateTouch(e);e.preventDefault()}});"
-          if old not in s: raise SystemExit('pointer block not found')
-          s=s.replace(old,new,1)
+          s=s.replace("const stopped=Math.hypot(input.dx,input.dy)<.02,k=stopped?.18:.07;","const stopped=Math.hypot(input.dx,input.dy)<.02,k=stopped?.20:.05;",1)
           p.write_text(s)
           PY
-      - name: Bump server and HTML
+      - name: Send map collisions from server
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('cloud/game-server-v2.mjs'); s=p.read_text().replace("ONLINE_VERSION='0.17.37-online.4'","ONLINE_VERSION='0.17.37-online.5'",1); p.write_text(s)
-          p=Path('multiplayer.html'); s=p.read_text().replace('ONLINE 0.17.37-online.4','ONLINE 0.17.37-online.5').replace('ONLINE.4','ONLINE.5').replace('/src/multiplayer.js?v=01737o4','/src/multiplayer.js?v=01737o5'); p.write_text(s)
+          p=Path('cloud/game-server-v2.mjs'); s=p.read_text()
+          s=s.replace("ONLINE_VERSION='0.17.37-online.5'","ONLINE_VERSION='0.17.37-online.6'",1)
+          old="map:{seed:MAP.seed,chunkSize:MAP.chunkSize,gridSize:MAP.gridSize,cells:MAP.cells}"
+          new="map:{seed:MAP.seed,chunkSize:MAP.chunkSize,gridSize:MAP.gridSize,cells:MAP.cells,collisions:MAP.collisions}"
+          if old not in s: raise SystemExit('map payload not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Bump HTML cache
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('multiplayer.html'); s=p.read_text().replace('ONLINE 0.17.37-online.5','ONLINE 0.17.37-online.6').replace('ONLINE.5','ONLINE.6').replace('/src/multiplayer.js?v=01737o5','/src/multiplayer.js?v=01737o6'); p.write_text(s)
           PY
       - name: Validate
         run: |
           node --check src/multiplayer.js
           node --check cloud/game-server-v2.mjs
+          grep -q 'function resolveLocalPlayer' src/multiplayer.js
+          grep -q 'collisions:MAP.collisions' cloud/game-server-v2.mjs
           npm run check
       - name: Commit
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add src/multiplayer.js cloud/game-server-v2.mjs multiplayer.html
-          git commit -m 'fix: clamp multiplayer camera and reduce touch input spam'
+          git commit -m 'fix: predict multiplayer map collisions locally'
           git push
