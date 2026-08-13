@@ -1,14 +1,9 @@
-name: Caos Live Multiplayer Online.4 Map Renderer Fix
-
+name: Caos Live Multiplayer Online.5 Camera Fix
 on:
   push:
-    paths:
-      - '.github/workflows/release-online2-lobby.yml'
-  workflow_dispatch:
-
+    paths: ['.github/workflows/release-online2-lobby.yml']
 permissions:
   contents: write
-
 jobs:
   repair:
     runs-on: ubuntu-latest
@@ -17,61 +12,39 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Fix map viewport culling and version
+      - name: Patch camera and touch input
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('src/multiplayer.js')
-          s=p.read_text()
-          s=s.replace("const ONLINE_VERSION='0.17.37-online.3'","const ONLINE_VERSION='0.17.37-online.4'",1)
-          s=s.replace("TAG='01737o3'","TAG='01737o4'",1)
-          old="if(p.x>C||p.y>C||p.x+C<0||p.y+C<0)continue;"
-          new="if(p.x>innerWidth+2||p.y>innerHeight+2||p.x+C<-2||p.y+C<-2)continue;"
-          if old not in s:
-              raise SystemExit('map culling block not found')
+          p=Path('src/multiplayer.js'); s=p.read_text()
+          s=s.replace("const ONLINE_VERSION='0.17.37-online.4'","const ONLINE_VERSION='0.17.37-online.5'",1)
+          s=s.replace("TAG='01737o4'","TAG='01737o5'",1)
+          old="const me=players.get(myId),cx=me?.x??world.width/2,cy=me?.y??world.height/2;ctx.setTransform"
+          new="const me=players.get(myId),hw=Math.min(innerWidth/2,world.width/2),hh=Math.min(innerHeight/2,world.height/2),cx=Math.min(world.width-hw,Math.max(hw,me?.x??world.width/2)),cy=Math.min(world.height-hh,Math.max(hh,me?.y??world.height/2));ctx.setTransform"
+          if old not in s: raise SystemExit('camera block not found')
+          s=s.replace(old,new,1)
+          old="canvas.addEventListener('pointermove',e=>{if(touch.active&&e.pointerId===touch.id){updateTouch(e);sendInput(false);e.preventDefault()}});"
+          new="canvas.addEventListener('pointermove',e=>{if(touch.active&&e.pointerId===touch.id){updateTouch(e);e.preventDefault()}});"
+          if old not in s: raise SystemExit('pointer block not found')
           s=s.replace(old,new,1)
           p.write_text(s)
           PY
-      - name: Restore map collisions and server version
+      - name: Bump server and HTML
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('cloud/game-server-v2.mjs')
-          s=p.read_text()
-          s=s.replace("ONLINE_VERSION='0.17.37-online.3'","ONLINE_VERSION='0.17.37-online.4'",1)
-          old="function resolveWorld(e,r){e.x=clamp(e.x,r,WORLD.width-r);e.y=clamp(e.y,r,WORLD.height-r)}"
-          new="function resolveWorld(e,r){e.x=clamp(e.x,r,WORLD.width-r);e.y=clamp(e.y,r,WORLD.height-r);for(let pass=0;pass<2;pass++)for(const c of MAP.collisions){let dx=e.x-c.x,dy=e.y-c.y,d=Math.hypot(dx,dy),min=r+c.r;if(d>0&&d<min){const k=(min-d)/d;e.x+=dx*k;e.y+=dy*k}else if(d===0)e.x+=min}e.x=clamp(e.x,r,WORLD.width-r);e.y=clamp(e.y,r,WORLD.height-r)}"
-          if old not in s:
-              raise SystemExit('online.3 resolveWorld block not found')
-          s=s.replace(old,new,1)
-          p.write_text(s)
+          p=Path('cloud/game-server-v2.mjs'); s=p.read_text().replace("ONLINE_VERSION='0.17.37-online.4'","ONLINE_VERSION='0.17.37-online.5'",1); p.write_text(s)
+          p=Path('multiplayer.html'); s=p.read_text().replace('ONLINE 0.17.37-online.4','ONLINE 0.17.37-online.5').replace('ONLINE.4','ONLINE.5').replace('/src/multiplayer.js?v=01737o4','/src/multiplayer.js?v=01737o5'); p.write_text(s)
           PY
-      - name: Cache bust multiplayer HTML
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('multiplayer.html')
-          s=p.read_text()
-          s=s.replace('ONLINE 0.17.37-online.3','ONLINE 0.17.37-online.4')
-          s=s.replace('ONLINE.3','ONLINE.4')
-          s=s.replace('/src/multiplayer.js?v=01737o3','/src/multiplayer.js?v=01737o4')
-          p.write_text(s)
-          PY
-      - name: Validate multiplayer only
+      - name: Validate
         run: |
           node --check src/multiplayer.js
           node --check cloud/game-server-v2.mjs
-          grep -q 'online.4' src/multiplayer.js
-          grep -q 'online.4' cloud/game-server-v2.mjs
-          grep -q '01737o4' multiplayer.html
-          grep -q 'p.x>innerWidth+2' src/multiplayer.js
-          grep -q 'MAP.collisions' cloud/game-server-v2.mjs
-      - name: Validate Solo unchanged
-        run: npm run check
-      - name: Commit online.4
+          npm run check
+      - name: Commit
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add src/multiplayer.js cloud/game-server-v2.mjs multiplayer.html
-          git commit -m 'fix: render all visible multiplayer map chunks'
+          git commit -m 'fix: clamp multiplayer camera and reduce touch input spam'
           git push
