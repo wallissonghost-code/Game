@@ -1,4 +1,4 @@
-name: Caos Live Multiplayer Online.3 Repair
+name: Caos Live Multiplayer Online.4 Map Renderer Fix
 
 on:
   push:
@@ -17,33 +17,32 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Patch multiplayer client
+      - name: Fix map viewport culling and version
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path('src/multiplayer.js')
           s=p.read_text()
-          s=s.replace("const ONLINE_VERSION='0.17.37-online.2'","const ONLINE_VERSION='0.17.37-online.3'",1)
-          s=s.replace("TAG='01737o2'","TAG='01737o3'",1)
-          s=s.replace("lobbyState={players:[],canStart:false,status:'waiting'},skillKey='';","lobbyState={players:[],canStart:false,status:'waiting'},skillKey='',skillPendingKey='',skillPendingUntil=0;",1)
-          old="function refreshSkill(){const me=players.get(myId),list=me?.choices||[],key=list.map(x=>x.id+':'+x.level).join('|');if(!list.length){skillKey='';ui.skillPick.classList.remove('show');return}if(key===skillKey&&ui.skillPick.classList.contains('show'))return;skillKey=key;ui.skillChoices.innerHTML='';for(const s of list){const b=document.createElement('button');b.className='skill '+(s.rarity||'common');b.innerHTML=`<span class=\"ico\">${s.icon||'✦'}</span><b>${escapeHtml(s.name||s.id)}</b><em>${String(s.rarity||'').toUpperCase()}</em><small>${escapeHtml(s.desc||'')}</small><span class=\"lvl\">LV ${s.level||1}</span>`;b.onclick=()=>{send({type:'skill-choice',skill:s.id});ui.skillPick.classList.remove('show')};ui.skillChoices.appendChild(b)}ui.skillPick.classList.add('show')}"
-          new="function refreshSkill(){const me=players.get(myId),list=me?.choices||[],key=list.map(x=>x.id+':'+x.level).join('|'),now=performance.now();if(!list.length){skillKey='';skillPendingKey='';skillPendingUntil=0;ui.skillPick.classList.remove('show');return}if(skillPendingKey===key&&now<skillPendingUntil){ui.skillPick.classList.remove('show');return}if(key===skillKey&&ui.skillPick.classList.contains('show'))return;skillKey=key;ui.skillChoices.innerHTML='';for(const s of list){const b=document.createElement('button');b.className='skill '+(s.rarity||'common');b.innerHTML=`<span class=\"ico\">${s.icon||'✦'}</span><b>${escapeHtml(s.name||s.id)}</b><em>${String(s.rarity||'').toUpperCase()}</em><small>${escapeHtml(s.desc||'')}</small><span class=\"lvl\">LV ${s.level||1}</span>`;b.onclick=()=>{if(skillPendingKey===key&&performance.now()<skillPendingUntil)return;skillPendingKey=key;skillPendingUntil=performance.now()+2500;for(const x of ui.skillChoices.querySelectorAll('button'))x.disabled=true;ui.skillPick.classList.remove('show');send({type:'skill-choice',skill:s.id})};ui.skillChoices.appendChild(b)}ui.skillPick.classList.add('show')}"
+          s=s.replace("const ONLINE_VERSION='0.17.37-online.3'","const ONLINE_VERSION='0.17.37-online.4'",1)
+          s=s.replace("TAG='01737o3'","TAG='01737o4'",1)
+          old="if(p.x>C||p.y>C||p.x+C<0||p.y+C<0)continue;"
+          new="if(p.x>innerWidth+2||p.y>innerHeight+2||p.x+C<-2||p.y+C<-2)continue;"
           if old not in s:
-              raise SystemExit('refreshSkill block not found')
+              raise SystemExit('map culling block not found')
           s=s.replace(old,new,1)
           p.write_text(s)
           PY
-      - name: Patch dedicated server movement
+      - name: Restore map collisions and server version
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path('cloud/game-server-v2.mjs')
           s=p.read_text()
-          s=s.replace("ONLINE_VERSION='0.17.37-online.2'","ONLINE_VERSION='0.17.37-online.3'",1)
-          old="function resolveWorld(e,r){e.x=clamp(e.x,r,WORLD.width-r);e.y=clamp(e.y,r,WORLD.height-r);for(let pass=0;pass<2;pass++)for(const c of MAP.collisions){let dx=e.x-c.x,dy=e.y-c.y,d=Math.hypot(dx,dy),min=r+c.r;if(d>0&&d<min){const k=(min-d)/d;e.x+=dx*k;e.y+=dy*k}else if(d===0)e.x+=min}e.x=clamp(e.x,r,WORLD.width-r);e.y=clamp(e.y,r,WORLD.height-r)}"
-          new="function resolveWorld(e,r){e.x=clamp(e.x,r,WORLD.width-r);e.y=clamp(e.y,r,WORLD.height-r)}"
+          s=s.replace("ONLINE_VERSION='0.17.37-online.3'","ONLINE_VERSION='0.17.37-online.4'",1)
+          old="function resolveWorld(e,r){e.x=clamp(e.x,r,WORLD.width-r);e.y=clamp(e.y,r,WORLD.height-r)}"
+          new="function resolveWorld(e,r){e.x=clamp(e.x,r,WORLD.width-r);e.y=clamp(e.y,r,WORLD.height-r);for(let pass=0;pass<2;pass++)for(const c of MAP.collisions){let dx=e.x-c.x,dy=e.y-c.y,d=Math.hypot(dx,dy),min=r+c.r;if(d>0&&d<min){const k=(min-d)/d;e.x+=dx*k;e.y+=dy*k}else if(d===0)e.x+=min}e.x=clamp(e.x,r,WORLD.width-r);e.y=clamp(e.y,r,WORLD.height-r)}"
           if old not in s:
-              raise SystemExit('resolveWorld block not found')
+              raise SystemExit('online.3 resolveWorld block not found')
           s=s.replace(old,new,1)
           p.write_text(s)
           PY
@@ -53,22 +52,26 @@ jobs:
           from pathlib import Path
           p=Path('multiplayer.html')
           s=p.read_text()
-          s=s.replace('ONLINE 0.17.37-online.2','ONLINE 0.17.37-online.3')
-          s=s.replace('ONLINE.2','ONLINE.3')
-          s=s.replace('/src/multiplayer.js?v=01737o2','/src/multiplayer.js?v=01737o3')
+          s=s.replace('ONLINE 0.17.37-online.3','ONLINE 0.17.37-online.4')
+          s=s.replace('ONLINE.3','ONLINE.4')
+          s=s.replace('/src/multiplayer.js?v=01737o3','/src/multiplayer.js?v=01737o4')
           p.write_text(s)
           PY
-      - name: Validate
+      - name: Validate multiplayer only
         run: |
           node --check src/multiplayer.js
           node --check cloud/game-server-v2.mjs
-          grep -q 'online.3' src/multiplayer.js
-          grep -q 'online.3' cloud/game-server-v2.mjs
-          grep -q '01737o3' multiplayer.html
-      - name: Commit repair
+          grep -q 'online.4' src/multiplayer.js
+          grep -q 'online.4' cloud/game-server-v2.mjs
+          grep -q '01737o4' multiplayer.html
+          grep -q 'p.x>innerWidth+2' src/multiplayer.js
+          grep -q 'MAP.collisions' cloud/game-server-v2.mjs
+      - name: Validate Solo unchanged
+        run: npm run check
+      - name: Commit online.4
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add src/multiplayer.js cloud/game-server-v2.mjs multiplayer.html
-          git commit -m 'fix: multiplayer map movement and skill flicker'
+          git commit -m 'fix: render all visible multiplayer map chunks'
           git push
