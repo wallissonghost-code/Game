@@ -1,0 +1,42 @@
+name: Caos Live v0.17.36 Corrupted Ogre Skin
+
+on:
+  push:
+    paths:
+      - 'scripts/release-v01736-corrupted-ogre-skin.py'
+      - '.github/workflows/release-v01736-corrupted-ogre-skin.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Apply corrupted ogre skin patch
+        run: python3 scripts/release-v01736-corrupted-ogre-skin.py
+      - name: Validate JavaScript
+        run: |
+          node --check src/game.js
+          node --check src/duo.js
+      - name: Validate project
+        run: npm run check
+      - name: Validate corrupted assets
+        run: |
+          test "$(find 'assets/mobs/Ogro Corrompido' -maxdepth 1 -type f -name 'frame_*.png' | wc -l)" -eq 32
+          test "$(find assets/mobs -maxdepth 1 -type f -name 'frame_*.png' | wc -l)" -eq 0
+          grep -q "Ogro Corrompido" src/game.js
+          grep -q "Ogro Corrompido" src/duo.js
+          grep -q '"version": "0.17.36"' version.json
+      - name: Commit release
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "release: v0.17.36 corrupted ogre dedicated skin" || exit 0
+          git push
