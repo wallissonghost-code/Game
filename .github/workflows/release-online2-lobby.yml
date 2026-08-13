@@ -1,4 +1,4 @@
-name: Caos Live Multiplayer Join Test
+name: Caos Live Multiplayer URL Fix
 
 on:
   push:
@@ -7,25 +7,52 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  test-room-join:
+  fix-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: npm install --ignore-scripts --no-audit --no-fund
-      - name: Validate server syntax and room grace
+      - name: Force canonical Render websocket endpoint
         run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/multiplayer.js')
+          s=p.read_text()
+          old="function serverWs(){const raw=params.get('server')||location.origin;const u=new URL(raw,location.href);u.protocol=u.protocol==='https:'?'wss:':'ws:';u.pathname='/game';u.search='';u.hash='';return u.toString()}"
+          new="function serverWs(){const raw='https://caos-live-game-server-va.onrender.com';const u=new URL(raw);u.protocol='wss:';u.pathname='/game';u.search='';u.hash='';return u.toString()}"
+          if old not in s:
+              raise SystemExit('serverWs signature not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+          grep -q "const raw='https://caos-live-game-server-va.onrender.com'" src/multiplayer.js
+          if grep -q "params.get('server')||location.origin" src/multiplayer.js; then exit 1; fi
+      - name: Validate multiplayer and server
+        run: |
+          node --check src/multiplayer.js
           node --check cloud/game-server-v2.mjs
           grep -q 'RECONNECT_GRACE_MS=600000' cloud/game-server-v2.mjs
+      - name: Commit canonical endpoint fix
+        run: |
+          if git diff --quiet; then
+            echo 'Already fixed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/multiplayer.js
+          git commit -m 'fix: use canonical Render endpoint for multiplayer'
+          git push
+      - name: Install test dependency
+        run: npm install --ignore-scripts --no-audit --no-fund
       - name: Start dedicated server
         run: |
           npm run game-server > /tmp/caos-server.log 2>&1 &
-          echo $! > /tmp/caos-server.pid
           for i in $(seq 1 30); do
             if curl -fsS http://127.0.0.1:10000/health >/dev/null; then exit 0; fi
             sleep 1
@@ -36,27 +63,14 @@ jobs:
         run: |
           node --input-type=module <<'NODE'
           import WebSocket from 'ws';
-          const url='ws://127.0.0.1:10000/game';
-          const room='TEST8P2X';
+          const url='ws://127.0.0.1:10000/game', room='TEST8P2X';
           const connect=(name,session,create)=>new Promise((resolve,reject)=>{
-            const ws=new WebSocket(url);
-            const timer=setTimeout(()=>reject(new Error('timeout '+name)),5000);
+            const ws=new WebSocket(url),timer=setTimeout(()=>reject(new Error('timeout '+name)),5000);
             ws.on('open',()=>ws.send(JSON.stringify({type:'join',room,name,session,create})));
-            ws.on('message',raw=>{
-              const m=JSON.parse(raw.toString());
-              if(m.type==='error'){clearTimeout(timer);reject(new Error(name+': '+m.code+' '+m.message));}
-              if(m.type==='welcome'){clearTimeout(timer);resolve({ws,m});}
-            });
+            ws.on('message',raw=>{const m=JSON.parse(raw.toString());if(m.type==='error'){clearTimeout(timer);reject(new Error(name+': '+m.code));}if(m.type==='welcome'){clearTimeout(timer);resolve({ws,m});}});
             ws.on('error',reject);
           });
-          const p1=await connect('P1TEST','session-p1',true);
-          const p2=await connect('P2TEST','session-p2',false);
-          if(p1.m.room!==room||p2.m.room!==room) throw new Error('room mismatch');
-          if(p1.m.role!=='p1') throw new Error('P1 role='+p1.m.role);
-          if(p2.m.role!=='p2') throw new Error('P2 role='+p2.m.role);
-          console.log('PASS',p1.m.room,p1.m.role,p2.m.role);
-          p1.ws.close(); p2.ws.close();
+          const p1=await connect('P1TEST','session-p1',true),p2=await connect('P2TEST','session-p2',false);
+          if(p1.m.room!==room||p2.m.room!==room||p1.m.role!=='p1'||p2.m.role!=='p2') throw new Error('join mismatch');
+          console.log('PASS',room,p1.m.role,p2.m.role); p1.ws.close();p2.ws.close();
           NODE
-      - name: Show server log on failure
-        if: failure()
-        run: cat /tmp/caos-server.log || true
