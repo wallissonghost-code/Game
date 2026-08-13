@@ -10,3 +10,16 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "24"
+
+  - type: web
+    name: caos-live-game-server-va
+    runtime: node
+    region: virginia
+    plan: free
+    buildCommand: npm install
+    startCommand: npm run game-server
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
