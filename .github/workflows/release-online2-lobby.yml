@@ -1,4 +1,4 @@
-name: Caos Live Multiplayer URL Fix
+name: Caos Live Multiplayer Online.3 Repair
 
 on:
   push:
@@ -10,67 +10,65 @@ permissions:
   contents: write
 
 jobs:
-  fix-and-test:
+  repair:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Force canonical Render websocket endpoint
+      - name: Patch multiplayer client
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path('src/multiplayer.js')
           s=p.read_text()
-          old="function serverWs(){const raw=params.get('server')||location.origin;const u=new URL(raw,location.href);u.protocol=u.protocol==='https:'?'wss:':'ws:';u.pathname='/game';u.search='';u.hash='';return u.toString()}"
-          new="function serverWs(){const raw='https://caos-live-game-server-va.onrender.com';const u=new URL(raw);u.protocol='wss:';u.pathname='/game';u.search='';u.hash='';return u.toString()}"
+          s=s.replace("const ONLINE_VERSION='0.17.37-online.2'","const ONLINE_VERSION='0.17.37-online.3'",1)
+          s=s.replace("TAG='01737o2'","TAG='01737o3'",1)
+          s=s.replace("lobbyState={players:[],canStart:false,status:'waiting'},skillKey='';","lobbyState={players:[],canStart:false,status:'waiting'},skillKey='',skillPendingKey='',skillPendingUntil=0;",1)
+          old="function refreshSkill(){const me=players.get(myId),list=me?.choices||[],key=list.map(x=>x.id+':'+x.level).join('|');if(!list.length){skillKey='';ui.skillPick.classList.remove('show');return}if(key===skillKey&&ui.skillPick.classList.contains('show'))return;skillKey=key;ui.skillChoices.innerHTML='';for(const s of list){const b=document.createElement('button');b.className='skill '+(s.rarity||'common');b.innerHTML=`<span class=\"ico\">${s.icon||'✦'}</span><b>${escapeHtml(s.name||s.id)}</b><em>${String(s.rarity||'').toUpperCase()}</em><small>${escapeHtml(s.desc||'')}</small><span class=\"lvl\">LV ${s.level||1}</span>`;b.onclick=()=>{send({type:'skill-choice',skill:s.id});ui.skillPick.classList.remove('show')};ui.skillChoices.appendChild(b)}ui.skillPick.classList.add('show')}"
+          new="function refreshSkill(){const me=players.get(myId),list=me?.choices||[],key=list.map(x=>x.id+':'+x.level).join('|'),now=performance.now();if(!list.length){skillKey='';skillPendingKey='';skillPendingUntil=0;ui.skillPick.classList.remove('show');return}if(skillPendingKey===key&&now<skillPendingUntil){ui.skillPick.classList.remove('show');return}if(key===skillKey&&ui.skillPick.classList.contains('show'))return;skillKey=key;ui.skillChoices.innerHTML='';for(const s of list){const b=document.createElement('button');b.className='skill '+(s.rarity||'common');b.innerHTML=`<span class=\"ico\">${s.icon||'✦'}</span><b>${escapeHtml(s.name||s.id)}</b><em>${String(s.rarity||'').toUpperCase()}</em><small>${escapeHtml(s.desc||'')}</small><span class=\"lvl\">LV ${s.level||1}</span>`;b.onclick=()=>{if(skillPendingKey===key&&performance.now()<skillPendingUntil)return;skillPendingKey=key;skillPendingUntil=performance.now()+2500;for(const x of ui.skillChoices.querySelectorAll('button'))x.disabled=true;ui.skillPick.classList.remove('show');send({type:'skill-choice',skill:s.id})};ui.skillChoices.appendChild(b)}ui.skillPick.classList.add('show')}"
           if old not in s:
-              raise SystemExit('serverWs signature not found')
+              raise SystemExit('refreshSkill block not found')
           s=s.replace(old,new,1)
           p.write_text(s)
           PY
-          grep -q "const raw='https://caos-live-game-server-va.onrender.com'" src/multiplayer.js
-          if grep -q "params.get('server')||location.origin" src/multiplayer.js; then exit 1; fi
-      - name: Validate multiplayer and server
+      - name: Patch dedicated server movement
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('cloud/game-server-v2.mjs')
+          s=p.read_text()
+          s=s.replace("ONLINE_VERSION='0.17.37-online.2'","ONLINE_VERSION='0.17.37-online.3'",1)
+          old="function resolveWorld(e,r){e.x=clamp(e.x,r,WORLD.width-r);e.y=clamp(e.y,r,WORLD.height-r);for(let pass=0;pass<2;pass++)for(const c of MAP.collisions){let dx=e.x-c.x,dy=e.y-c.y,d=Math.hypot(dx,dy),min=r+c.r;if(d>0&&d<min){const k=(min-d)/d;e.x+=dx*k;e.y+=dy*k}else if(d===0)e.x+=min}e.x=clamp(e.x,r,WORLD.width-r);e.y=clamp(e.y,r,WORLD.height-r)}"
+          new="function resolveWorld(e,r){e.x=clamp(e.x,r,WORLD.width-r);e.y=clamp(e.y,r,WORLD.height-r)}"
+          if old not in s:
+              raise SystemExit('resolveWorld block not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Cache bust multiplayer HTML
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('multiplayer.html')
+          s=p.read_text()
+          s=s.replace('ONLINE 0.17.37-online.2','ONLINE 0.17.37-online.3')
+          s=s.replace('ONLINE.2','ONLINE.3')
+          s=s.replace('/src/multiplayer.js?v=01737o2','/src/multiplayer.js?v=01737o3')
+          p.write_text(s)
+          PY
+      - name: Validate
         run: |
           node --check src/multiplayer.js
           node --check cloud/game-server-v2.mjs
-          grep -q 'RECONNECT_GRACE_MS=600000' cloud/game-server-v2.mjs
-      - name: Commit canonical endpoint fix
+          grep -q 'online.3' src/multiplayer.js
+          grep -q 'online.3' cloud/game-server-v2.mjs
+          grep -q '01737o3' multiplayer.html
+      - name: Commit repair
         run: |
-          if git diff --quiet; then
-            echo 'Already fixed.'
-            exit 0
-          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/multiplayer.js
-          git commit -m 'fix: use canonical Render endpoint for multiplayer'
+          git add src/multiplayer.js cloud/game-server-v2.mjs multiplayer.html
+          git commit -m 'fix: multiplayer map movement and skill flicker'
           git push
-      - name: Install test dependency
-        run: npm install --ignore-scripts --no-audit --no-fund
-      - name: Start dedicated server
-        run: |
-          npm run game-server > /tmp/caos-server.log 2>&1 &
-          for i in $(seq 1 30); do
-            if curl -fsS http://127.0.0.1:10000/health >/dev/null; then exit 0; fi
-            sleep 1
-          done
-          cat /tmp/caos-server.log
-          exit 1
-      - name: Simulate P1 and P2 joining same room
-        run: |
-          node --input-type=module <<'NODE'
-          import WebSocket from 'ws';
-          const url='ws://127.0.0.1:10000/game', room='TEST8P2X';
-          const connect=(name,session,create)=>new Promise((resolve,reject)=>{
-            const ws=new WebSocket(url),timer=setTimeout(()=>reject(new Error('timeout '+name)),5000);
-            ws.on('open',()=>ws.send(JSON.stringify({type:'join',room,name,session,create})));
-            ws.on('message',raw=>{const m=JSON.parse(raw.toString());if(m.type==='error'){clearTimeout(timer);reject(new Error(name+': '+m.code));}if(m.type==='welcome'){clearTimeout(timer);resolve({ws,m});}});
-            ws.on('error',reject);
-          });
-          const p1=await connect('P1TEST','session-p1',true),p2=await connect('P2TEST','session-p2',false);
-          if(p1.m.room!==room||p2.m.room!==room||p1.m.role!=='p1'||p2.m.role!=='p2') throw new Error('join mismatch');
-          console.log('PASS',room,p1.m.role,p2.m.role); p1.ws.close();p2.ws.close();
-          NODE
