@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { WebSocketServer, WebSocket } from 'ws';
 
 const PORT=Number(process.env.PORT||10000),HOST='0.0.0.0';
-const TICK_RATE=30,SNAPSHOT_RATE=20,ONLINE_VERSION='0.17.37-online.2',BASE_SOLO_VERSION='0.17.37';
+const TICK_RATE=30,SNAPSHOT_RATE=20,ONLINE_VERSION='0.17.37-online.3',BASE_SOLO_VERSION='0.17.37';
 const WORLD={width:3072,height:3072},PLAYER_RADIUS=18,INPUT_TIMEOUT_MS=450,RECONNECT_GRACE_MS=600000,MAX_MESSAGE_BYTES=12288,MAX_ENEMIES=180,MAX_BULLETS=260;
 const CHUNK_SIZE=512,MAP_N=6,MAP_SEED='ICE-BMFSXT';
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
@@ -35,7 +35,7 @@ function hashSeed(s){let h=2166136261>>>0;for(const c of String(s)){h^=c.charCod
 function H(x,y,z=0){let h=hashSeed(MAP_SEED);h^=Math.imul(x+0x9e3779b9,0x85ebca6b);h^=Math.imul(y+0xc2b2ae35,0x27d4eb2d);h^=z;h=Math.imul(h^(h>>>16),0x7feb352d);h=Math.imul(h^(h>>>15),0x846ca68b);return((h^(h>>>16))>>>0)/4294967296}
 function buildMap(){const by=Array.from({length:16},()=>[]);for(const d of manifest.chunks||[])if(Number.isInteger(d.mask)&&d.mask>=0&&d.mask<16)by[d.mask].push(d);const grid=Array(MAP_N*MAP_N),cells=[],collisions=[],idx=(x,y)=>y*MAP_N+x,inside=(x,y)=>x>=0&&y>=0&&x<MAP_N&&y<MAP_N,cell=(x,y)=>inside(x,y)?grid[idx(x,y)]:null,choose=(m,x,y)=>{const a=by[m]||[];if(!a.length)return manifest.chunks[0];if(a.length===1)return a[0];return H(x,y,991)<.32?(a.find(v=>v.variant===2)||a[1]||a[0]):(a.find(v=>v.variant===1)||a[0])};for(let y=0;y<MAP_N;y++)for(let x=0;x<MAP_N;x++){let m=0,u=cell(x,y-1),l=cell(x-1,y);if(u&&(u.mask&4))m|=1;if(l&&(l.mask&2))m|=8;if(x<MAP_N-1&&H(x,y,101)<.85)m|=2;if(y<MAP_N-1&&H(x,y,102)<.85)m|=4;const d=choose(m,x,y);grid[idx(x,y)]={mask:m,def:d};cells.push({x,y,mask:m,file:`/assets/Map/snow-frost/${d.file}`,id:d.id,variant:d.variant||1});for(const c of d.collision||[])if(c.type==='circle')collisions.push({x:x*CHUNK_SIZE+c.x*CHUNK_SIZE,y:y*CHUNK_SIZE+c.y*CHUNK_SIZE,r:c.r*CHUNK_SIZE})}return{seed:MAP_SEED,chunkSize:CHUNK_SIZE,gridSize:MAP_N,cells,collisions}}
 const MAP=buildMap();
-function resolveWorld(e,r){e.x=clamp(e.x,r,WORLD.width-r);e.y=clamp(e.y,r,WORLD.height-r);for(let pass=0;pass<2;pass++)for(const c of MAP.collisions){let dx=e.x-c.x,dy=e.y-c.y,d=Math.hypot(dx,dy),min=r+c.r;if(d>0&&d<min){const k=(min-d)/d;e.x+=dx*k;e.y+=dy*k}else if(d===0)e.x+=min}e.x=clamp(e.x,r,WORLD.width-r);e.y=clamp(e.y,r,WORLD.height-r)}
+function resolveWorld(e,r){e.x=clamp(e.x,r,WORLD.width-r);e.y=clamp(e.y,r,WORLD.height-r)}
 
 function xpNeedFor(lv){const base=60*Math.pow(Math.max(1,lv),1.42),mult=lv>=90?1.70:lv>=80?1.50:lv>=60?1.30:lv>=40?1.12:1;return Math.floor(base*mult)}
 function enemyTier(level,boss=false){const r=Math.random();if(boss)return r<.01?2:r<.07?1:0;let c=0,e=0;if(level>=90){c=.34;e=.42}else if(level>=80){c=.28;e=.38}else if(level>=60){c=.20;e=.34}else if(level>=40){c=.14;e=.28}else{c=level>=30?.12:level>=20?.08:level>=10?.035:0;e=level>=30?.24:level>=15?.18:level>=5?.10:0}if(r<c)return 2;if(r<c+e)return 1;return 0}
