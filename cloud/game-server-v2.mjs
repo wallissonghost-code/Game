@@ -7,7 +7,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 
 const PORT=Number(process.env.PORT||10000),HOST='0.0.0.0';
 const TICK_RATE=30,SNAPSHOT_RATE=20,ONLINE_VERSION='0.17.37-online.2',BASE_SOLO_VERSION='0.17.37';
-const WORLD={width:3072,height:3072},PLAYER_RADIUS=18,INPUT_TIMEOUT_MS=450,RECONNECT_GRACE_MS=20000,MAX_MESSAGE_BYTES=12288,MAX_ENEMIES=180,MAX_BULLETS=260;
+const WORLD={width:3072,height:3072},PLAYER_RADIUS=18,INPUT_TIMEOUT_MS=450,RECONNECT_GRACE_MS=600000,MAX_MESSAGE_BYTES=12288,MAX_ENEMIES=180,MAX_BULLETS=260;
 const CHUNK_SIZE=512,MAP_N=6,MAP_SEED='ICE-BMFSXT';
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const FILES={html:path.join(ROOT,'multiplayer.html'),js:path.join(ROOT,'src','multiplayer.js'),css:path.join(ROOT,'src','styles','game.css'),version:path.join(ROOT,'version.json'),manifest:path.join(ROOT,'assets','Map','snow-frost','manifest.json')};
