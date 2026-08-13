@@ -1,4 +1,4 @@
-name: Caos Live Online Room Persistence Hotfix
+name: Caos Live Multiplayer Join Test
 
 on:
   push:
@@ -7,44 +7,56 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  release:
+  test-room-join:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Extend waiting room reconnect grace
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('cloud/game-server-v2.mjs')
-          s=p.read_text(encoding='utf-8')
-          old='RECONNECT_GRACE_MS=20000'
-          if old not in s:
-              raise SystemExit('expected room grace token not found')
-          s=s.replace(old,'RECONNECT_GRACE_MS=600000',1)
-          p.write_text(s,encoding='utf-8')
-          PY
-      - name: Validate dedicated server
+      - run: npm ci
+      - name: Validate server syntax and room grace
         run: |
           node --check cloud/game-server-v2.mjs
           grep -q 'RECONNECT_GRACE_MS=600000' cloud/game-server-v2.mjs
-          grep -q "status:'waiting'" cloud/game-server-v2.mjs
-          grep -q "code:'room_not_found'" cloud/game-server-v2.mjs
-      - name: Validate Solo unchanged
-        run: npm run check
-      - name: Commit hotfix
+      - name: Start dedicated server
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add cloud/game-server-v2.mjs
-          if git diff --cached --quiet; then
-            echo 'No changes to commit.'
-          else
-            git commit -m 'fix: keep multiplayer waiting rooms alive for 10 minutes'
-            git push
-          fi
+          npm run game-server > /tmp/caos-server.log 2>&1 &
+          echo $! > /tmp/caos-server.pid
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:10000/health >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/caos-server.log
+          exit 1
+      - name: Simulate P1 and P2 joining same room
+        run: |
+          node --input-type=module <<'NODE'
+          import WebSocket from 'ws';
+          const url='ws://127.0.0.1:10000/game';
+          const room='TEST8P2X';
+          const connect=(name,session,create)=>new Promise((resolve,reject)=>{
+            const ws=new WebSocket(url);
+            const timer=setTimeout(()=>reject(new Error('timeout '+name)),5000);
+            ws.on('open',()=>ws.send(JSON.stringify({type:'join',room,name,session,create})));
+            ws.on('message',raw=>{
+              const m=JSON.parse(raw.toString());
+              if(m.type==='error'){clearTimeout(timer);reject(new Error(name+': '+m.code+' '+m.message));}
+              if(m.type==='welcome'){clearTimeout(timer);resolve({ws,m});}
+            });
+            ws.on('error',reject);
+          });
+          const p1=await connect('P1TEST','session-p1',true);
+          const p2=await connect('P2TEST','session-p2',false);
+          if(p1.m.room!==room||p2.m.room!==room) throw new Error('room mismatch');
+          if(p1.m.role!=='p1') throw new Error('P1 role='+p1.m.role);
+          if(p2.m.role!=='p2') throw new Error('P2 role='+p2.m.role);
+          console.log('PASS',p1.m.room,p1.m.role,p2.m.role);
+          p1.ws.close(); p2.ws.close();
+          NODE
+      - name: Show server log on failure
+        if: failure()
+        run: cat /tmp/caos-server.log || true
