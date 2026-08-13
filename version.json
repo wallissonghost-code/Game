@@ -1,4 +1,4 @@
 {
-  "version": "0.17.34",
-  "build": "firebase-migrate-legacy-ranking"
+  "version": "0.17.35",
+  "build": "ranked-admin-integrity-guard"
 }

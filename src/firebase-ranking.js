@@ -96,13 +96,13 @@ async function migrateLocalHistory(){
     const existingSolo=new Set(soloSnap.docs.map(d=>soloSig(d.data()))),existingDuo=new Set(duoSnap.docs.map(d=>duoSig(d.data())));
     let migrated=0,skipped=0;
     for(let i=0;i<local.solo.length;i++){
-      const r=local.solo[i]||{},payload={name:text(r.name,'P1',20),kills:int(r.kills,0,1000000),xp:int(r.xp,0,100000000),level:int(r.level,1,10000),points:int(r.points??r.score,0,1000000000),durationMs:int(r.durationMs??r.duration,0,86400000),version:'legacy-0.17.32'},sig=soloSig(payload);
+      const r=local.solo[i]||{};if(r.ranked===false){skipped++;continue}const payload={name:text(r.name,'P1',20),kills:int(r.kills,0,1000000),xp:int(r.xp,0,100000000),level:int(r.level,1,10000),points:int(r.points??r.score,0,1000000000),durationMs:int(r.durationMs??r.duration,0,86400000),version:'legacy-0.17.32'},sig=soloSig(payload);
       if(existingSolo.has(sig)){skipped++;continue}
       const legacyId='legacy-s-'+u.uid.slice(0,10)+'-'+String(Math.max(0,Number(r.date)||0)).slice(0,13)+'-'+i+'-'+rankHash(sig);
       await saveSolo(payload,legacyId);existingSolo.add(sig);migrated++;
     }
     for(let i=0;i<local.duo.length;i++){
-      const r=local.duo[i]||{},ps=Array.isArray(r.players)?r.players:[],a=ps[0]||{},b=ps[1]||{};
+      const r=local.duo[i]||{};if(r.ranked===false){skipped++;continue}const ps=Array.isArray(r.players)?r.players:[],a=ps[0]||{},b=ps[1]||{};
       const payload={p2Uid:'',p1Name:text(a.name||r.p1Name,'P1',20),p2Name:text(b.name||r.p2Name,'P2',20),p1Kills:int(a.kills??r.p1Kills,0,1000000),p2Kills:int(b.kills??r.p2Kills,0,1000000),p1Xp:int(a.xp??r.p1Xp,0,100000000),p2Xp:int(b.xp??r.p2Xp,0,100000000),p1Level:int(a.level??r.p1Level??r.level,1,10000),p2Level:int(b.level??r.p2Level??r.level,1,10000),points:int(r.points??r.score,0,2000000000),durationMs:int(r.durationMs??r.duration,0,86400000),version:'legacy-0.17.32'},sig=duoSig(payload);
       if(existingDuo.has(sig)){skipped++;continue}
       const legacyId='legacy-d-'+u.uid.slice(0,10)+'-'+String(Math.max(0,Number(r.date)||0)).slice(0,13)+'-'+i+'-'+rankHash(sig);

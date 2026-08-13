@@ -205,3 +205,18 @@ if(!firebaseRank34.includes("where('uid','==',u.uid)")) fail('deduplicacao solo 
 if(!firebaseRank34.includes("where('hostUid','==',u.uid)")) fail('deduplicacao duo ausente'); else ok('deduplicacao duo por Host UID');
 if(!firebaseRank34.includes("version:'legacy-0.17.32'")) fail('historico legado sem identificacao'); else ok('historico legado identificado');
 if(!firebaseRank34.includes('init().then(()=>migrateLocalHistory())')) fail('migracao nao inicia automaticamente'); else ok('migracao inicia ao abrir o jogo');
+
+// v0.17.35 · ranked integrity guard against manual admin assistance
+const duo35=read('src/duo.js'),firebase35=read('src/firebase-ranking.js');
+if(!gameHtml.includes('id="rankIntegrity"')) fail('HUD sem selo de integridade do rank'); else ok('HUD mostra RANQUEADA/RANK OFF');
+if(!read('duo.html').includes('id="rankIntegrityDuo"')) fail('Duo sem selo de rank'); else ok('Duo mostra integridade do rank');
+if(!panelHtml.includes('id="rankGuard"')) fail('Painel sem estado do rank'); else ok('Painel mostra integridade do rank');
+if(!game.includes("RANK_SAFE_ADMIN_COMMANDS=new Set(['ping','fps'])")) fail('allowlist segura ADM ausente'); else ok('ping/FPS nao invalidam rank');
+if(!game.includes('adminCommandIsLive(d)')) fail('eventos legitimos da live nao separados'); else ok('TikTok separado de ADM manual');
+if(!game.includes('invalidateRankByAdmin(c)')) fail('comando ADM nao invalida rank'); else ok('ADM manual invalida rank');
+if(!game.includes("rankEligible=!adminSessionDirty")) fail('restart pode limpar fraude ADM'); else ok('rank continua OFF ate reload');
+if(!game.includes("if(!rankEligible){toast('🛠️ PARTIDA ASSISTIDA PELO ADM · NÃO RANQUEADA');return}")) fail('partida assistida ainda pode ir ao Firebase'); else ok('partida assistida bloqueada no rank global');
+if(!game.includes('ranked:rankEligible,rankInvalidReason')) fail('historico local nao marca run assistida'); else ok('historico local marca integridade');
+if(!game.includes('rank:{eligible:rankEligible,reason:rankInvalidReason}')) fail('P2 nao recebe estado do rank'); else ok('P2 recebe estado do rank');
+if(!game.includes('ranked:rankEligible,rankInvalidReason,adminSessionDirty')) fail('painel nao recebe estado do rank'); else ok('painel recebe estado do rank');
+if(!firebase35.includes('if(r.ranked===false){skipped++;continue}')) fail('migracao pode subir run ADM antiga'); else ok('migracao ignora runs explicitamente nao ranqueadas');
