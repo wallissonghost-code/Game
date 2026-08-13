@@ -5,7 +5,7 @@
   "scripts": {
     "tiktok": "node scripts/tiktok-bridge.mjs",
     "cloud": "node cloud/connector-server.mjs",
-    "game-server": "node cloud/game-server.mjs",
+    "game-server": "node cloud/game-server-v2.mjs",
     "check": "node scripts/check-game.mjs",
     "validate": "npm run check"
   },
