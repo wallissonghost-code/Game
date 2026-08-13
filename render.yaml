@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: caos-live-game-server
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm run game-server
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
