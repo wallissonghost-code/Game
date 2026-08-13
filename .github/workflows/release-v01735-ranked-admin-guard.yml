@@ -1,0 +1,44 @@
+name: Caos Live v0.17.35 Ranked Admin Guard
+
+on:
+  push:
+    paths:
+      - 'scripts/release-v01735-ranked-admin-guard.py'
+      - '.github/workflows/release-v01735-ranked-admin-guard.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Apply ranked admin integrity guard
+        run: python3 scripts/release-v01735-ranked-admin-guard.py
+      - name: Validate JavaScript
+        run: |
+          node --check src/game.js
+          node --check src/duo.js
+          node --check src/panel.js
+          node --check src/firebase-ranking.js
+      - name: Validate project
+        run: npm run check
+      - name: Validate ranked guard contract
+        run: |
+          grep -q "ranked-admin-integrity-guard" version.json
+          grep -q "RANK_SAFE_ADMIN_COMMANDS" src/game.js
+          grep -q "PARTIDA ASSISTIDA PELO ADM" src/game.js
+          grep -q "rankIntegrityDuo" duo.html
+          grep -q "rankGuard" painel.html
+      - name: Commit release
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "release: v0.17.35 ranked admin integrity guard" || exit 0
+          git push
