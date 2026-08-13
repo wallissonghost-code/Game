@@ -37,10 +37,6 @@ if len(list(target.glob('frame_*.png'))) != 32:
 g=rw('src/game.js')
 g=g.replace(OLD_VERSION,VERSION).replace(OLD_TAG,TAG)
 g=must_replace(g,
-    "const MOB_VISUAL_HEIGHT={normal:62,elite:86,bossScale:3.55};",
-    "const MOB_VISUAL_HEIGHT={normal:62,elite:86,corrupted:86,bossScale:3.55};",
-    'escala visual corrupted')
-g=must_replace(g,
     "const ogreFrames={up:[],down:[],right:[],left:[]},eliteOgreFrames={up:[],down:[],right:[],left:[]},bossOgreFrames={up:[],down:[],right:[],left:[]},bossColossusFrames={up:[],down:[],right:[],left:[]},bossVoidFrames={up:[],down:[],right:[],left:[]};let ogreReady=false,eliteOgreReady=false,bossOgreReady=false,bossColossusReady=false,bossVoidReady=false;",
     "const ogreFrames={up:[],down:[],right:[],left:[]},eliteOgreFrames={up:[],down:[],right:[],left:[]},corruptedOgreFrames={up:[],down:[],right:[],left:[]},bossOgreFrames={up:[],down:[],right:[],left:[]},bossColossusFrames={up:[],down:[],right:[],left:[]},bossVoidFrames={up:[],down:[],right:[],left:[]};let ogreReady=false,eliteOgreReady=false,corruptedOgreReady=false,bossOgreReady=false,bossColossusReady=false,bossVoidReady=false;",
     'frames corrupted P1')
@@ -58,7 +54,7 @@ g=must_replace(g,
     'ready corrupted P1')
 g=must_replace(g,
     "(e.tier===1?MOB_VISUAL_HEIGHT.elite:MOB_VISUAL_HEIGHT.normal)",
-    "(e.tier===2?MOB_VISUAL_HEIGHT.corrupted:e.tier===1?MOB_VISUAL_HEIGHT.elite:MOB_VISUAL_HEIGHT.normal)",
+    "(e.tier===2?MOB_VISUAL_HEIGHT.elite:e.tier===1?MOB_VISUAL_HEIGHT.elite:MOB_VISUAL_HEIGHT.normal)",
     'altura corrupted P1')
 ww('src/game.js',g)
 
