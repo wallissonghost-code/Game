@@ -1,4 +1,7 @@
 import http from 'node:http';
+import path from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
 
 const PORT = Number(process.env.PORT || 10000);
@@ -9,6 +12,9 @@ const WORLD = { width: 1600, height: 900 };
 const PLAYER_SPEED = 300;
 const INPUT_TIMEOUT_MS = 500;
 const MAX_MESSAGE_BYTES = 4096;
+const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const LAB_HTML = path.join(ROOT_DIR, 'duo-server.html');
+const LAB_JS = path.join(ROOT_DIR, 'src', 'duo-server.js');
 
 const rooms = new Map();
 const clientState = new WeakMap();
@@ -24,8 +30,24 @@ function json(res, status, payload) {
   res.end(body);
 }
 
-const server = http.createServer((req, res) => {
-  const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+async function serveFile(res, filePath, contentType) {
+  try {
+    const body = await readFile(filePath);
+    res.writeHead(200, {
+      'content-type': contentType,
+      'cache-control': 'no-store',
+      'x-content-type-options': 'nosniff',
+    });
+    res.end(body);
+  } catch (error) {
+    console.error(`[http] failed to serve ${filePath}:`, error?.message || error);
+    json(res, 500, { ok: false, error: 'lab_asset_unavailable' });
+  }
+}
+
+const server = http.createServer(async (req, res) => {
+  const hostHeader = req.headers.host || 'localhost';
+  const url = new URL(req.url || '/', `http://${hostHeader}`);
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
@@ -42,7 +64,7 @@ const server = http.createServer((req, res) => {
     return json(res, 200, {
       ok: true,
       service: 'caos-live-game-server',
-      version: '0.1.0-lab',
+      version: '0.1.1-lab',
       rooms: rooms.size,
       players,
       tickRate: TICK_RATE,
@@ -52,14 +74,32 @@ const server = http.createServer((req, res) => {
     });
   }
 
-  if (url.pathname === '/') {
+  if (url.pathname === '/api') {
     return json(res, 200, {
       ok: true,
       name: 'Caos Live Multiplayer Server',
       websocket: '/game',
       health: '/health',
+      lab: '/duo-server.html',
       mode: 'duo-server-lab',
     });
+  }
+
+  if (url.pathname === '/' || url.pathname === '/duo-server.html') {
+    if (!url.searchParams.get('server')) {
+      const protocol = hostHeader.includes('localhost') || hostHeader.startsWith('127.0.0.1') ? 'http' : 'https';
+      const publicOrigin = `${protocol}://${hostHeader}`;
+      res.writeHead(302, {
+        location: `/duo-server.html?server=${encodeURIComponent(publicOrigin)}`,
+        'cache-control': 'no-store',
+      });
+      return res.end();
+    }
+    return serveFile(res, LAB_HTML, 'text/html; charset=utf-8');
+  }
+
+  if (url.pathname === '/src/duo-server.js') {
+    return serveFile(res, LAB_JS, 'text/javascript; charset=utf-8');
   }
 
   return json(res, 404, { ok: false, error: 'not_found' });
@@ -258,7 +298,7 @@ wss.on('connection', (ws, req) => {
   send(ws, {
     type: 'hello',
     service: 'caos-live-game-server',
-    version: '0.1.0-lab',
+    version: '0.1.1-lab',
     serverTime: Date.now(),
   });
 
@@ -389,5 +429,5 @@ process.on('SIGINT', () => shutdown('SIGINT'));
 
 server.listen(PORT, HOST, () => {
   console.log(`[server] Caos Live multiplayer lab listening on http://${HOST}:${PORT}`);
-  console.log(`[server] ws path: /game | tick=${TICK_RATE}Hz snapshots=${SNAPSHOT_RATE}Hz`);
+  console.log(`[server] lab: /duo-server.html | ws: /game | tick=${TICK_RATE}Hz snapshots=${SNAPSHOT_RATE}Hz`);
 });
