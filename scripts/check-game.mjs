@@ -220,3 +220,10 @@ if(!game.includes('ranked:rankEligible,rankInvalidReason')) fail('historico loca
 if(!game.includes('rank:{eligible:rankEligible,reason:rankInvalidReason}')) fail('P2 nao recebe estado do rank'); else ok('P2 recebe estado do rank');
 if(!game.includes('ranked:rankEligible,rankInvalidReason,adminSessionDirty')) fail('painel nao recebe estado do rank'); else ok('painel recebe estado do rank');
 if(!firebase35.includes('if(r.ranked===false){skipped++;continue}')) fail('migracao pode subir run ADM antiga'); else ok('migracao ignora runs explicitamente nao ranqueadas');
+
+// v0.17.36 · dedicated corrupted ogre skin
+const corruptGame=read('src/game.js'),corruptDuo=read('src/duo.js');
+if(!corruptGame.includes("./assets/mobs/Ogro Corrompido")) fail('skin Corrompido ausente no Host'); else ok('Host carrega skin Ogro Corrompido');
+if(!corruptGame.includes('e.tier===2&&corruptedOgreReady?corruptedOgreFrames')) fail('tier 2 nao usa skin Corrompido no Host'); else ok('tier 2 usa skin Corrompido no Host');
+if(!corruptDuo.includes("assets/mobs/Ogro Corrompido")) fail('skin Corrompido ausente no P2'); else ok('P2 carrega skin Ogro Corrompido');
+if(!corruptDuo.includes('e.tier===2&&corruptedReady?corruptedOgreFrames')) fail('tier 2 nao usa skin Corrompido no P2'); else ok('tier 2 usa skin Corrompido no P2');
