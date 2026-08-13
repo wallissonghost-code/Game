@@ -6,7 +6,7 @@
     "tiktok": "node scripts/tiktok-bridge.mjs",
     "cloud": "node cloud/connector-server.mjs",
     "game-server": "node cloud/game-server-v2.mjs",
-    "check": "node scripts/check-game.mjs",
+    "check": "node scripts/verify-v204.mjs && node scripts/check-game.mjs",
     "validate": "npm run check",
     "game-server-v3": "python3 scripts/patch-v204-skills.py && node cloud/game-server-v3.mjs"
   },
