@@ -1,0 +1,129 @@
+name: Caos Live Multiplayer V2.0.2 Team + Net
+
+on:
+  push:
+    paths:
+      - '.github/workflows/v2-02-team-ui-net.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Add teammate locator and revive progress
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('src/multiplayer-v2.js')
+          s=p.read_text()
+          s=s.replace("0.17.37-online-v2.0.1","0.17.37-online-v2.0.2")
+          s=s.replace("TAG='01737v201'","TAG='01737v202'",1)
+
+          old="if(p.down){ctx.fillStyle='#fecaca';ctx.fillText('CAÍDO',0,48)}ctx.restore()}"
+          new="""if(p.down){ctx.fillStyle='#fecaca';ctx.fillText('CAÍDO',0,48);if(!me){const rv=Math.max(0,Math.min(1,Number(p.revive||0)));if(rv>0){const bw=68,by=-59,remain=Math.max(0,3*(1-rv));ctx.fillStyle='#06111be8';ctx.fillRect(-bw/2,by,bw,7);ctx.fillStyle='#22d3ee';ctx.fillRect(-bw/2,by,bw*rv,7);ctx.strokeStyle='#cffafe';ctx.lineWidth=1;ctx.strokeRect(-bw/2,by,bw,7);ctx.fillStyle='#ecfeff';ctx.font='900 8px sans-serif';ctx.fillText(`REVIVE ${Math.round(rv*100)}% · ${remain.toFixed(1)}s`,0,by-4)}}}ctx.restore()}"""
+          if old not in s: raise SystemExit('drawPlayer down block not found')
+          s=s.replace(old,new,1)
+
+          marker="function enemyPack(e){"
+          locator=r"""function teammatePlayer(){for(const p of players.values())if(p.id!==myId)return p;return null}
+function drawTeammateLocator(cx,cy){const me=players.get(myId),mate=teammatePlayer();if(!me||!mate)return;const q=worldToScreen(mate.x,mate.y,cx,cy),top=118,edge=46,bottom=62,on=q.x>=edge&&q.x<=innerWidth-edge&&q.y>=top&&q.y<=innerHeight-bottom;if(on)return;const sx=innerWidth/2,sy=innerHeight/2,dx=q.x-sx,dy=q.y-sy,n=Math.max(1,Math.hypot(dx,dy)),ux=dx/n,uy=dy/n,rx=Math.max(24,innerWidth/2-edge),ry=Math.max(24,innerHeight/2-94),k=Math.min(rx/Math.max(.001,Math.abs(ux)),ry/Math.max(.001,Math.abs(uy))),x=Math.min(innerWidth-edge,Math.max(edge,sx+ux*k)),y=Math.min(innerHeight-bottom,Math.max(top,sy+uy*k)),down=!!mate.down,offline=mate.connected===false,color=offline?'#94a3b8':down?'#fb7185':'#67e8f9',ang=Math.atan2(uy,ux),pulse=down?.82+.18*Math.sin(performance.now()/120):1,dist=Math.round(Math.hypot(mate.x-me.x,mate.y-me.y)),label=offline?`${mate.role?.toUpperCase()||'P2'} OFFLINE · ${dist}`:down?`${mate.role?.toUpperCase()||'P2'} CAÍDO · ${dist}`:`${mate.role?.toUpperCase()||'P2'} · ${dist}`;ctx.save();ctx.globalAlpha=pulse;ctx.translate(x,y);ctx.rotate(ang);ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=down?14:7;ctx.beginPath();ctx.moveTo(15,0);ctx.lineTo(-8,-9);ctx.lineTo(-5,0);ctx.lineTo(-8,9);ctx.closePath();ctx.fill();ctx.restore();ctx.save();ctx.font='900 9px sans-serif';ctx.textAlign='center';const w=Math.max(58,ctx.measureText(label).width+14),ly=y>innerHeight/2?y-20:y+23;ctx.fillStyle='#07101ddd';ctx.fillRect(Math.max(4,Math.min(innerWidth-w-4,x-w/2)),ly-10,w,16);ctx.fillStyle=color;ctx.fillText(label,Math.max(w/2+4,Math.min(innerWidth-w/2-4,x)),ly+1);ctx.restore()}
+"""
+          if marker not in s: raise SystemExit('enemyPack marker missing')
+          s=s.replace(marker,locator+marker,1)
+
+          old_frame="for(const p of players.values())drawPlayer(p,cx,cy)}fpsFrames++"
+          new_frame="for(const p of players.values())drawPlayer(p,cx,cy);drawTeammateLocator(cx,cy)}fpsFrames++"
+          if old_frame not in s: raise SystemExit('frame player loop missing')
+          s=s.replace(old_frame,new_frame,1)
+          p.write_text(s)
+          PY
+
+      - name: Reduce snapshot load and add backpressure
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('cloud/game-server-v3.mjs')
+          s=p.read_text()
+          s=s.replace("0.17.37-online-v2.0.1","0.17.37-online-v2.0.2")
+
+          anchor="function serializePlayer(p){return{id:p.id,role:p.role,name:p.name,connected:p.connected,ready:!!p.ready,x:q(p.x),y:q(p.y),vx:q(p.vx),vy:q(p.vy),hp:q(p.hp),maxHp:q(p.maxHp),down:p.down,revive:q(p.revive),aim:q(p.aim),walk:q(p.walk),shotFlash:p.shotFlash>0,kills:p.kills,xp:Math.floor(p.xp),level:p.level,xpNeed:p.xpNeed,skills:p.skills,choices:p.choices,ack:p.lastSeq,phoenix:p.phoenixReady}}"
+          if anchor not in s: raise SystemExit('serializePlayer anchor missing')
+          remote=anchor+"\nfunction serializeRemotePlayer(p){return{id:p.id,role:p.role,name:p.name,connected:p.connected,x:q(p.x),y:q(p.y),vx:q(p.vx),vy:q(p.vy),hp:q(p.hp),maxHp:q(p.maxHp),down:p.down,revive:q(p.revive),aim:q(p.aim),walk:q(p.walk),shotFlash:p.shotFlash>0,level:p.level,ack:p.lastSeq}}"
+          s=s.replace(anchor,remote,1)
+          s=s.replace("const AOI_ENEMY=1550,AOI_BULLET=1750;","const AOI_ENEMY=1200,AOI_BULLET=1350,SNAPSHOT_BACKPRESSURE=131072;",1)
+          old="players:[...r.players.values()].map(serializePlayer),enemies:nearEnemies.map"
+          new="players:[...r.players.values()].map(x=>x.id===p.id?serializePlayer(x):serializeRemotePlayer(x)),enemies:nearEnemies.map"
+          if old not in s: raise SystemExit('viewer player snapshot anchor missing')
+          s=s.replace(old,new,1)
+          old_loop="for(const p of connected(r))send(p.ws,snapshotFor(r,p,now))"
+          new_loop="for(const p of connected(r)){if((p.ws?.bufferedAmount||0)>SNAPSHOT_BACKPRESSURE)continue;send(p.ws,snapshotFor(r,p,now))}"
+          if old_loop not in s: raise SystemExit('snapshot send loop missing')
+          s=s.replace(old_loop,new_loop,1)
+          p.write_text(s)
+          PY
+
+      - name: Bump V2 HTML cache/version
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('multiplayer-v2.html'); s=p.read_text()
+          s=s.replace('0.17.37-online-v2.0.1','0.17.37-online-v2.0.2')
+          s=s.replace('01737v201','01737v202')
+          p.write_text(s)
+          PY
+
+      - name: Validate source
+        run: |
+          node --check src/multiplayer-v2.js
+          node --check cloud/game-server-v3.mjs
+          grep -q 'drawTeammateLocator' src/multiplayer-v2.js
+          grep -q 'REVIVE' src/multiplayer-v2.js
+          grep -q 'serializeRemotePlayer' cloud/game-server-v3.mjs
+          grep -q 'SNAPSHOT_BACKPRESSURE' cloud/game-server-v3.mjs
+          grep -q 'AOI_ENEMY=1200' cloud/game-server-v3.mjs
+          npm run check
+
+      - name: Smoke test V2 with two players
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          PORT=11002 npm run game-server-v3 > /tmp/v202.log 2>&1 &
+          PID=$!
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:11002/health >/dev/null && break; sleep 1; done
+          node --input-type=module <<'NODE'
+          import WebSocket from 'ws';
+          const wait=(ws,type,timeout=6000)=>new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('timeout '+type)),timeout);const fn=b=>{const m=JSON.parse(b.toString());if(m.type===type){clearTimeout(t);ws.off('message',fn);resolve(m)}};ws.on('message',fn)});
+          async function connect(){const ws=new WebSocket('ws://127.0.0.1:11002/game-v2');await wait(ws,'hello');return ws}
+          const a=await connect(),b=await connect(),room='V2TEST02';
+          a.send(JSON.stringify({type:'join',room,name:'P1',session:'v202-p1',create:true}));const wa=await wait(a,'welcome');
+          b.send(JSON.stringify({type:'join',room,name:'P2',session:'v202-p2',create:false}));const wb=await wait(b,'welcome');
+          a.send(JSON.stringify({type:'ready',ready:true}));b.send(JSON.stringify({type:'ready',ready:true}));
+          await new Promise(r=>setTimeout(r,150));a.send(JSON.stringify({type:'start-match'}));await wait(a,'match-start');await wait(b,'match-start');
+          a.send(JSON.stringify({type:'input',seq:1,dx:1,dy:0}));
+          const snap=await wait(a,'snapshot');
+          if(snap.version!=='0.17.37-online-v2.0.2')throw Error('wrong version');
+          if(snap.players.length!==2)throw Error('players missing');
+          const self=snap.players.find(x=>x.id===wa.id),other=snap.players.find(x=>x.id===wb.id);
+          if(!self?.skills)throw Error('self full state missing');
+          if(other?.skills)throw Error('remote state not compact');
+          if(typeof other?.revive!=='number')throw Error('remote revive state missing');
+          console.log('V2.0.2 TWO PLAYER SNAPSHOT OK');a.close();b.close();
+          NODE
+          kill $PID || true
+
+      - name: Commit V2.0.2
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/multiplayer-v2.js cloud/game-server-v3.mjs multiplayer-v2.html
+          git commit -m 'feat: multiplayer v2.0.2 teammate rescue ui and network backpressure'
+          git push
