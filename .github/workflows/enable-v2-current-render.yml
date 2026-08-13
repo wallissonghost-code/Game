@@ -1,4 +1,4 @@
-name: Enable Multiplayer V2 On Current Render
+name: Promote Multiplayer V2.0.4 Skills
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  bridge:
+  promote:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,114 +18,29 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Point V2 client to existing Virginia service
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('src/multiplayer-v2.js'); s=p.read_text()
-          s=s.replace("'https://caos-live-game-server-v2-va.onrender.com'","'https://caos-live-game-server-va.onrender.com'",1)
-          # Prefix new V2 rooms so they do not collide accidentally with legacy rooms.
-          old="function randomRoom(){const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',data=new Uint32Array(8);crypto.getRandomValues(data);return[...data].map(n=>chars[n%chars.length]).join('')}"
-          new="function randomRoom(){const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',data=new Uint32Array(7);crypto.getRandomValues(data);return'V'+[...data].map(n=>chars[n%chars.length]).join('')}"
-          if old not in s: raise SystemExit('V2 randomRoom block not found')
-          s=s.replace(old,new,1)
-          p.write_text(s)
-          PY
+      - name: Apply V2.0.4 skill parity
+        run: python3 scripts/patch-v204-skills.py
 
-      - name: Add V2 protocol beside legacy WebSocket
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import re
-          p=Path('cloud/game-server-v2.mjs'); s=p.read_text()
-          if "ONLINE_V2_VERSION=" not in s:
-              s=s.replace("const TICK_RATE=30,SNAPSHOT_RATE=20,ONLINE_VERSION='0.17.37-online.7',BASE_SOLO_VERSION='0.17.37';","const TICK_RATE=30,SNAPSHOT_RATE=20,ONLINE_VERSION='0.17.37-online.7',ONLINE_V2_VERSION='0.17.37-online-v2.0.1',BASE_SOLO_VERSION='0.17.37';",1)
-          old="const FILES={html:path.join(ROOT,'multiplayer.html'),js:path.join(ROOT,'src','multiplayer.js'),css:path.join(ROOT,'src','styles','game.css'),version:path.join(ROOT,'version.json'),manifest:path.join(ROOT,'assets','Map','snow-frost','manifest.json')};"
-          new="const FILES={html:path.join(ROOT,'multiplayer.html'),js:path.join(ROOT,'src','multiplayer.js'),htmlV2:path.join(ROOT,'multiplayer-v2.html'),jsV2:path.join(ROOT,'src','multiplayer-v2.js'),css:path.join(ROOT,'src','styles','game.css'),version:path.join(ROOT,'version.json'),manifest:path.join(ROOT,'assets','Map','snow-frost','manifest.json')};"
-          if old not in s: raise SystemExit('FILES block not found')
-          s=s.replace(old,new,1)
-
-          # Welcome reports the protocol-specific version without altering legacy clients.
-          old="function welcome(r,p,reconnected){send(p.ws,{type:'welcome',version:ONLINE_VERSION,baseSoloVersion:BASE_SOLO_VERSION"
-          new="function welcome(r,p,reconnected){send(p.ws,{type:'welcome',version:p.ws?.caosProtocol==='v2'?ONLINE_V2_VERSION:ONLINE_VERSION,baseSoloVersion:BASE_SOLO_VERSION"
-          if old not in s: raise SystemExit('welcome block not found')
-          s=s.replace(old,new,1)
-
-          # V2 ACK semantics: input is acknowledged only after an authoritative tick consumes it.
-          old_match=re.search(r"function inputMsg\(ws,m\)\{.*?\}\nfunction skillMsg",s,re.S)
-          if not old_match: raise SystemExit('inputMsg not found')
-          new_input="""function inputMsg(ws,m){const{r,p}=stateFor(ws);if(!r||r.status!=='running'||r.gameOver||!p)return;let dx=clamp(safe(m.dx),-1,1),dy=clamp(safe(m.dy),-1,1),n=Math.hypot(dx,dy);if(n>1){dx/=n;dy/=n}p.inputX=dx;p.inputY=dy;p.lastInputAt=Date.now();const nextSeq=Math.floor(safe(m.seq,p.lastSeq||0));if(ws.caosProtocol==='v2'){p.recvSeq=Math.max(p.recvSeq||0,nextSeq)}else{p.lastSeq=Math.max(p.lastSeq,nextSeq);if(m.stop&&Math.hypot(dx,dy)<.01){const px=safe(m.px,p.x),py=safe(m.py,p.y);if(Math.hypot(px-p.x,py-p.y)<=105){p.x=px;p.y=py;resolveWorld(p,p.r);p.vx=p.vy=0}}}}"""
-          s=s[:old_match.start()]+new_input+"\nfunction skillMsg"+s[old_match.end():]
-          marker="if(now-p.lastInputAt>INPUT_TIMEOUT_MS)p.inputX=p.inputY=0;p.shotFlash"
-          repl="if(now-p.lastInputAt>INPUT_TIMEOUT_MS)p.inputX=p.inputY=0;if(p.ws?.caosProtocol==='v2')p.lastSeq=p.recvSeq||p.lastSeq||0;p.shotFlash"
-          if marker not in s: raise SystemExit('updatePlayers ACK marker not found')
-          s=s.replace(marker,repl,1)
-
-          # Serve V2 static client from the same existing Render process.
-          anchor="if(u.pathname==='/'||u.pathname==='/multiplayer')return serve(res,FILES.html,'text/html; charset=utf-8');"
-          addition="if(u.pathname==='/multiplayer-v2')return serve(res,FILES.htmlV2,'text/html; charset=utf-8');if(u.pathname==='/src/multiplayer-v2.js')return serve(res,FILES.jsV2,'text/javascript; charset=utf-8','no-store');"
-          if anchor not in s: raise SystemExit('HTTP multiplayer anchor not found')
-          s=s.replace(anchor,anchor+addition,1)
-
-          # Replace one-path WS setup with two isolated protocol entrances sharing the same authoritative rooms.
-          start=s.index("const wss=new WebSocketServer")
-          end=s.index("const tick=setInterval",start)
-          socket_block=r"""const wss=new WebSocketServer({server,path:'/game',perMessageDeflate:false,maxPayload:MAX_MESSAGE_BYTES});
-const wssV2=new WebSocketServer({server,path:'/game-v2',perMessageDeflate:false,maxPayload:MAX_MESSAGE_BYTES});
-function bindSocket(ws,req,protocol='legacy'){ws.caosProtocol=protocol;ws.isAlive=true;ws.msgAt=Date.now();ws.msgCount=0;send(ws,{type:'hello',service:'caos-live-game-server',version:protocol==='v2'?ONLINE_V2_VERSION:ONLINE_VERSION,serverTime:Date.now()});ws.on('pong',()=>ws.isAlive=true);ws.on('message',raw=>{const now=Date.now();if(now-ws.msgAt>=1000){ws.msgAt=now;ws.msgCount=0}if(++ws.msgCount>140)return ws.close(1008,'rate_limit');if(raw.length>MAX_MESSAGE_BYTES)return ws.close(1009,'message_too_large');let m;try{m=JSON.parse(raw.toString())}catch{return send(ws,{type:'error',code:'invalid_json',message:'Mensagem inválida.'})}if(!m||typeof m.type!=='string')return;if(m.type==='join')join(ws,m);else if(m.type==='ready')readyMsg(ws,m);else if(m.type==='start-match')startMsg(ws);else if(m.type==='input')inputMsg(ws,m);else if(m.type==='skill-choice')skillMsg(ws,m);else if(m.type==='restart')restartMsg(ws);else if(m.type==='ping')send(ws,{type:'pong',clientTime:safe(m.clientTime),serverTime:Date.now()})});ws.on('close',()=>detach(ws));ws.on('error',()=>detach(ws));console.log(`[ws:${protocol}] ${req.headers.origin||'unknown'}`)}
-wss.on('connection',(ws,req)=>bindSocket(ws,req,'legacy'));
-wssV2.on('connection',(ws,req)=>bindSocket(ws,req,'v2'));
-"""
-          s=s[:start]+socket_block+s[end:]
-
-          # Legacy receives the exact full snapshot; V2 receives AOI snapshots.
-          snap_start=s.index("const snaps=setInterval")
-          snap_end=s.index("snaps.unref?.();",snap_start)+len("snaps.unref?.();")
-          snap_block=r"""function fullSnapshot(r,now){return{type:'snapshot',version:ONLINE_VERSION,room:r.code,tick:serverTick,serverTime:now,meta:{totalKills:r.totalKills,totalXp:Math.floor(r.totalXp),wave:r.wave,mobs:r.enemies.length,boss:r.enemies.some(e=>e.boss),gameOver:r.gameOver,durationMs:r.startedAt?now-r.startedAt:0,matchId:r.matchId,medDrop:r.medDrop?{x:q(r.medDrop.x),y:q(r.medDrop.y)}:null},players:[...r.players.values()].map(serializePlayer),enemies:r.enemies.map(e=>[e.id,q(e.x),q(e.y),q(e.hp),q(e.maxHp),q(e.vx),q(e.vy),e.typeIndex,q(e.walk),e.tier,e.boss?1:0,e.evolution||1,q(e.r)]),bullets:r.bullets.map(b=>[b.id,q(b.x),q(b.y),q(b.vx),q(b.vy),b.ownerRole,b.flash?1:0])}}
-const AOI_ENEMY=1550,AOI_BULLET=1750;function v2Snapshot(r,p,now){const er2=AOI_ENEMY*AOI_ENEMY,br2=AOI_BULLET*AOI_BULLET,nearEnemies=r.enemies.filter(e=>e.boss||(e.x-p.x)**2+(e.y-p.y)**2<=er2),nearBullets=r.bullets.filter(b=>(b.x-p.x)**2+(b.y-p.y)**2<=br2);return{type:'snapshot',version:ONLINE_V2_VERSION,room:r.code,tick:serverTick,serverTime:now,meta:{totalKills:r.totalKills,totalXp:Math.floor(r.totalXp),wave:r.wave,mobs:r.enemies.length,visibleMobs:nearEnemies.length,boss:r.enemies.some(e=>e.boss),gameOver:r.gameOver,durationMs:r.startedAt?now-r.startedAt:0,matchId:r.matchId,medDrop:r.medDrop?{x:q(r.medDrop.x),y:q(r.medDrop.y)}:null},players:[...r.players.values()].map(serializePlayer),enemies:nearEnemies.map(e=>[e.id,q(e.x),q(e.y),q(e.hp),q(e.maxHp),q(e.vx),q(e.vy),e.typeIndex,q(e.walk),e.tier,e.boss?1:0,e.evolution||1,q(e.r)]),bullets:nearBullets.map(b=>[b.id,q(b.x),q(b.y),q(b.vx),q(b.vy),b.ownerRole,b.flash?1:0])}}
-const snaps=setInterval(()=>{const now=Date.now();for(const r of rooms.values())if(r.status==='running'){let legacy=null;for(const p of connected(r)){if(p.ws?.caosProtocol==='v2')send(p.ws,v2Snapshot(r,p,now));else{legacy ||= fullSnapshot(r,now);send(p.ws,legacy)}}}},Math.round(1000/SNAPSHOT_RATE));snaps.unref?.();"""
-          s=s[:snap_start]+snap_block+s[snap_end:]
-
-          # Heartbeat and shutdown cover both protocol sockets.
-          hb_start=s.index("const heartbeat=setInterval")
-          hb_end=s.index("heartbeat.unref?.();",hb_start)+len("heartbeat.unref?.();")
-          hb="const heartbeat=setInterval(()=>{for(const pool of [wss.clients,wssV2.clients])for(const ws of pool){if(ws.isAlive===false){ws.terminate();continue}ws.isAlive=false;ws.ping()}},10000);heartbeat.unref?.();"
-          s=s[:hb_start]+hb+s[hb_end:]
-          s=s.replace("for(const ws of wss.clients)try{ws.close(1012,'server_restart')}catch{}","for(const pool of [wss.clients,wssV2.clients])for(const ws of pool)try{ws.close(1012,'server_restart')}catch{}",1)
-          p.write_text(s)
-          PY
-
-      - name: Validate legacy and V2 code
+      - name: Validate V2.0.4
         run: |
           node --check src/multiplayer-v2.js
-          node --check cloud/game-server-v2.mjs
-          grep -q "path:'/game-v2'" cloud/game-server-v2.mjs
-          grep -q "function v2Snapshot" cloud/game-server-v2.mjs
-          grep -q "function fullSnapshot" cloud/game-server-v2.mjs
-          grep -q "caos-live-game-server-va.onrender.com" src/multiplayer-v2.js
-          npm run check
+          node --check cloud/game-server-v3.mjs
+          grep -q 'online-v2.0.4' src/multiplayer-v2.js
+          grep -q 'online-v2.0.4' cloud/game-server-v3.mjs
+          grep -q 'mobInvUntil' cloud/game-server-v3.mjs
+          grep -q "kind:'flash'" cloud/game-server-v3.mjs
+          grep -q "kind:'arc'" cloud/game-server-v3.mjs
+          grep -q "kind:'phoenix'" cloud/game-server-v3.mjs
+          grep -q 'regenStage' cloud/game-server-v3.mjs
+          grep -q 'drawSkillEffects' src/multiplayer-v2.js
+          grep -q 'piercing' src/multiplayer-v2.js
+          grep -q '01737v204' multiplayer-v2.html
+          node scripts/check-game.mjs
 
-      - name: Smoke test both protocols on same server
-        run: |
-          npm install --ignore-scripts --no-audit --no-fund
-          PORT=11001 npm run game-server > /tmp/bridge-server.log 2>&1 &
-          SERVER_PID=$!
-          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:11001/health >/dev/null && break; sleep 1; done
-          curl -fsS http://127.0.0.1:11001/multiplayer-v2 | grep -q 'V2 BETA'
-          node --input-type=module <<'NODE'
-          import WebSocket from 'ws';
-          async function hello(path){return new Promise((resolve,reject)=>{const ws=new WebSocket('ws://127.0.0.1:11001'+path);const t=setTimeout(()=>reject(Error(path+' timeout')),5000);ws.on('error',reject);ws.on('message',b=>{const m=JSON.parse(b.toString());if(m.type==='hello'){clearTimeout(t);resolve({ws,m})}})})}
-          const legacy=await hello('/game'),v2=await hello('/game-v2');
-          if(legacy.m.version!=='0.17.37-online.7')throw Error('legacy version changed');
-          if(v2.m.version!=='0.17.37-online-v2.0.1')throw Error('v2 version wrong');
-          legacy.ws.close();v2.ws.close();console.log('DUAL PROTOCOL OK');
-          NODE
-          kill $SERVER_PID || true
-
-      - name: Commit dual protocol bridge
+      - name: Commit V2.0.4
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add cloud/game-server-v2.mjs src/multiplayer-v2.js
-          git commit -m 'feat: serve multiplayer v2 beside online.7 on Virginia'
+          git add src/multiplayer-v2.js cloud/game-server-v3.mjs multiplayer-v2.html
+          git commit -m 'fix: multiplayer v2.0.4 skill parity and damage cadence'
           git push
