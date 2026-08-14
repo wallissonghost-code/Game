@@ -19,6 +19,16 @@ jobs:
           python-version: '3.12'
       - name: Apply Solo v0.17.38 skills and Fury
         run: python3 scripts/combat-rebalance-v0175.py
+      - name: Sync auxiliary Solo cache only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for name in ['duo.html','map-lab.html']:
+              p=Path(name)
+              s=p.read_text(encoding='utf-8')
+              s=s.replace('0.17.37','0.17.38').replace('v=01737','v=01738')
+              p.write_text(s,encoding='utf-8')
+          PY
       - name: Validate gameplay and admin
         run: |
           node --check src/game.js
@@ -33,6 +43,7 @@ jobs:
           grep -q "id:'explosive'" src/game.js
           grep -q "triggerBossFury" src/game.js
           grep -q "FÚRIA PÓS-BOSS" src/game.js
+          grep -q "NEW_SOLO_SKILLS" src/game.js
           grep -q "solo-new-skills-boss-fury-test" version.json
           grep -q "src/game.js?v=01738" index.html
           grep -q "src/panel.js?v=01738" painel.html
@@ -40,7 +51,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/game.js src/panel.js index.html painel.html version.json
+          git add src/game.js src/panel.js index.html painel.html version.json duo.html map-lab.html
           git diff --cached --quiet && exit 0
           git commit -m 'feat: six new Solo skills and post-boss Fury v0.17.38'
           git push
