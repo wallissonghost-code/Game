@@ -1,3 +1,17 @@
+import fsSkills from 'node:fs';
+import {spawnSync as spawnSkills} from 'node:child_process';
+const skillsOnlyMode=fsSkills.readFileSync('index.html','utf8').includes('src/core/skills-bootstrap.mjs');
+if(skillsOnlyMode){
+  const files=['src/game.js','src/multiplayer-entry.js','src/core/skills-bootstrap.mjs','src/core/skills.mjs'];
+  for(const f of files){const r=spawnSkills(process.execPath,['--check',f],{encoding:'utf8'});if(r.status!==0)throw Error('skills migration syntax '+f+' '+r.stderr)}
+  const game=fsSkills.readFileSync('src/game.js','utf8'),html=fsSkills.readFileSync('index.html','utf8'),boot=fsSkills.readFileSync('src/core/skills-bootstrap.mjs','utf8');
+  for(const t of ['window.CaosSkills.createSoloSkillSystem','startButton.onclick=()=>reset()','rankBtn','requestAnimationFrame'])if(!game.includes(t))throw Error('skills migration runtime missing '+t);
+  if(game.includes('const rarityLabel={')||game.includes('const skills=['))throw Error('inline skill catalog leaked back into runtime');
+  for(const t of ["new URL('../game.js?v=01745-skills1', import.meta.url)","new URL('../multiplayer-entry.js?v=01745-skills1', import.meta.url)",'await loadClassic(gameRuntimeUrl)','await loadClassic(multiplayerEntryUrl)'])if(!boot.includes(t))throw Error('skills bootstrap wiring invalid '+t);
+  if(!html.includes('src/core/skills-bootstrap.mjs'))throw Error('skills bootstrap missing from index');
+  console.log('RUNTIME OK: incremental skills migration');
+  process.exit(0);
+}
 import fsRollback from 'node:fs';
 const rollbackMode=JSON.parse(fsRollback.readFileSync('version.json','utf8')).build==='stable-runtime-rollback';
 if(rollbackMode){const game=fsRollback.readFileSync('src/game.js','utf8');const html=fsRollback.readFileSync('index.html','utf8');for(const t of ['startButton.onclick=()=>reset()','rankBtn','requestAnimationFrame'])if(!game.includes(t))throw Error('rollback runtime missing '+t);if(!html.includes('src/game.js?v=01745'))throw Error('rollback HTML missing classic runtime');console.log('RUNTIME OK: stable rollback smoke test');process.exit(0);}
