@@ -17,6 +17,8 @@ import {
   assertSkillCatalog,
   createSoloSkillSystem
 } from '../src/core/skills.mjs';
+import { assertMobDomain } from '../src/core/mobs.mjs';
+import { assertCombatDomain } from '../src/core/combat.mjs';
 
 const fail = message => {
   console.error('ARCH FAIL:', message);
@@ -29,12 +31,15 @@ const solo = read('src/game.js');
 const html = read('index.html');
 const bootstrap = read('src/core/game-bootstrap.mjs');
 const skillsSource = read('src/core/skills.mjs');
+const mobsSource = read('src/core/mobs.mjs');
+const combatSource = read('src/core/combat.mjs');
+const soloContractView = solo+'\n'+mobsSource+'\n'+combatSource+'\n'+read('src/core/contracts.mjs');
 const mpClient = read('src/multiplayer-v2.js');
 const mpServer = read('cloud/game-server-v3.mjs');
 
 // Core formulas must remain identical while extraction is incremental.
 const xpFormula = '60*Math.pow(Math.max(1,lv),1.42)';
-for (const [name, source] of [['solo', solo], ['multiplayer server', mpServer]]) {
+for (const [name, source] of [['solo', soloContractView], ['multiplayer server', mpServer]]) {
   source.includes(xpFormula) ? ok(`${name} XP formula matches contract`) : fail(`${name} XP formula drifted from contract`);
 }
 if (xpNeedFor(1) !== 60 || xpNeedFor(40) <= xpNeedFor(39)) fail('canonical xpNeedFor sanity check failed');
@@ -42,7 +47,7 @@ else ok('canonical xpNeedFor sanity check');
 
 // Mob identity contract. This catches silent balance/name drift between Solo and Multiplayer.
 for (const [id, mob] of Object.entries(ENEMY_TYPES)) {
-  for (const [name, source] of [['solo', solo], ['multiplayer server', mpServer]]) {
+  for (const [name, source] of [['solo', soloContractView], ['multiplayer server', mpServer]]) {
     if (!source.includes(mob.name)) fail(`${name} missing mob ${id}/${mob.name}`);
   }
 }
@@ -57,10 +62,14 @@ const tierSignatures = [
   `hp:${BOSS_VARIANTS.corrupted.hp},dmg:${BOSS_VARIANTS.corrupted.dmg},speed:${BOSS_VARIANTS.corrupted.speed}`
 ];
 for (const sig of tierSignatures) {
-  if (!solo.includes(sig)) fail(`solo tier contract mismatch: ${sig}`);
+  if (!soloContractView.includes(sig)) fail(`solo tier contract mismatch: ${sig}`);
   if (!mpServer.includes(sig)) fail(`multiplayer tier contract mismatch: ${sig}`);
 }
 ok('tier and boss multipliers guarded against cascade drift');
+
+try { assertMobDomain(); ok('mob domain behavior validates'); } catch (error) { fail(error.message); }
+try { assertCombatDomain(); ok('combat domain behavior validates'); } catch (error) { fail(error.message); }
+for (const token of ['window.CaosMobs.createSoloMobTypes','window.CaosCombat.applyEnemyDamage','window.CaosCombat.projectileTraits']) solo.includes(token)?ok('domain bridge present: '+token):fail('domain bridge missing: '+token);
 
 // Phase 2: Skills are a real domain now, not an inline catalog in game.js.
 try { assertSkillCatalog(); ok('canonical skill catalog validates'); }
