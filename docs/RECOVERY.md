@@ -21,3 +21,7 @@ Online V2 is a separate release channel and is not part of this Solo rollback.
 - Commit: `7071e82901635b135c0771779f57cdb569b359f4`
 - Branch: `backup/solo-v0.17.40-stable`
 - Reason: restore point before Double XP and Meteor Rain special events.
+
+## Solo v0.17.41 stable
+- Branch: `backup/solo-v0.17.41-stable`
+- Estado anterior ao editor de meteoros simultâneos v0.17.42.
