@@ -17,6 +17,7 @@ jobs:
         with:
           node-version: '24'
       - run: node scripts/apply-phase3.mjs
+      - run: node scripts/fix-phase3-checks.mjs
       - run: npm run check
       - name: Commit generated migration
         run: |
