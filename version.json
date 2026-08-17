@@ -1,4 +1,4 @@
 {
-  "version": "0.17.42",
-  "build": "solo-meteor-admin-editable-simultaneous-waves"
+  "version": "0.17.43",
+  "build": "solo-persistent-meteor-admin-config"
 }

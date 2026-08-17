@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#050812">
 <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
-<title>Caos Admin v0.17.42</title>
-<link rel="stylesheet" href="src/styles/panel.css?v=01742">
+<title>Caos Admin v0.17.43</title>
+<link rel="stylesheet" href="src/styles/panel.css?v=01743">
 </head>
 <body>
 <main class="app">
@@ -15,7 +15,7 @@
     <div class="brandMark"><span>CAOS</span><b>ADMIN</b></div>
     <div class="brandSub">CENTRAL DE COMANDO · LIVE CONTROL</div>
   </div>
-  <div class="topMeta"><span id="versionSync" class="syncBadge">SINCRONIZANDO</span><span id="panelVersion" class="topVersion">v0.17.42</span><a class="openGame" href="index.html?v=01742">ABRIR JOGO</a></div>
+  <div class="topMeta"><span id="versionSync" class="syncBadge">SINCRONIZANDO</span><span id="panelVersion" class="topVersion">v0.17.43</span><a class="openGame" href="index.html?v=01743">ABRIR JOGO</a></div>
 </header>
 
 <section class="dashboardTop">
@@ -67,7 +67,7 @@
 
 <section class="card specialEventsCard" id="specialEventsCard">
   <div class="sectionTitle"><div><span class="eyebrow">EVENTOS ESPECIAIS</span><h2>Caos temporário</h2></div><span class="miniStatus">CONTROLE ADM</span></div>
-  <p class="hint">Você pode ajustar os valores mesmo antes de conectar. Para ativar/desativar o evento, conecte o painel ao jogo.</p>
+  <p class="hint">Você pode ajustar e salvar os valores mesmo antes de conectar. O último padrão fica guardado neste dispositivo e é carregado na próxima abertura.</p>
   <div class="modeGrid eventModeGrid">
     <button id="doubleXpEventToggle" class="modeToggle" type="button" data-on="false"><span class="modeInfo"><span class="modeIcon">✨</span><span><b>DOBRO DE XP</b><small>Mobs que nascerem durante o evento recebem 2× XP e ficam marcados.</small></span></span><span class="modeRight"><span id="doubleXpEventState" class="modeBadge">OFF</span><span class="toggleTrack"><span class="toggleKnob"></span></span></span></button>
     <button id="meteorEventToggle" class="modeToggle" type="button" data-on="false"><span class="modeInfo"><span class="modeIcon">☄️</span><span><b>CHUVA DE METEORO</b><small>Cada onda marca o solo e derruba a quantidade configurada de meteoros ao mesmo tempo.</small></span></span><span class="modeRight"><span id="meteorEventState" class="modeBadge">OFF</span><span class="toggleTrack"><span class="toggleKnob"></span></span></span></button>
@@ -82,7 +82,7 @@
     <label class="meteorField"><span>DANO MOBS</span><input id="meteorMobDamage" inputmode="numeric" type="number" min="1" max="100" step="1" value="20"><small>por impacto</small></label>
     <button id="meteorConfigSave" class="gold meteorSave" type="button">SALVAR CONFIGURAÇÃO</button>
   </div>
-  <div class="net leftNet eventFoot">Meteoros pendentes: <b id="meteorPending">0</b> · Ex.: coloque 10 para cair uma onda de 10 meteoros simultaneamente.</div>
+  <div class="net leftNet eventFoot">Meteoros pendentes: <b id="meteorPending">0</b> · Configuração persistente neste dispositivo. Ex.: 10 = uma onda de 10 meteoros.</div>
 </section>
 
 <section id="controls" class="controls disabled">
@@ -136,6 +136,6 @@
 </section>
 </main>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="src/panel.js?v=01742"></script>
+<script src="src/panel.js?v=01743"></script>
 </body>
 </html>
