@@ -11,8 +11,28 @@ async function runScenario(browser,name,viewport){
   const context=await browser.newContext({viewport});
   const page=await context.newPage();
   const errors=[];
+  const warnings=[];
   page.on('pageerror',e=>errors.push(`pageerror: ${e.message}`));
-  page.on('console',m=>{if(m.type()==='error')errors.push(`console: ${m.text()}`)});
+  page.on('console',m=>{
+    if(m.type()!=='error')return;
+    const text=m.text();
+    // Chromium reports a generic console error for HTTP failures. The response listener below records the real URL/status.
+    if(/Failed to load resource/i.test(text))return;
+    errors.push(`console: ${text}`);
+  });
+  page.on('response',res=>{
+    const status=res.status();
+    if(status<400)return;
+    const url=res.url();
+    const msg=`http ${status}: ${url}`;
+    if(/\/favicon\.ico(?:\?|$)/i.test(url))warnings.push(msg);
+    else errors.push(msg);
+  });
+  page.on('requestfailed',req=>{
+    const url=req.url();
+    if(/onrender\.com/i.test(url))return;
+    errors.push(`requestfailed: ${url} :: ${req.failure()?.errorText||'unknown'}`);
+  });
   await page.route('https://caos-live-game-server-va.onrender.com/**',r=>r.fulfill({status:200,contentType:'application/json',body:'{"ok":true}'}));
   await page.goto(`${BASE}/?ci=1&bot=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:30000});
   await page.locator('#startBtn').waitFor({state:'visible',timeout:15000});
@@ -82,6 +102,7 @@ async function runScenario(browser,name,viewport){
   assert(Number.isFinite(stress1.health),'player health became invalid');
   noErrors('stress runtime error');
 
+  if(warnings.length)console.log(`GAMEPLAY BOT WARN [${name}] ${warnings.join(' | ')}`);
   console.log(`GAMEPLAY BOT OK [${name}] fps=${stress1.fps} mobs=${stress1.mobs} kills=${stress1.kills} level=${stress1.level}`);
   await context.close();
 }
