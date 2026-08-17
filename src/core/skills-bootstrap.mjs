@@ -12,6 +12,12 @@ function loadClassic(src) {
   });
 }
 
+const premiumHud = document.createElement('link');
+premiumHud.rel = 'stylesheet';
+premiumHud.href = new URL('../styles/hud-premium.css?v=01745-hud1', import.meta.url).href;
+premiumHud.dataset.caosHud = 'premium';
+document.head.appendChild(premiumHud);
+
 const gameRuntimeUrl = new URL('../game.js?v=01745-skills1', import.meta.url).href;
 const multiplayerEntryUrl = new URL('../multiplayer-entry.js?v=01745-skills1', import.meta.url).href;
 
