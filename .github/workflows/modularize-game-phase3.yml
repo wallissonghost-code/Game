@@ -27,3 +27,4 @@ jobs:
           git add src/game.js scripts/check-architecture.mjs
           git commit -m "refactor: extract solo mobs and combat from game runtime"
           git push origin HEAD:main
+# retry: whitespace-safe combat matcher
