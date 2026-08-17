@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+const path='src/game.js';
+let game=fs.readFileSync(path,'utf8');
+const bad="explosiveShotCounter=traits.counters.explosive;const {pierceLeft,ice,explosive}=traitsbullets.push({";
+const good="explosiveShotCounter=traits.counters.explosive;const {pierceLeft,ice,explosive}=traits;bullets.push({";
+if(!game.includes(bad)) throw new Error('projectile bridge typo not found');
+game=game.replace(bad,good);
+if(game.includes('traitsbullets')) throw new Error('traitsbullets typo remains');
+if(!game.includes("const {pierceLeft,ice,explosive}=traits;bullets.push({")) throw new Error('projectile bridge repair missing');
+fs.writeFileSync(path,game);
+console.log('PROJECTILE BRIDGE REPAIRED');
