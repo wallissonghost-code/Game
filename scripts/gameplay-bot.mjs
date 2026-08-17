@@ -10,29 +10,11 @@ async function waitServer(){for(let i=0;i<40;i++){try{const r=await fetch(BASE,{
 async function runScenario(browser,name,viewport){
   const context=await browser.newContext({viewport});
   const page=await context.newPage();
-  const errors=[];
-  const warnings=[];
+  const errors=[],warnings=[];
   page.on('pageerror',e=>errors.push(`pageerror: ${e.message}`));
-  page.on('console',m=>{
-    if(m.type()!=='error')return;
-    const text=m.text();
-    // Chromium reports a generic console error for HTTP failures. The response listener below records the real URL/status.
-    if(/Failed to load resource/i.test(text))return;
-    errors.push(`console: ${text}`);
-  });
-  page.on('response',res=>{
-    const status=res.status();
-    if(status<400)return;
-    const url=res.url();
-    const msg=`http ${status}: ${url}`;
-    if(/\/favicon\.ico(?:\?|$)/i.test(url))warnings.push(msg);
-    else errors.push(msg);
-  });
-  page.on('requestfailed',req=>{
-    const url=req.url();
-    if(/onrender\.com/i.test(url))return;
-    errors.push(`requestfailed: ${url} :: ${req.failure()?.errorText||'unknown'}`);
-  });
+  page.on('console',m=>{if(m.type()!=='error')return;const text=m.text();if(/Failed to load resource/i.test(text))return;errors.push(`console: ${text}`)});
+  page.on('response',res=>{const status=res.status();if(status<400)return;const url=res.url(),msg=`http ${status}: ${url}`;if(/\/favicon\.ico(?:\?|$)/i.test(url))warnings.push(msg);else errors.push(msg)});
+  page.on('requestfailed',req=>{const url=req.url();if(/onrender\.com/i.test(url))return;errors.push(`requestfailed: ${url} :: ${req.failure()?.errorText||'unknown'}`)});
   await page.route('https://caos-live-game-server-va.onrender.com/**',r=>r.fulfill({status:200,contentType:'application/json',body:'{"ok":true}'}));
   await page.goto(`${BASE}/?ci=1&bot=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:30000});
   await page.locator('#startBtn').waitFor({state:'visible',timeout:15000});
@@ -45,76 +27,63 @@ async function runScenario(browser,name,viewport){
   const assert=(ok,msg)=>{if(!ok)throw Error(`[${name}] ${msg}`)};
   const noErrors=label=>assert(errors.length===0,`${label}; ${errors.join(' | ')}`);
 
-  let s0=await snap();
-  await sleep(3000);
-  let s1=await snap();
+  let s0=await snap(); await sleep(3000); let s1=await snap();
   assert(s1.frameSeq>s0.frameSeq+20,'game loop did not advance');
   assert(s1.fps>=20,`low/dead FPS at baseline: ${s1.fps}`);
-  assert(s1.mobs>0,'no mobs spawned');
-  noErrors('baseline runtime error');
+  assert(s1.mobs>0,'no mobs spawned'); noErrors('baseline runtime error');
 
-  const x0=s1.test.playerX, y0=s1.test.playerY;
-  await page.keyboard.down('d'); await sleep(700); await page.keyboard.up('d'); await sleep(150);
-  const moved=await snap();
-  assert(Math.hypot(moved.test.playerX-x0,moved.test.playerY-y0)>5,'keyboard movement failed');
-  noErrors('movement runtime error');
+  const x0=s1.test.playerX,y0=s1.test.playerY;
+  await page.keyboard.down('d');await sleep(700);await page.keyboard.up('d');await sleep(150);
+  const moved=await snap();assert(Math.hypot(moved.test.playerX-x0,moved.test.playerY-y0)>5,'keyboard movement failed');noErrors('movement runtime error');
 
-  await cmd({command:'spawn',amount:18,mob:'grunt'});
-  const combat0=await snap();
-  await sleep(7000);
-  const combat1=await snap();
-  assert(combat1.test.shots>combat0.test.shots,'autofire produced no projectiles');
-  assert(combat1.kills>combat0.kills || combat1.xp>combat0.xp,'combat produced no kill/xp progress');
-  noErrors('combat runtime error');
+  // SHOT HUNT 1: no target => no phantom fire.
+  await cmd({command:'horde',value:false}); await cmd({command:'clear'}); await cmd({command:'autofire',value:true});
+  const empty0=await snap(); await sleep(1200); const empty1=await snap();
+  assert(empty1.test.shotsFired===empty0.test.shotsFired,'autofire fired with no target');
 
-  await cmd({command:'skilltest',skill:'rapid',level:3});
-  await sleep(300);
-  const skill=await snap();
-  assert(skill.skillLv.rapid===3,'skill application failed');
+  // SHOT HUNT 2: autofire OFF must be hard-off even with mobs.
+  await cmd({command:'spawn',amount:20,mob:'grunt'}); await cmd({command:'freeze',seconds:8}); await cmd({command:'autofire',value:false});
+  const off0=await snap(); await sleep(1200); const off1=await snap();
+  assert(off1.test.shotsFired===off0.test.shotsFired,'shots fired while autofire was OFF');
 
-  await cmd({command:'pause'}); await sleep(250);
-  assert((await snap()).paused===true,'pause failed');
-  await cmd({command:'resume'}); await sleep(250);
-  assert((await snap()).paused===false,'resume failed');
+  // SHOT HUNT 3: normal fire must produce real shots and real hits, not just live bullet sprites.
+  await cmd({command:'autofire',value:true}); await cmd({command:'skillreset'});
+  const fire0=await snap(); await sleep(4000); const fire1=await snap();
+  const firedNormal=fire1.test.shotsFired-fire0.test.shotsFired,hitNormal=fire1.test.shotsHit-fire0.test.shotsHit,expiredNormal=fire1.test.shotsExpired-fire0.test.shotsExpired;
+  assert(firedNormal>=8,`normal fire cadence too low: ${firedNormal} shots/4s`);
+  assert(hitNormal>0,`shots exist visually but no projectile collision registered; fired=${firedNormal} hit=${hitNormal}`);
+  assert(expiredNormal<=Math.max(6,Math.floor(firedNormal*.75)),`too many shots miss/expire: fired=${firedNormal} hit=${hitNormal} expired=${expiredNormal}`);
+  noErrors('shot collision runtime error');
 
-  await cmd({command:'boss',amount:1}); await sleep(500);
-  assert((await snap()).bosses>=1,'boss spawn failed');
-  noErrors('boss runtime error');
+  // SHOT HUNT 4: Rapid must measurably increase cadence.
+  await cmd({command:'spawn',amount:35,mob:'grunt'}); await cmd({command:'freeze',seconds:8});
+  const base0=await snap(); await sleep(2500); const base1=await snap(); const baseRate=base1.test.shotsFired-base0.test.shotsFired;
+  await cmd({command:'skilltest',skill:'rapid',level:5});
+  const rapid0=await snap(); await sleep(2500); const rapid1=await snap(); const rapidRate=rapid1.test.shotsFired-rapid0.test.shotsFired;
+  assert(rapidRate>baseRate*1.25,`Rapid did not increase fire cadence enough: base=${baseRate}, rapid=${rapidRate}`);
 
-  const hp0=(await snap()).health;
-  await cmd({command:'damage',amount:7,target:'p1'}); await sleep(250);
-  const hp1=(await snap()).health;
-  assert(hp1<hp0,'damage command did not reduce health');
+  // SHOT HUNT 5: special projectile schedules must actually occur.
+  await cmd({command:'skillreset'}); await cmd({command:'spawn',amount:60,mob:'grunt'}); await cmd({command:'freeze',seconds:20});
+  await cmd({command:'skilltest',skill:'pierce',level:5}); let sp0=await snap(); await sleep(3000); let sp1=await snap();
+  assert(sp1.test.pierceShots>sp0.test.pierceShots,'Pierce schedule produced no piercing projectile');
+  await cmd({command:'skillreset'}); await cmd({command:'skilltest',skill:'ice',level:5}); sp0=await snap(); await sleep(3500); sp1=await snap();
+  assert(sp1.test.iceShots>sp0.test.iceShots,'Ice schedule produced no ice projectile');
+  await cmd({command:'skillreset'}); await cmd({command:'skilltest',skill:'explosive',level:5}); sp0=await snap(); await sleep(3500); sp1=await snap();
+  assert(sp1.test.explosiveShots>sp0.test.explosiveShots,'Explosive schedule produced no explosive projectile');
+  noErrors('special-shot runtime error');
 
-  await cmd({command:'eventmeteor',value:true,interval:.6,warning:.7,batch:2});
-  await sleep(2500);
-  const meteor=await snap();
-  assert(meteor.events.meteor.active===true,'meteor event did not activate');
-  noErrors('meteor runtime error');
-  await cmd({command:'eventmeteor',value:false});
-
-  await cmd({command:'spawn',amount:140,mob:'grunt'});
-  const stress0=await snap();
-  await sleep(10000);
-  const stress1=await snap();
-  assert(stress1.frameSeq>stress0.frameSeq+100,'stress test froze game loop');
-  assert(stress1.fps>=10,`stress FPS collapsed: ${stress1.fps}`);
-  assert(Number.isFinite(stress1.health),'player health became invalid');
-  noErrors('stress runtime error');
+  // General gameplay battery.
+  await cmd({command:'pause'});await sleep(250);assert((await snap()).paused===true,'pause failed');await cmd({command:'resume'});await sleep(250);assert((await snap()).paused===false,'resume failed');
+  await cmd({command:'boss',amount:1});await sleep(500);assert((await snap()).bosses>=1,'boss spawn failed');noErrors('boss runtime error');
+  const hp0=(await snap()).health;await cmd({command:'damage',amount:7,target:'p1'});await sleep(250);assert((await snap()).health<hp0,'damage command did not reduce health');
+  await cmd({command:'eventmeteor',value:true,interval:.6,warning:.7,batch:2});await sleep(2500);assert((await snap()).events.meteor.active===true,'meteor event did not activate');noErrors('meteor runtime error');await cmd({command:'eventmeteor',value:false});
+  await cmd({command:'spawn',amount:140,mob:'grunt'});const stress0=await snap();await sleep(10000);const stress1=await snap();
+  assert(stress1.frameSeq>stress0.frameSeq+100,'stress test froze game loop');assert(stress1.fps>=10,`stress FPS collapsed: ${stress1.fps}`);assert(Number.isFinite(stress1.health),'player health became invalid');noErrors('stress runtime error');
 
   if(warnings.length)console.log(`GAMEPLAY BOT WARN [${name}] ${warnings.join(' | ')}`);
-  console.log(`GAMEPLAY BOT OK [${name}] fps=${stress1.fps} mobs=${stress1.mobs} kills=${stress1.kills} level=${stress1.level}`);
+  console.log(`GAMEPLAY BOT OK [${name}] fps=${stress1.fps} mobs=${stress1.mobs} fired=${stress1.test.shotsFired} hit=${stress1.test.shotsHit} expired=${stress1.test.shotsExpired}`);
   await context.close();
 }
 
 let browser;
-try{
-  await waitServer();
-  browser=await chromium.launch({headless:true});
-  await runScenario(browser,'mobile',{width:390,height:844});
-  await runScenario(browser,'desktop',{width:1440,height:900});
-  console.log('CAOS GAMEPLAY BOT: ALL SCENARIOS PASSED');
-}finally{
-  if(browser)await browser.close();
-  server.kill('SIGTERM');
-}
+try{await waitServer();browser=await chromium.launch({headless:true});await runScenario(browser,'mobile',{width:390,height:844});await runScenario(browser,'desktop',{width:1440,height:900});console.log('CAOS GAMEPLAY BOT: ALL SCENARIOS PASSED')}finally{if(browser)await browser.close();server.kill('SIGTERM')}
