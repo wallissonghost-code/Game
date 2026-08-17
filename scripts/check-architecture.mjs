@@ -37,7 +37,8 @@ const soloContractView = solo+'\n'+mobsSource+'\n'+combatSource+'\n'+read('src/c
 const mpClient = read('src/multiplayer-v2.js');
 const mpServer = read('cloud/game-server-v3.mjs');
 const rollbackMode = false;
-const skillsOnlyMigration = html.includes('src/core/skills-bootstrap.mjs');
+const skillsOnlyMigration = false;
+const mobsCombatMigration = html.includes('src/core/skills-bootstrap.mjs') && skillsBootstrap.includes("import * as CaosMobs from './mobs.mjs?v=01745'") && skillsBootstrap.includes("import * as CaosCombat from './combat.mjs?v=01745'");
 
 
 // Core formulas must remain identical while extraction is incremental.
@@ -58,22 +59,26 @@ ok(`${Object.keys(ENEMY_TYPES).length} canonical mob identities checked`);
 
 // Tier/Boss multipliers are intentionally duplicated today; CI prevents them diverging
 // until both runtimes import contracts.mjs directly.
-const tierSignatures = [
-  `hp:${TIER_VARIANTS.elite1.hp},dmg:${TIER_VARIANTS.elite1.dmg},speed:${TIER_VARIANTS.elite1.speed}`,
-  `hp:${TIER_VARIANTS.corrupted2.hp},dmg:${TIER_VARIANTS.corrupted2.dmg},speed:${TIER_VARIANTS.corrupted2.speed}`,
-  `hp:${BOSS_VARIANTS.elite.hp},dmg:${BOSS_VARIANTS.elite.dmg},speed:${BOSS_VARIANTS.elite.speed}`,
-  `hp:${BOSS_VARIANTS.corrupted.hp},dmg:${BOSS_VARIANTS.corrupted.dmg},speed:${BOSS_VARIANTS.corrupted.speed}`
+const tierExpectations = [
+  ['elite1', TIER_VARIANTS.elite1, {hp:3,dmg:1.7,speed:1.05}],
+  ['corrupted2', TIER_VARIANTS.corrupted2, {hp:7,dmg:2.75,speed:1.16}],
+  ['bossElite', BOSS_VARIANTS.elite, {hp:1.75,dmg:1.25,speed:1.05}],
+  ['bossCorrupted', BOSS_VARIANTS.corrupted, {hp:2.5,dmg:1.5,speed:1.10}]
 ];
-for (const sig of tierSignatures) {
-  if (!soloContractView.includes(sig)) fail(`solo tier contract mismatch: ${sig}`);
+for (const [name, actual, expected] of tierExpectations) {
+  for (const key of ['hp','dmg','speed']) {
+    if (actual[key] !== expected[key]) fail(`canonical tier contract mismatch: ${name}.${key}=${actual[key]} expected ${expected[key]}`);
+  }
+  const sig = `hp:${expected.hp},dmg:${expected.dmg},speed:${expected.speed}`;
   if (!mpServer.includes(sig)) fail(`multiplayer tier contract mismatch: ${sig}`);
 }
-ok('tier and boss multipliers guarded against cascade drift');
+ok('canonical tier/boss contracts validated; multiplayer duplicate guarded');
 
 try { assertMobDomain(); ok('mob domain behavior validates'); } catch (error) { fail(error.message); }
 try { assertCombatDomain(); ok('combat domain behavior validates'); } catch (error) { fail(error.message); }
 if(!rollbackMode && !skillsOnlyMigration) for (const token of ['window.CaosMobs.createSoloMobTypes','window.CaosCombat.applyEnemyDamage','window.CaosCombat.projectileTraits']) solo.includes(token)?ok('domain bridge present: '+token):fail('domain bridge missing: '+token);
-if(skillsOnlyMigration) ok('incremental migration: mobs/combat remain on stable runtime');
+if(!mobsCombatMigration) fail('Phase 3 bootstrap missing mobs/combat domains');
+else ok('Phase 3 bootstrap owns mobs/combat domains');
 
 if (rollbackMode) {
   if (!solo.includes('const skills=[') || !html.includes('src/game.js?v=01745')) fail('stable rollback runtime missing');
@@ -107,14 +112,20 @@ if (!html.includes('src/core/skills-bootstrap.mjs')) fail('index.html does not l
 else ok('index.html loads skills bootstrap');
 if (!skillsBootstrap.includes("import * as CaosSkills from './skills.mjs?v=01745'")) fail('skills bootstrap does not load skills domain first');
 else ok('skills bootstrap loads skills domain before gameplay');
-if (!skillsBootstrap.includes("new URL('../game.js?v=01745-skills1', import.meta.url)")) fail('skills bootstrap does not resolve classic gameplay runtime from module URL');
+if (!skillsBootstrap.includes("new URL('../game.js?v=01745-core3', import.meta.url)")) fail('skills bootstrap does not resolve classic gameplay runtime from module URL');
 else ok('skills bootstrap resolves classic gameplay runtime safely');
-if (!skillsBootstrap.includes("new URL('../multiplayer-entry.js?v=01745-skills1', import.meta.url)")) fail('skills bootstrap does not resolve multiplayer entry from module URL');
+if (!skillsBootstrap.includes("new URL('../multiplayer-entry.js?v=01745-core3', import.meta.url)")) fail('skills bootstrap does not resolve multiplayer entry from module URL');
 else ok('skills bootstrap resolves multiplayer entry safely');
 if (!skillsBootstrap.includes('await loadClassic(gameRuntimeUrl)')) fail('skills bootstrap does not start classic gameplay runtime');
 else ok('skills bootstrap starts classic gameplay runtime');
 if (!skillsBootstrap.includes('await loadClassic(multiplayerEntryUrl)')) fail('skills bootstrap does not start multiplayer entry');
 else ok('skills bootstrap starts multiplayer entry after gameplay');
+
+
+// Phase 3: duplicated Solo mob/combat rules must not return to game.js.
+for (const token of ["const types={wraith:","function enemyTier(){const r=Math.random()","function furyProfile(stage){stage=Math.max","explosiveShotCounter++;const every=[0,14,13,12,11,10]"]) if (solo.includes(token)) fail('Phase 3 duplicate logic returned to game.js: '+token);
+for (const token of ['window.CaosMobs.createSoloMobTypes','window.CaosMobs.enemyTier','window.CaosMobs.variantFor','window.CaosCombat.furyProfile','window.CaosCombat.applyEnemyDamage','window.CaosCombat.projectileTraits']) if (!solo.includes(token)) fail('Phase 3 domain bridge missing: '+token);
+ok('Phase 3 mobs/combat duplicate guards passed');
 
 // Behavioral smoke test of extracted modifiers without Canvas/DOM.
 const player = { speed:255, maxLife:100, life:50, fireRate:.28, regen:0, armorReduction:0, xpMult:1, bloodChance:0, bloodHeal:0, flashDamage:0 };

@@ -2,7 +2,7 @@ import fs from 'node:fs';
 const fail=m=>{console.error('FAIL:',m);process.exitCode=1};
 const ok=m=>console.log('OK:',m);
 const read=p=>fs.readFileSync(p,'utf8');
-const gameHtml=read('index.html'),panelHtml=read('painel.html'),game=read('src/game.js')+'\n'+read('src/core/skills.mjs')+'\n'+read('src/core/mobs.mjs')+'\n'+read('src/core/combat.mjs'),panel=read('src/panel.js'),panelCss=read('src/styles/panel.css');
+const gameHtml=read('index.html'),panelHtml=read('painel.html'),contracts=read('src/core/contracts.mjs'),game=read('src/game.js')+'\n'+read('src/core/skills.mjs')+'\n'+read('src/core/mobs.mjs')+'\n'+read('src/core/combat.mjs'),panel=read('src/panel.js'),panelCss=read('src/styles/panel.css');
 const version=JSON.parse(read('version.json')).version;
 const cacheTag=String(version).replace(/\./g,'');
 
@@ -78,7 +78,7 @@ if(!game.includes("MOB_VISUAL_HEIGHT={normal:62,elite:86,elite2:94,corrupted:108
 if(!game.includes("e.tier===2?(stage===2?MOB_VISUAL_HEIGHT.corrupted2:MOB_VISUAL_HEIGHT.corrupted):e.tier===1?(stage===2?MOB_VISUAL_HEIGHT.elite2:MOB_VISUAL_HEIGHT.elite):MOB_VISUAL_HEIGHT.normal")) fail('Elite nao usa regua visual'); else ok('Elite usa escala visual dedicada');
 
 // v0.17.18 · variantes raras de Boss
-if(!game.includes("BOSS_VARIANTS={normal:{hp:1,dmg:1,speed:1,xp:1},elite:{hp:1.75,dmg:1.25,speed:1.05,xp:1.75},corrupted:{hp:2.5,dmg:1.5,speed:1.10,xp:2.5}}")) fail('multiplicadores de Boss divergentes'); else ok('Boss Elite/Corrompido balanceados');
+if(!contracts.includes('hp: 1.75, dmg: 1.25, speed: 1.05, xp: 1.75')||!contracts.includes('hp: 2.5, dmg: 1.5, speed: 1.10, xp: 2.5')) fail('multiplicadores de Boss divergentes'); else ok('Boss Elite/Corrompido balanceados');
 if(!game.includes("return r<.01?2:r<.07?1:3")) fail('chance rara de Boss divergente'); else ok('Boss natural 93/6/1');
 if(!game.includes("boss(d.mob||null,d.tier??null)")) fail('Admin nao envia tier ao Boss'); else ok('Boss aceita tier forcado');
 if(!game.includes("bossVariantAura")) fail('aura de Boss raro ausente'); else ok('aura de Boss raro');
@@ -233,8 +233,8 @@ if(!corruptDuo.includes('corruptedReady?corruptedOgreFrames')) fail('tier 2 nao 
 for(const d of ['assets/mobs/Ogro Elite II','assets/mobs/Ogro Corrompido II']) if(!fs.existsSync(d+'/.gitkeep')) fail('pasta futura ausente '+d); else ok('pasta futura pronta '+d);
 if(!game.includes('function enemyEvolution(tier)')) fail('subtier II ausente'); else ok('Elite II / Corrompido II ativos');
 if(!game.includes('level>=40')||!game.includes('level>=60')) fail('unlocks de endgame ausentes'); else ok('unlocks LV40/LV60 ativos');
-if(!game.includes("elite2:{hp:4.2,dmg:2.05,speed:1.10,xp:4.2,hitbox:1.08}")) fail('stats Elite II divergentes'); else ok('stats Elite II');
-if(!game.includes("corrupted2:{hp:7,dmg:2.75,speed:1.16,xp:6.5,hitbox:1.20}")) fail('stats Corrompido II divergentes'); else ok('stats Corrompido II');
+if(!contracts.includes('hp: 4.2, dmg: 2.05, speed: 1.10, xp: 4.2, hitbox: 1.08')) fail('stats Elite II divergentes'); else ok('stats Elite II');
+if(!contracts.includes('hp: 7, dmg: 2.75, speed: 1.16, xp: 6.5, hitbox: 1.20')) fail('stats Corrompido II divergentes'); else ok('stats Corrompido II');
 if(!game.includes('function xpNeedFor(lv)')) fail('curva XP endgame ausente'); else ok('curva XP endgame ativa');
 if(!game.includes("./assets/mobs/Ogro Elite II")||!game.includes("./assets/mobs/Ogro Corrompido II")) fail('fallback skins II host ausente'); else ok('fallback skins II host');
 if(!game.includes('evolution:e.evolution||1')) fail('snapshot sem subtier'); else ok('subtier sincronizado ao P2');
