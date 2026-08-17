@@ -7,9 +7,9 @@ import './live-hud.mjs?v=01745-live1';
 CaosSkills.assertSkillCatalog();
 CaosMobs.assertMobDomain();
 CaosCombat.assertCombatDomain();
-window.CaosSkills = Object.freeze(CaosSkills);
-window.CaosMobs = Object.freeze(CaosMobs);
-window.CaosCombat = Object.freeze(CaosCombat);
+window.CaosSkills = Object.freeze({ ...CaosSkills });
+window.CaosMobs = Object.freeze({ ...CaosMobs });
+window.CaosCombat = Object.freeze({ ...CaosCombat });
 
 function loadClassic(src) {
   return new Promise((resolve, reject) => {
