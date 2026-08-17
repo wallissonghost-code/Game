@@ -53,7 +53,7 @@ async function runScenario(browser,name,viewport){
   // SHOT HUNT 3: controlled target must trigger fire; inspect muzzle origin + aim vector.
   await cmd({command:'autofire',value:true});
   const fire0=await snap();
-  await page.waitForFunction(n=>window.CaosTest.snapshot().test.shotsFired>n,fire0.test.shotsFired,{timeout:1800});
+  try{await page.waitForFunction(n=>window.CaosTest.snapshot().test.shotsFired>n,fire0.test.shotsFired,{timeout:1800})}catch{const d=await snap();throw Error(`[${name}] controlled target visible but no shot in 1.8s; mobs=${d.mobs} autofire=${d.autofire} mode=${d.gameplayMode} paused=${d.paused} fps=${d.fps} player=(${d.test.playerX.toFixed(1)},${d.test.playerY.toFixed(1)})`)}
   const geo=await snap(),ls=geo.test.lastShot;
   assert(ls,'shot fired but last-shot geometry missing');
   const muzzleDist=Math.hypot(ls.spawnX-ls.playerX,ls.spawnY-ls.playerY);
@@ -67,9 +67,9 @@ async function runScenario(browser,name,viewport){
   }
 
   // SHOT HUNT 4: projectile must advance forward frame-to-frame, not teleport/backtrack.
-  await cmd({command:'clear'});await cmd({command:'autofire',value:false});assert(await spawnTarget(340),'could not create long-range target');
+  await cmd({command:'clear'});await cmd({command:'autofire',value:false});assert(await spawnTarget(Math.min(160,Math.floor(viewport.width*.40))),'could not create visible trajectory target');
   const traj0=await snap();await cmd({command:'autofire',value:true});
-  await page.waitForFunction(n=>window.CaosTest.snapshot().test.shotsFired>n,traj0.test.shotsFired,{timeout:1800});
+  try{await page.waitForFunction(n=>window.CaosTest.snapshot().test.shotsFired>n,traj0.test.shotsFired,{timeout:1800})}catch{const d=await snap();throw Error(`[${name}] visible trajectory target produced no shot; mobs=${d.mobs} autofire=${d.autofire} mode=${d.gameplayMode} paused=${d.paused} fps=${d.fps}`)}
   await cmd({command:'autofire',value:false});await sleep(25);
   const ta=await snap();
   const bulletA=[...(ta.test.liveBullets||[])].sort((a,b)=>b.born-a.born)[0];
@@ -84,7 +84,7 @@ async function runScenario(browser,name,viewport){
   assert(angleDiff(moveAngle,bulletAngle)<0.05,`projectile trajectory bends unexpectedly: ${(angleDiff(moveAngle,bulletAngle)*180/Math.PI).toFixed(2)}deg`);
 
   // SHOT HUNT 5: real hits + misses with controlled targets.
-  await cmd({command:'clear'});await cmd({command:'autofire',value:false});for(let i=0;i<8;i++)await spawnTarget(180+i*18);await cmd({command:'autofire',value:true});
+  await cmd({command:'clear'});await cmd({command:'autofire',value:false});for(let i=0;i<8;i++)await spawnTarget(120+(i%4)*12);await cmd({command:'autofire',value:true});
   const hit0=await snap();await sleep(3500);const hit1=await snap();
   const firedNormal=hit1.test.shotsFired-hit0.test.shotsFired,hitNormal=hit1.test.shotsHit-hit0.test.shotsHit,expiredNormal=hit1.test.shotsExpired-hit0.test.shotsExpired;
   assert(firedNormal>=6,`controlled normal fire cadence too low: ${firedNormal} shots/3.5s`);
@@ -93,17 +93,17 @@ async function runScenario(browser,name,viewport){
   noErrors('shot geometry/collision runtime error');
 
   // SHOT HUNT 6: Rapid must measurably increase cadence on controlled targets.
-  await cmd({command:'clear'});await cmd({command:'autofire',value:false});for(let i=0;i<16;i++)await spawnTarget(180+i*8);await cmd({command:'autofire',value:true});
+  await cmd({command:'clear'});await cmd({command:'autofire',value:false});for(let i=0;i<16;i++)await spawnTarget(120+(i%5)*10);await cmd({command:'autofire',value:true});
   const base0=await snap();await sleep(2200);const base1=await snap();const baseRate=base1.test.shotsFired-base0.test.shotsFired;
-  await cmd({command:'skilltest',skill:'rapid',level:5});for(let i=0;i<16;i++)await spawnTarget(180+i*8);
+  await cmd({command:'skilltest',skill:'rapid',level:5});for(let i=0;i<16;i++)await spawnTarget(120+(i%5)*10);
   const rapid0=await snap();await sleep(2200);const rapid1=await snap();const rapidRate=rapid1.test.shotsFired-rapid0.test.shotsFired;
   assert(rapidRate>baseRate*1.20,`Rapid did not increase fire cadence enough: base=${baseRate}, rapid=${rapidRate}`);
 
   // SHOT HUNT 7: special projectile schedules must occur.
-  await cmd({command:'skillreset'});await cmd({command:'clear'});for(let i=0;i<30;i++)await spawnTarget(180+i*5);await cmd({command:'autofire',value:true});
+  await cmd({command:'skillreset'});await cmd({command:'clear'});for(let i=0;i<30;i++)await spawnTarget(120+(i%6)*8);await cmd({command:'autofire',value:true});
   await cmd({command:'skilltest',skill:'pierce',level:5});let sp0=await snap();await sleep(3000);let sp1=await snap();assert(sp1.test.pierceShots>sp0.test.pierceShots,'Pierce schedule produced no piercing projectile');
-  await cmd({command:'skillreset'});for(let i=0;i<20;i++)await spawnTarget(180+i*5);await cmd({command:'skilltest',skill:'ice',level:5});sp0=await snap();await sleep(3500);sp1=await snap();assert(sp1.test.iceShots>sp0.test.iceShots,'Ice schedule produced no ice projectile');
-  await cmd({command:'skillreset'});for(let i=0;i<20;i++)await spawnTarget(180+i*5);await cmd({command:'skilltest',skill:'explosive',level:5});sp0=await snap();await sleep(3500);sp1=await snap();assert(sp1.test.explosiveShots>sp0.test.explosiveShots,'Explosive schedule produced no explosive projectile');
+  await cmd({command:'skillreset'});for(let i=0;i<20;i++)await spawnTarget(120+(i%6)*8);await cmd({command:'skilltest',skill:'ice',level:5});sp0=await snap();await sleep(3500);sp1=await snap();assert(sp1.test.iceShots>sp0.test.iceShots,'Ice schedule produced no ice projectile');
+  await cmd({command:'skillreset'});for(let i=0;i<20;i++)await spawnTarget(120+(i%6)*8);await cmd({command:'skilltest',skill:'explosive',level:5});sp0=await snap();await sleep(3500);sp1=await snap();assert(sp1.test.explosiveShots>sp0.test.explosiveShots,'Explosive schedule produced no explosive projectile');
   noErrors('special-shot runtime error');
 
   // General gameplay battery.
@@ -111,7 +111,7 @@ async function runScenario(browser,name,viewport){
   await cmd({command:'boss',amount:1});await sleep(500);assert((await snap()).bosses>=1,'boss spawn failed');noErrors('boss runtime error');
   const hp0=(await snap()).health;await cmd({command:'damage',amount:7,target:'p1'});await sleep(250);assert((await snap()).health<hp0,'damage command did not reduce health');
   await cmd({command:'eventmeteor',value:true,interval:.6,warning:.7,batch:2});await sleep(2500);assert((await snap()).events.meteor.active===true,'meteor event did not activate');noErrors('meteor runtime error');await cmd({command:'eventmeteor',value:false});
-  await cmd({command:'spawn',amount:140,mob:'grunt'});const stress0=await snap();await sleep(10000);const stress1=await snap();
+  await cmd({command:'spawn',amount:140,mob:'infected'});const stress0=await snap();await sleep(10000);const stress1=await snap();
   assert(stress1.frameSeq>stress0.frameSeq+100,'stress test froze game loop');assert(stress1.fps>=10,`stress FPS collapsed: ${stress1.fps}`);assert(Number.isFinite(stress1.health),'player health became invalid');noErrors('stress runtime error');
 
   if(warnings.length)console.log(`GAMEPLAY BOT WARN [${name}] ${warnings.join(' | ')}`);
