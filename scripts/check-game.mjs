@@ -2,14 +2,14 @@ import fs from 'node:fs';
 const fail=m=>{console.error('FAIL:',m);process.exitCode=1};
 const ok=m=>console.log('OK:',m);
 const read=p=>fs.readFileSync(p,'utf8');
-const gameHtml=read('index.html'),panelHtml=read('painel.html'),game=read('src/game.js'),panel=read('src/panel.js'),panelCss=read('src/styles/panel.css');
+const gameHtml=read('index.html'),panelHtml=read('painel.html'),game=read('src/game.js')+'\n'+read('src/core/skills.mjs'),panel=read('src/panel.js'),panelCss=read('src/styles/panel.css');
 const version=JSON.parse(read('version.json')).version;
 const cacheTag=String(version).replace(/\./g,'');
 
 if(!game.includes(`const VERSION='${version}'`)) fail('VERSION do jogo divergente'); else ok('versao sincronizada '+version);
 if(!gameHtml.includes(`v${version}`)) fail('HTML do jogo sem versao atual'); else ok('HTML do jogo versionado');
 if(!panelHtml.includes(`v${version}`)) fail('Painel sem versao atual'); else ok('painel versionado');
-if(!gameHtml.includes(`src/game.js?v=${cacheTag}`)) fail('cache tag do game.js divergente'); else ok('cache tag game.js '+cacheTag);
+if(!gameHtml.includes(`src/core/game-bootstrap.mjs?v=${cacheTag}`)) fail('cache tag do bootstrap modular divergente'); else ok('cache tag bootstrap modular '+cacheTag);
 if(!panelHtml.includes(`src/panel.js?v=${cacheTag}`)) fail('cache tag do panel.js divergente'); else ok('cache tag panel.js '+cacheTag);
 if(!panelHtml.includes(`src/styles/panel.css?v=${cacheTag}`)) fail('cache tag do panel.css divergente'); else ok('cache tag panel.css '+cacheTag);
 if(panelCss.includes('.topVersion{display:none}')) fail('versao do painel escondida no mobile'); else ok('versao visivel no mobile');
