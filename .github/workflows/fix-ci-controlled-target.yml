@@ -1,0 +1,26 @@
+name: Fix CI Controlled Target
+on:
+  push:
+    paths:
+      - 'scripts/fix-ci-controlled-target.mjs'
+      - '.github/workflows/fix-ci-controlled-target.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node scripts/fix-ci-controlled-target.mjs
+      - run: npm run check
+      - name: Commit patch
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "caos-live-bot"
+          git config user.email "actions@github.com"
+          git add src/game.js
+          git commit -m "test: fix controlled shot target"
+          git push
