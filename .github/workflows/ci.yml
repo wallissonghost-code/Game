@@ -16,3 +16,9 @@ jobs:
           node-version: '24'
       - name: Validate game and architecture
         run: npm run check
+      - name: Install browser smoke dependencies
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Smoke test main menu interactions
+        run: npm run check:menu
