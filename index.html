@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#070913">
 <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
-<title>Caos Live v0.17.38</title>
+<title>Caos Live v0.17.39</title>
 <link rel="stylesheet" href="src/styles/game.css?v=0155">
 </head>
 <body>
 <main class="game" id="stage">
-<header class="hud"><div><div class="logo">CAOS <b>LIVE</b></div><div class="sub" id="coords">SETOR 0, 0</div><div class="version" id="gameVersion">v0.17.38 · NOVAS SKILLS + FÚRIA</div><div class="fpsHud" id="fpsHud">FPS --</div><div id="rankIntegrity" style="margin-top:4px;font-size:9px;font-weight:950;color:#86efac;letter-spacing:.04em">🏆 RANQUEADA</div></div><div class="right"><div class="stats"><div><span>LV</span><strong id="level">1</strong><small id="levelPct">0%</small></div><div><span>XP</span><strong id="xp">0</strong></div><div><span>VIDA</span><strong id="life">100</strong></div><div><span>MOBS</span><strong id="mobCount">0</strong></div></div><button class="pauseBtn" id="pauseBtn">Ⅱ</button></div></header>
+<header class="hud"><div><div class="logo">CAOS <b>LIVE</b></div><div class="sub" id="coords">SETOR 0, 0</div><div class="version" id="gameVersion">v0.17.39 · NOVAS SKILLS + FÚRIA</div><div class="fpsHud" id="fpsHud">FPS --</div><div id="rankIntegrity" style="margin-top:4px;font-size:9px;font-weight:950;color:#86efac;letter-spacing:.04em">🏆 RANQUEADA</div></div><div class="right"><div class="stats"><div><span>LV</span><strong id="level">1</strong><small id="levelPct">0%</small></div><div><span>XP</span><strong id="xp">0</strong></div><div><span>VIDA</span><strong id="life">100</strong></div><div><span>MOBS</span><strong id="mobCount">0</strong></div></div><button class="pauseBtn" id="pauseBtn">Ⅱ</button></div></header>
 <div class="xpbar"><i id="xpFill"></i></div>
 <canvas id="canvas"></canvas>
 <div class="ghost" id="connectionMini">PAINEL: DESCONECTADO</div>
 <div id="duoMini" style="position:absolute;z-index:4;left:12px;bottom:48px;font-size:10px;font-weight:800;color:#8aa3b5;text-shadow:0 2px 6px #000">DUO: AGUARDANDO P2</div>
 
-<section id="start" class="overlay show startOverlay"><div class="startCard"><div class="startTop"><div><span class="startEyebrow">CAOS LIVE</span><h1>Pronto para entrar?</h1></div><span class="startVersion" id="startVersion">v0.17.38</span></div><p>Sobreviva às hordas, evolua suas skills e avance pelo caos.</p><div class="startMeta"><span><b>100</b> VIDA</span><span><b>60</b> FPS</span><span><b>ONLINE</b> STATUS</span></div><div style="margin:14px 0 10px"><input id="playerName" maxlength="18" placeholder="SEU NOME" autocomplete="nickname" style="width:100%;padding:13px 14px;border-radius:13px;border:1px solid #343861;background:#080b19;color:#fff;font-weight:900;text-align:center;font-size:15px;outline:none"></div><button class="startBtnPremium" id="startBtn">ENTRAR NA ARENA</button><button id="multiplayerBtn" type="button" style="width:100%;margin-top:9px;padding:12px;border:1px solid #256d58;border-radius:13px;background:linear-gradient(135deg,#08231c,#0d3341);color:#a7f3d0;font-weight:950;letter-spacing:.02em">🌐 MODO MULTIPLAYER <span style="display:block;margin-top:3px;font-size:8px;color:#7dd3fc;font-weight:800">SERVIDOR DEDICADO · RENDER</span></button><button id="rankBtn" type="button" style="width:100%;margin-top:9px;padding:11px;border:1px solid #343861;border-radius:13px;background:#0b0e1d;color:#c4b5fd;font-weight:900">🏆 RANK / HISTÓRICO</button><small>Build · Player + Pose Armada + Weapon em PNG direto</small></div></section>
+<section id="start" class="overlay show startOverlay"><div class="startCard"><div class="startTop"><div><span class="startEyebrow">CAOS LIVE</span><h1>Pronto para entrar?</h1></div><span class="startVersion" id="startVersion">v0.17.39</span></div><p>Sobreviva às hordas, evolua suas skills e avance pelo caos.</p><div class="startMeta"><span><b>100</b> VIDA</span><span><b>60</b> FPS</span><span><b>ONLINE</b> STATUS</span></div><div style="margin:14px 0 10px"><input id="playerName" maxlength="18" placeholder="SEU NOME" autocomplete="nickname" style="width:100%;padding:13px 14px;border-radius:13px;border:1px solid #343861;background:#080b19;color:#fff;font-weight:900;text-align:center;font-size:15px;outline:none"></div><button class="startBtnPremium" id="startBtn">ENTRAR NA ARENA</button><button id="multiplayerBtn" type="button" style="width:100%;margin-top:9px;padding:12px;border:1px solid #256d58;border-radius:13px;background:linear-gradient(135deg,#08231c,#0d3341);color:#a7f3d0;font-weight:950;letter-spacing:.02em">🌐 MODO MULTIPLAYER <span style="display:block;margin-top:3px;font-size:8px;color:#7dd3fc;font-weight:800">SERVIDOR DEDICADO · RENDER</span></button><button id="rankBtn" type="button" style="width:100%;margin-top:9px;padding:11px;border:1px solid #343861;border-radius:13px;background:#0b0e1d;color:#c4b5fd;font-weight:900">🏆 RANK / HISTÓRICO</button><small>Build · Player + Pose Armada + Weapon em PNG direto</small></div></section>
 
 <section id="multiplayerWake" class="overlay"><div class="card" style="width:min(460px,94vw);text-align:center"><div style="font-size:10px;font-weight:950;letter-spacing:.15em;color:#67e8f9">MULTIPLAYER</div><h1 style="margin:9px 0 7px">Preparando servidor...</h1><p id="multiplayerWakeStatus">ACORDANDO SERVIDOR MULTIPLAYER...</p><div style="margin:14px auto;width:52px;height:52px;border:4px solid #24304e;border-top-color:#8b5cf6;border-radius:50%;animation:caosMpSpin .8s linear infinite"></div><div style="font-size:10px;color:#7f8ab4">TEMPO: <b id="multiplayerWakeTime" style="color:#fff">0s</b></div><button id="multiplayerWakeRetry" class="btn" type="button" style="display:none;width:100%;margin-top:14px">TENTAR NOVAMENTE</button><button id="multiplayerWakeCancel" type="button" style="width:100%;margin-top:8px;padding:11px;border:1px solid #343861;border-radius:13px;background:#0b0e1d;color:#cbd5e1;font-weight:900">CANCELAR</button><style>@keyframes caosMpSpin{to{transform:rotate(360deg)}}</style></div></section>
 
@@ -31,9 +31,9 @@
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore-compat.js"></script>
-<script src="src/firebase-ranking.js?v=01738"></script>
-<script src="src/map-runtime.js?v=01738"></script>
-<script src="src/game.js?v=01738"></script>
-<script src="src/multiplayer-entry.js?v=01738"></script>
+<script src="src/firebase-ranking.js?v=01739"></script>
+<script src="src/map-runtime.js?v=01739"></script>
+<script src="src/game.js?v=01739"></script>
+<script src="src/multiplayer-entry.js?v=01739"></script>
 </body>
 </html>
