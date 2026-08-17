@@ -13,3 +13,4 @@ if(!s.includes("mob:'infected'});const stress0")) throw Error('stress mob replac
 if(!s.includes('SHOT MATRIX: 8 directions')) throw Error('shot matrix insertion failed');
 fs.writeFileSync(path,s);
 console.log('GAMEPLAY SHOT MATRIX INSTALLED');
+// trigger workflow
