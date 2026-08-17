@@ -9,3 +9,9 @@ Stable Solo snapshot before v0.17.39:
 If a future Solo release breaks, restore `main` to the stable commit/branch only after verifying the rollback target.
 
 Online V2 is a separate release channel and is not part of this Solo rollback.
+
+## Stable Solo snapshot before v0.17.40
+
+- Commit: `aabb8edce37ba94b9c4d7f0d7259592f26da6cb7`
+- Branch: `backup/solo-v0.17.39-stable`
+- Reason: restore point before Auto movement hysteresis/smoothing.
