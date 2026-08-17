@@ -12,6 +12,7 @@
     "check:architecture": "node scripts/check-architecture.mjs",
     "check:runtime": "node scripts/audit-runtime.mjs",
     "check:menu": "node scripts/smoke-menu.mjs",
+    "check:gameplay": "node scripts/gameplay-bot.mjs",
     "check": "npm run check:game && npm run check:architecture && npm run check:runtime",
     "validate": "npm run check"
   },
