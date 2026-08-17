@@ -24,7 +24,7 @@ jobs:
         run: |
           git config user.name "wallissonghost-code"
           git config user.email "wallissonghost@gmail.com"
-          git add src/game.js scripts/check-architecture.mjs
+          git add src/game.js scripts/check-architecture.mjs scripts/check-game.mjs
           git commit -m "refactor: extract solo mobs and combat from game runtime"
           git push origin HEAD:main
-# retry: whitespace-safe combat matcher
+# retry: contract-aware legacy checks
