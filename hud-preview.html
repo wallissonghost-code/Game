@@ -7,7 +7,7 @@
 <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
 <title>Caos Live · HUD Preview</title>
 <link rel="stylesheet" href="src/styles/game.css?v=0155">
-<link rel="stylesheet" href="src/styles/hud-premium.css?v=preview7">
+<link rel="stylesheet" href="src/styles/hud-premium.css?v=preview8">
 </head>
 <body>
 <main class="game" id="stage">
@@ -32,7 +32,13 @@
     <div id="rankIntegrity" class="hudStatus hudRank">🏆 RANQUEADA</div>
     <div id="fpsHud" class="fpsHud hudStatus hudFps">FPS --</div>
   </div>
-  <div class="xpbar hudXp"><i id="xpFill"></i></div>
+  <div class="hudXpWrap">
+    <div class="hudXpInner">
+      <div class="xpbar hudXp"><i id="xpFill"></i></div>
+      <div class="hudXpLabel">XP PARA PRÓXIMO NÍVEL</div>
+    </div>
+    <div class="hudXpValue" id="xpBarValue">0/60</div>
+  </div>
 </header>
 <canvas id="canvas"></canvas>
 <section id="start" class="overlay show startOverlay"><div class="startCard"><div class="startTop"><div><span class="startEyebrow">CAOS LIVE</span><h1>Pronto para entrar?</h1></div><span class="startVersion" id="startVersion">v0.17.45</span></div><p>Sobreviva às hordas, evolua suas skills e avance pelo caos.</p><div class="startMeta"><span><b>100</b> VIDA</span><span><b>60</b> FPS</span><span><b>ONLINE</b> STATUS</span></div><div style="margin:14px 0 10px"><input id="playerName" maxlength="18" placeholder="SEU NOME" autocomplete="nickname" style="width:100%;padding:13px 14px;border-radius:13px;border:1px solid #343861;background:#080b19;color:#fff;font-weight:900;text-align:center;font-size:15px;outline:none"></div><button class="startBtnPremium" id="startBtn">ENTRAR NA ARENA</button><button id="multiplayerBtn" type="button" style="width:100%;margin-top:9px;padding:12px;border:1px solid #256d58;border-radius:13px;background:linear-gradient(135deg,#08231c,#0d3341);color:#a7f3d0;font-weight:950;letter-spacing:.02em">🌐 MODO MULTIPLAYER <span style="display:block;margin-top:3px;font-size:8px;color:#7dd3fc;font-weight:800">SERVIDOR DEDICADO · RENDER</span></button><button id="rankBtn" type="button" style="width:100%;margin-top:9px;padding:11px;border:1px solid #343861;border-radius:13px;background:#0b0e1d;color:#c4b5fd;font-weight:900">🏆 RANK / HISTÓRICO</button><small>Preview visual do HUD premium</small></div></section>
@@ -51,5 +57,14 @@
 <script src="src/firebase-ranking.js?v=01745"></script>
 <script src="src/map-runtime.js?v=01745"></script>
 <script type="module" src="src/core/skills-bootstrap.mjs?v=01745-skills1"></script>
+<script>
+(()=>{
+  const xp=document.getElementById('xp'), bar=document.getElementById('xpBarValue');
+  if(!xp||!bar)return;
+  const sync=()=>{bar.textContent=xp.textContent||'0/60'};
+  new MutationObserver(sync).observe(xp,{childList:true,subtree:true,characterData:true});
+  sync();
+})();
+</script>
 </body>
 </html>
