@@ -1,0 +1,115 @@
+/* Premium HUD layout experiment - visual only. No gameplay controls are added/removed. */
+:root{--hud-bg:rgba(7,11,25,.84);--hud-border:rgba(93,105,160,.42);--hud-muted:#8f9abb;--hud-glow:rgba(124,58,237,.16)}
+
+.hud{
+  top:max(8px,env(safe-area-inset-top));
+  left:max(10px,env(safe-area-inset-left));
+  right:max(10px,env(safe-area-inset-right));
+  gap:10px;
+  align-items:stretch;
+}
+.hud>div:first-child{
+  min-width:190px;
+  padding:10px 13px 9px;
+  border:1px solid var(--hud-border);
+  border-radius:17px;
+  background:linear-gradient(145deg,rgba(12,17,36,.93),rgba(7,10,23,.84));
+  box-shadow:0 12px 30px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.035),0 0 24px var(--hud-glow);
+  backdrop-filter:blur(10px);
+}
+.logo{font-size:17px;letter-spacing:.02em}.sub{margin-top:3px;color:#8f9abb}.version{margin-top:5px;border:0;background:transparent;padding:0;color:#737f9f;font-size:7px;box-shadow:none}
+
+.right{gap:7px;align-items:stretch}.stats{gap:5px}.stats div{
+  min-width:58px;
+  min-height:54px;
+  padding:7px 7px 6px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  border:1px solid var(--hud-border);
+  border-radius:15px;
+  background:linear-gradient(180deg,rgba(14,20,42,.94),rgba(8,12,27,.88));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 8px 24px rgba(0,0,0,.18);
+  backdrop-filter:blur(10px);
+}
+.stats span{font-size:7px;letter-spacing:.08em;color:#8f9abb;font-weight:800}.stats strong{margin-top:2px;font-size:14px;line-height:1.1}.stats small{font-size:6px}.pauseBtn{
+  width:48px;height:auto;min-height:54px;
+  border-radius:15px;border-color:var(--hud-border);
+  background:linear-gradient(180deg,rgba(18,24,48,.96),rgba(8,12,27,.92));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 8px 24px rgba(0,0,0,.20),0 0 18px rgba(124,58,237,.10);
+}
+
+/* Visual-only status rail: Duo / Panel / Rank / FPS are kept visible at the top. */
+#duoMini,.ghost,#rankIntegrity,.fpsHud{
+  position:fixed!important;
+  z-index:6!important;
+  bottom:auto!important;
+  height:24px;
+  display:flex!important;
+  align-items:center;
+  padding:0 9px!important;
+  border:1px solid rgba(73,87,133,.50)!important;
+  border-radius:9px!important;
+  background:rgba(7,12,26,.82)!important;
+  box-shadow:0 7px 20px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.025)!important;
+  backdrop-filter:blur(9px);
+  color:#aeb8d4!important;
+  font-size:7px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  white-space:nowrap;
+  text-shadow:none!important;
+  pointer-events:none!important;
+}
+#duoMini{top:max(72px,calc(env(safe-area-inset-top) + 64px));left:max(10px,env(safe-area-inset-left))!important}
+.ghost{top:max(72px,calc(env(safe-area-inset-top) + 64px));left:max(122px,calc(env(safe-area-inset-left) + 122px))!important;color:#8fd9ef!important}
+#rankIntegrity{top:max(72px,calc(env(safe-area-inset-top) + 64px));left:max(246px,calc(env(safe-area-inset-left) + 246px))!important;margin:0!important;color:#a7f3d0!important}
+.fpsHud{top:max(72px,calc(env(safe-area-inset-top) + 64px));right:max(10px,env(safe-area-inset-right))!important;left:auto!important;margin:0!important;color:#7dd3fc!important;border-color:rgba(36,95,131,.65)!important}
+
+/* XP remains visible, but no longer dominates the whole screen width. */
+.xpbar{
+  top:max(103px,calc(env(safe-area-inset-top) + 95px));
+  left:auto;
+  right:max(10px,env(safe-area-inset-right));
+  width:min(360px,38vw);
+  height:5px;
+  border-color:rgba(68,78,124,.55);
+  background:rgba(5,8,18,.76);
+  box-shadow:0 5px 18px rgba(0,0,0,.16);
+}
+.xpbar i{box-shadow:0 0 10px rgba(139,92,246,.40)}
+
+@media(max-width:700px){
+  .hud{top:max(6px,env(safe-area-inset-top));left:max(7px,env(safe-area-inset-left));right:max(7px,env(safe-area-inset-right));gap:5px}
+  .hud>div:first-child{min-width:118px;max-width:128px;padding:7px 8px 6px;border-radius:13px;flex:0 0 128px}
+  .logo{font-size:13px}.sub{font-size:6px;margin-top:3px}.version{font-size:5.5px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .right{gap:3px;min-width:0;flex:1;justify-content:flex-end}.stats{gap:3px;flex:1;justify-content:flex-end}
+  .stats div{display:flex!important;min-width:0!important;flex:1 1 0;max-width:49px;min-height:45px;padding:4px 3px;border-radius:11px}
+  .stats span{font-size:5px}.stats strong{font-size:10px}.stats small{font-size:5px}
+  .pauseBtn{width:31px;min-width:31px;min-height:45px;height:45px;border-radius:11px;font-size:14px}
+
+  #duoMini,.ghost,#rankIntegrity,.fpsHud{top:max(57px,calc(env(safe-area-inset-top) + 51px));height:21px;padding:0 6px!important;border-radius:8px!important;font-size:6px!important}
+  #duoMini{left:max(7px,env(safe-area-inset-left))!important}
+  .ghost{left:max(83px,calc(env(safe-area-inset-left) + 83px))!important;max-width:94px;overflow:hidden;text-overflow:ellipsis}
+  #rankIntegrity{left:max(181px,calc(env(safe-area-inset-left) + 181px))!important;max-width:108px;overflow:hidden;text-overflow:ellipsis}
+  .fpsHud{right:max(7px,env(safe-area-inset-right))!important}
+  .xpbar{top:max(83px,calc(env(safe-area-inset-top) + 77px));right:max(7px,env(safe-area-inset-right));width:min(170px,44vw);height:4px}
+}
+
+@media(max-width:430px){
+  .hud{display:flex;grid-template-columns:none}
+  .hud>div:first-child{flex-basis:116px;max-width:116px;min-width:116px}
+  .logo{font-size:12px}.version{max-width:101px}
+  .stats div{max-width:44px}.stats strong{font-size:9px}.pauseBtn{width:29px;min-width:29px}
+  #duoMini,.ghost,#rankIntegrity,.fpsHud{font-size:5.7px!important;padding:0 5px!important}
+  #duoMini{left:7px!important}.ghost{left:76px!important;max-width:88px}.ghost{right:auto!important}
+  #rankIntegrity{left:168px!important;max-width:102px}.fpsHud{right:7px!important}
+  .xpbar{width:145px}
+}
+
+@media(max-width:370px){
+  .hud>div:first-child{flex-basis:104px;max-width:104px;min-width:104px}.logo{font-size:11px}.version{max-width:90px}
+  .stats div{max-width:39px}.stats strong{font-size:8px}.stats span{font-size:4.5px}
+  #duoMini{left:6px!important}.ghost{left:68px!important;max-width:78px}#rankIntegrity{left:150px!important;max-width:91px}.fpsHud{display:flex!important;right:6px!important}
+  .xpbar{width:132px}
+}
