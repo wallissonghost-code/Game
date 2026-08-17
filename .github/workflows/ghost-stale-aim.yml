@@ -1,0 +1,48 @@
+name: Ghost Stale Aim Reproducer
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'ci: add Ghost stale-aim reproducer'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch gameplay bot with stale-aim recovery probe
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/gameplay-bot.mjs')
+          s=p.read_text()
+          old="""  try{await page.waitForFunction(n=>window.CaosTest.snapshot().test.shotsFired>n,fire0.test.shotsFired,{timeout:1800})}catch{const d=await snap();throw Error(`[${name}] controlled target visible but no shot in 1.8s; mobs=${d.mobs} autofire=${d.autofire} mode=${d.gameplayMode} paused=${d.paused} fps=${d.fps} player=(${d.test.playerX.toFixed(1)},${d.test.playerY.toFixed(1)})`)}
+"""
+          new="""  try{await page.waitForFunction(n=>window.CaosTest.snapshot().test.shotsFired>n,fire0.test.shotsFired,{timeout:1800})}catch{
+    const stuck=await snap();
+    const sx=stuck.test.playerX,sy=stuck.test.playerY,beforeMoveShots=stuck.test.shotsFired;
+    await page.keyboard.down('d');await sleep(220);await page.keyboard.up('d');await sleep(120);
+    let recovered=false,recovery=null;
+    try{await page.waitForFunction(n=>window.CaosTest.snapshot().test.shotsFired>n,beforeMoveShots,{timeout:1400});recovered=true;recovery=await snap()}catch{}
+    if(recovered){
+      const movedPx=Math.hypot(recovery.test.playerX-sx,recovery.test.playerY-sy);
+      const ls=recovery.test.lastShot;
+      const aimInfo=ls?` aim=${(ls.aim*180/Math.PI).toFixed(1)}deg spawn=(${ls.spawnX.toFixed(1)},${ls.spawnY.toFixed(1)}) target=(${Number(ls.targetX).toFixed(1)},${Number(ls.targetY).toFixed(1)})`:' no-last-shot';
+      throw Error(`[${name}] GHOST REPRODUCED STALE AIM/TARGET: target visible while stationary produced no shot for 1.8s, then movement ${movedPx.toFixed(1)}px restored autofire; mobs=${stuck.mobs} mode=${stuck.gameplayMode} fps=${stuck.fps}${aimInfo}`)
+    }
+    throw Error(`[${name}] controlled target visible but no shot in 1.8s and movement did NOT recover it; mobs=${stuck.mobs} autofire=${stuck.autofire} mode=${stuck.gameplayMode} paused=${stuck.paused} fps=${stuck.fps} player=(${sx.toFixed(1)},${sy.toFixed(1)})`)
+  }
+"""
+          if old not in s:
+              raise SystemExit('target snippet not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+          rm .github/workflows/ghost-stale-aim.yml
+          git config user.name "Ghost QA"
+          git config user.email "actions@users.noreply.github.com"
+          git add scripts/gameplay-bot.mjs .github/workflows/ghost-stale-aim.yml
+          git commit -m "test: Ghost reproduces stale autofire aim after movement"
+          git push
