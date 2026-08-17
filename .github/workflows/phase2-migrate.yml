@@ -1,0 +1,33 @@
+name: Caos Live Phase 2 Migration
+on:
+  push:
+    branches: [agent/core-phase2]
+permissions:
+  contents: write
+jobs:
+  migrate:
+    if: ${{ !contains(github.event.head_commit.message, '[phase2-generated]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/core-phase2
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Apply deterministic migration
+        run: node scripts/apply-phase2.mjs
+      - name: Validate migrated tree
+        run: npm run check
+      - name: Commit generated migration
+        run: |
+          if git diff --quiet; then
+            echo "No generated changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/game.js index.html scripts/check-game.mjs
+          git commit -m "refactor: wire modular skill runtime [phase2-generated]"
+          git push origin HEAD:agent/core-phase2
