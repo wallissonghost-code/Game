@@ -1,0 +1,27 @@
+name: Upgrade Gameplay Shot Matrix
+on:
+  push:
+    paths:
+      - 'scripts/upgrade-gameplay-shot-matrix.mjs'
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node scripts/upgrade-gameplay-shot-matrix.mjs
+      - run: npm run check
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: npm run check:gameplay
+      - name: Commit bot upgrade
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/gameplay-bot.mjs
+          git diff --cached --quiet || git commit -m "test: projectile geometry matrix in gameplay bot"
+          git push
