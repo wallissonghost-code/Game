@@ -1,8 +1,9 @@
-name: Solo skills + Boss Fury v0.17.38
+name: Solo safe fix v0.17.39
 on:
   push:
     paths:
       - '.github/workflows/combat-rebalance-v0175.yml'
+      - 'scripts/fix-solo-v01739.py'
   workflow_dispatch:
 permissions:
   contents: write
@@ -17,41 +18,28 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Apply Solo v0.17.38 skills and Fury
-        run: python3 scripts/combat-rebalance-v0175.py
-      - name: Sync auxiliary Solo cache only
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          for name in ['duo.html','map-lab.html']:
-              p=Path(name)
-              s=p.read_text(encoding='utf-8')
-              s=s.replace('0.17.37','0.17.38').replace('v=01737','v=01738')
-              p.write_text(s,encoding='utf-8')
-          PY
-      - name: Validate gameplay and admin
+      - name: Apply Solo v0.17.39 safe fix
+        run: python3 scripts/fix-solo-v01739.py
+      - name: Validate Solo gameplay and recovery
         run: |
           node --check src/game.js
           node --check src/panel.js
           node scripts/check-game.mjs
-          grep -q "VERSION='0.17.38'" src/game.js
-          grep -q "id:'ghost'" src/game.js
-          grep -q "id:'dodge'" src/game.js
-          grep -q "id:'ice'" src/game.js
-          grep -q "id:'shock'" src/game.js
-          grep -q "id:'berserker'" src/game.js
-          grep -q "id:'explosive'" src/game.js
-          grep -q "triggerBossFury" src/game.js
-          grep -q "FÚRIA PÓS-BOSS" src/game.js
-          grep -q "NEW_SOLO_SKILLS" src/game.js
-          grep -q "solo-new-skills-boss-fury-test" version.json
-          grep -q "src/game.js?v=01738" index.html
-          grep -q "src/panel.js?v=01738" painel.html
-      - name: Commit Solo v0.17.38
+          grep -q "VERSION='0.17.39'" src/game.js
+          grep -q "if(!explosive&&pl)" src/game.js
+          grep -q "iceHits:0" src/game.js
+          grep -q "applyIceHit(e,(b.iceHits||0)===0)" src/game.js
+          grep -q "com Perfurante, os seguintes recebem lentidão" src/game.js
+          grep -q "solo-ice-pierce-safe-fix" version.json
+          grep -q "src/game.js?v=01739" index.html
+          grep -q "src/panel.js?v=01739" painel.html
+          grep -q "backup/solo-v0.17.38-stable" docs/RECOVERY.md
+          ! grep -q "ONLINE_VERSION='0.17.39" src/multiplayer-v2.js
+      - name: Commit Solo v0.17.39
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/game.js src/panel.js index.html painel.html version.json duo.html map-lab.html
+          git add src/game.js index.html painel.html duo.html map-lab.html version.json docs/RECOVERY.md
           git diff --cached --quiet && exit 0
-          git commit -m 'feat: six new Solo skills and post-boss Fury v0.17.38'
+          git commit -m 'fix: Ice + Pierce interaction and Solo recovery v0.17.39'
           git push
