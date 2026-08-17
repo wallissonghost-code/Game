@@ -9,6 +9,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -16,9 +17,11 @@ jobs:
           node-version: '24'
       - name: Validate game and architecture
         run: npm run check
-      - name: Install browser smoke dependencies
+      - name: Install browser test dependencies
         run: |
           npm install --no-audit --no-fund
           npx playwright install --with-deps chromium
-      - name: Smoke test main menu interactions
+      - name: Smoke test menu and short gameplay
         run: npm run check:menu
+      - name: Full gameplay bot · mobile + desktop
+        run: npm run check:gameplay
