@@ -1,0 +1,81 @@
+name: Safe skills reconnection
+on:
+  push:
+    branches: [agent/reconnect-skills-safe3]
+permissions:
+  contents: write
+jobs:
+  migrate:
+    if: ${{ !contains(github.event.head_commit.message, '[skills-reconnected]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/reconnect-skills-safe3
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Reconnect skill domain safely
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          game_path=Path('src/game.js')
+          game=game_path.read_text()
+          pattern=r"const rarityLabel=\{.*?\};const skills=\[.*?\];\nconst soldierSprite="
+          bridge="""const {rarityLabel,rarityWeight,skills}=window.CaosSkills.createSoloSkillSystem({
+  player,
+  onArcApply:()=>{arcNextAt=Math.min(arcNextAt||Infinity,performance.now()+500)},
+  onShockApply:()=>{shockNextAt=Math.min(shockNextAt||Infinity,performance.now()+700)},
+  onPhoenixApply:()=>{phoenixReady=true;phoenixConsumed=false}
+});
+const soldierSprite="""
+          new_game,n=re.subn(pattern,bridge,game,count=1,flags=re.S)
+          if n != 1:
+              raise SystemExit(f'skill catalog replacement count={n}')
+          game_path.write_text(new_game)
+
+          html_path=Path('index.html')
+          html=html_path.read_text()
+          old='''<script src="src/game.js?v=01745"></script>\n<script src="src/multiplayer-entry.js?v=01745"></script>'''
+          new='''<script type="module" src="src/core/skills-bootstrap.mjs?v=01745-skills1"></script>'''
+          if old not in html:
+              raise SystemExit('classic runtime tags not found in index')
+          html_path.write_text(html.replace(old,new,1))
+
+          arch=Path('scripts/check-architecture.mjs')
+          s=arch.read_text()
+          s=s.replace("const rollbackMode = JSON.parse(read('version.json')).build === 'stable-runtime-rollback';","const rollbackMode = false;")
+          arch.write_text(s)
+
+          audit=Path('scripts/audit-runtime.mjs')
+          s=audit.read_text()
+          marker="if(rollbackMode){"
+          if marker in s:
+              s=s.replace("const rollbackMode=JSON.parse(fsRollback.readFileSync('version.json','utf8')).build==='stable-runtime-rollback';","const rollbackMode=false;")
+          audit.write_text(s)
+
+          check=Path('scripts/check-game.mjs')
+          s=check.read_text()
+          s=s.replace("if(!gameHtml.includes(`src/game.js?v=${cacheTag}`)) fail('cache tag do runtime classico divergente'); else ok('cache tag runtime classico '+cacheTag);", "if(!gameHtml.includes('src/core/skills-bootstrap.mjs?v=01745-skills1')) fail('skills bootstrap ausente'); else ok('skills bootstrap ativo');")
+          check.write_text(s)
+          PY
+      - name: Validate migration
+        run: |
+          node --check src/game.js
+          node --check src/core/skills-bootstrap.mjs
+          grep -q "window.CaosSkills.createSoloSkillSystem" src/game.js
+          grep -q "skills-bootstrap.mjs" index.html
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+          npm run check
+          npm run check:menu
+      - name: Commit migration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html src/game.js scripts/check-game.mjs scripts/check-architecture.mjs scripts/audit-runtime.mjs
+          git commit -m "refactor: reconnect skills domain safely [skills-reconnected]"
+          git push origin HEAD:agent/reconnect-skills-safe3
