@@ -24,6 +24,12 @@ jobs:
       - name: Smoke test menu and short gameplay
         run: npm run check:menu
       - name: Full gameplay bot · mobile + desktop
+        id: gameplay
+        continue-on-error: true
         run: npm run check:gameplay
       - name: Accelerated progression · LV1 to LV50
+        if: always()
         run: npm run check:progression
+      - name: Fail if gameplay bot failed
+        if: always() && steps.gameplay.outcome == 'failure'
+        run: exit 1
