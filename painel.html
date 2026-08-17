@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#050812">
 <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
-<title>Caos Admin v0.17.40</title>
-<link rel="stylesheet" href="src/styles/panel.css?v=01740">
+<title>Caos Admin v0.17.41</title>
+<link rel="stylesheet" href="src/styles/panel.css?v=01741">
 </head>
 <body>
 <main class="app">
@@ -15,7 +15,7 @@
     <div class="brandMark"><span>CAOS</span><b>ADMIN</b></div>
     <div class="brandSub">CENTRAL DE COMANDO · LIVE CONTROL</div>
   </div>
-  <div class="topMeta"><span id="versionSync" class="syncBadge">SINCRONIZANDO</span><span id="panelVersion" class="topVersion">v0.17.40</span><a class="openGame" href="index.html?v=01740">ABRIR JOGO</a></div>
+  <div class="topMeta"><span id="versionSync" class="syncBadge">SINCRONIZANDO</span><span id="panelVersion" class="topVersion">v0.17.41</span><a class="openGame" href="index.html?v=01741">ABRIR JOGO</a></div>
 </header>
 
 <section class="dashboardTop">
@@ -96,6 +96,25 @@
     <div class="tools" style="margin:12px 0"><label style="font-size:10px;font-weight:900;color:#9aa8c4">ALVO DOS EFEITOS</label><select id="playerTarget"><option value="p1">P1 · HOST</option><option value="p2">P2 · DUO</option><option value="all">TODOS</option></select><button id="savePlayer" class="good" type="button">🛟 SALVAR / REVIVER JOGADOR</button></div><div class="actionGrid grid"><button data-cmd="pause">Ⅱ PAUSAR<small>congela a partida</small></button><button data-cmd="resume">▶ CONTINUAR<small>retoma imediatamente</small></button><button class="good" data-cmd="heal" data-amount="1">❤ CURAR +1<small>ação instantânea</small></button><button class="danger" data-cmd="damage" data-amount="2">💥 DANO -2<small>ação instantânea</small></button><button data-cmd="clear">🧹 LIMPAR ARENA<small>remove todos os mobs</small></button><button class="blue" data-cmd="freeze" data-seconds="8">❄ CONGELAR 8s<small>efeito temporário</small></button><button class="gold" data-cmd="invincible" data-seconds="10">🛡 INVENCÍVEL 10s<small>escudo temporário</small></button><button class="danger" data-cmd="restart">↻ REINICIAR<small>nova partida limpa</small></button></div>
   </section>
 
+<section class="card specialEventsCard" id="specialEventsCard">
+    <div class="sectionTitle"><div><span class="eyebrow">EVENTOS ESPECIAIS</span><h2>Caos temporário</h2></div><span class="miniStatus">CONTROLE ADM</span></div>
+    <p class="hint">Eventos ficam ativos até o ADM desligar. Ativar eventos manualmente invalida a partida ranqueada.</p>
+    <div class="modeGrid">
+      <button id="doubleXpEventToggle" class="modeToggle" type="button" data-on="false"><span class="modeInfo"><span class="modeIcon">✨</span><span><b>DOBRO DE XP</b><small>Mobs que nascerem durante o evento recebem 2× XP e ficam marcados.</small></span></span><span class="modeRight"><span id="doubleXpEventState" class="modeBadge">OFF</span><span class="toggleTrack"><span class="toggleKnob"></span></span></span></button>
+      <button id="meteorEventToggle" class="modeToggle" type="button" data-on="false"><span class="modeInfo"><span class="modeIcon">☄️</span><span><b>CHUVA DE METEORO</b><small>Marca o solo, meteoro cai depois e causa dano em player e mobs.</small></span></span><span class="modeRight"><span id="meteorEventState" class="modeBadge">OFF</span><span class="toggleTrack"><span class="toggleKnob"></span></span></span></button>
+    </div>
+    <h3 style="margin-top:14px">Configuração da chuva</h3>
+    <div class="tools" style="align-items:end;flex-wrap:wrap">
+      <label>INTERVALO (s)<input id="meteorInterval" type="number" min="0.45" max="12" step="0.1" value="1.7"></label>
+      <label>AVISO NO CHÃO (s)<input id="meteorWarning" type="number" min="0.6" max="5" step="0.1" value="1.8"></label>
+      <label>RAIO<input id="meteorRadius" type="number" min="45" max="180" step="1" value="92"></label>
+      <label>DANO PLAYER<input id="meteorPlayerDamage" type="number" min="1" max="80" step="1" value="18"></label>
+      <label>DANO MOBS<input id="meteorMobDamage" type="number" min="1" max="100" step="1" value="20"></label>
+      <button id="meteorConfigSave" class="gold" type="button">SALVAR CONFIG</button>
+    </div>
+    <div class="net leftNet">Meteoros pendentes: <b id="meteorPending">0</b> · O evento usa aviso visual antes de cada impacto.</div>
+  </section>
+
   <div class="adminColumns">
     <section class="card">
       <div class="sectionTitle"><div><span class="eyebrow">COMBATE</span><h2>Bosses e mobs</h2></div></div>
@@ -116,6 +135,6 @@
 </section>
 </main>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="src/panel.js?v=01740"></script>
+<script src="src/panel.js?v=01741"></script>
 </body>
 </html>
