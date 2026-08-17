@@ -1,0 +1,68 @@
+name: Apply stale aim target fix
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'ci: apply stale-aim target fix and Ghost regression'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch target selection and Ghost Rapid scenario
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          gp=Path('src/game.js')
+          s=gp.read_text()
+          old="function focusedTarget(){const now=performance.now(),near=nearestVisible();if(!near){autoTarget=null;autoTargetUntil=0;return null}if(autoTarget&&(!autoTarget.dead)&&enemies.includes(autoTarget)&&targetVisible(autoTarget)){const ad=Math.hypot(autoTarget.x-player.x,autoTarget.y-player.y),nd=Math.hypot(near.x-player.x,near.y-player.y);if(ad<=FIRE_RANGE&&now<autoTargetUntil&&nd>ad*.72)return autoTarget}autoTarget=near;autoTargetUntil=now+550;return autoTarget}"
+          new="function focusedTarget(){const now=performance.now(),near=nearestVisible();if(!near){autoTarget=null;autoTargetUntil=0;return null}if(autoTarget&&(!autoTarget.dead)&&enemies.includes(autoTarget)&&targetVisible(autoTarget)){const ad=Math.hypot(autoTarget.x-player.x,autoTarget.y-player.y),nd=Math.hypot(near.x-player.x,near.y-player.y);if(near===autoTarget&&ad<=FIRE_RANGE)return autoTarget;if(ad<=FIRE_RANGE&&now<autoTargetUntil&&nd>=ad*.90)return autoTarget}autoTarget=near;autoTargetUntil=now+180;return autoTarget}"
+          if old not in s:
+              raise SystemExit('focusedTarget snippet not found')
+          s=s.replace(old,new,1)
+
+          oldmove="if(player.moving){player.x+=player.moveX*player.speed*dt*moveScale;player.y+=player.moveY*player.speed*dt*moveScale;player.walk+=dt*9;if(!autoMode&&(gameplayMode==='sweep'||gameplayMode==='hardcore'))movementAimAngle=Math.atan2(player.moveY,player.moveX)}"
+          newmove="if(player.moving){player.x+=player.moveX*player.speed*dt*moveScale;player.y+=player.moveY*player.speed*dt*moveScale;player.walk+=dt*9;if(!autoDriving)clearAutoTarget();if(!autoMode&&(gameplayMode==='sweep'||gameplayMode==='hardcore'))movementAimAngle=Math.atan2(player.moveY,player.moveX)}"
+          if oldmove not in s:
+              raise SystemExit('movement snippet not found')
+          s=s.replace(oldmove,newmove,1)
+          gp.write_text(s)
+
+          bp=Path('scripts/gameplay-bot.mjs')
+          b=bp.read_text()
+          oldrapid="""  await cmd({command:'clear'});await cmd({command:'autofire',value:false});for(let i=0;i<16;i++)await spawnTarget(120+(i%5)*10);await cmd({command:'autofire',value:true});
+  const base0=await snap();await sleep(2200);const base1=await snap();const baseRate=base1.test.shotsFired-base0.test.shotsFired;
+  await cmd({command:'skilltest',skill:'rapid',level:5});for(let i=0;i<16;i++)await spawnTarget(120+(i%5)*10);
+  const rapid0=await snap();await sleep(2200);const rapid1=await snap();const rapidRate=rapid1.test.shotsFired-rapid0.test.shotsFired;
+  assert(rapidRate>baseRate*1.20,`Rapid did not increase fire cadence enough: base=${baseRate}, rapid=${rapidRate}`);
+"""
+          newrapid="""  // Isolated Rapid cadence regression: both phases start from identical clean state.
+  await cmd({command:'skillreset'});await cmd({command:'clear'});await cmd({command:'autofire',value:false});for(let i=0;i<20;i++)await spawnTarget(125+(i%5)*8);await cmd({command:'autofire',value:true});
+  const base0=await snap();await sleep(2200);const base1=await snap();const baseRate=base1.test.shotsFired-base0.test.shotsFired;
+  assert(baseRate>=5,`baseline cadence unexpectedly low: ${baseRate}`);
+
+  await cmd({command:'autofire',value:false});await cmd({command:'skillreset'});await cmd({command:'clear'});await cmd({command:'skilltest',skill:'rapid',level:5});for(let i=0;i<20;i++)await spawnTarget(125+(i%5)*8);await cmd({command:'autofire',value:true});
+  const rapid0=await snap();await sleep(2200);let rapid1=await snap();let rapidRate=rapid1.test.shotsFired-rapid0.test.shotsFired;
+  if(rapidRate===0){
+    const beforeMove=rapid1.test.shotsFired,sx=rapid1.test.playerX,sy=rapid1.test.playerY;
+    await page.keyboard.down('d');await sleep(220);await page.keyboard.up('d');await sleep(1200);
+    rapid1=await snap();const afterMove=rapid1.test.shotsFired-beforeMove,movedPx=Math.hypot(rapid1.test.playerX-sx,rapid1.test.playerY-sy);
+    if(afterMove>0)throw Error(`[${name}] GHOST REPRODUCED STALE AIM DURING RAPID: 0 shots while stationary, movement ${movedPx.toFixed(1)}px restored ${afterMove} shots`);
+  }
+  assert(rapidRate>baseRate*1.20,`Rapid did not increase fire cadence enough: base=${baseRate}, rapid=${rapidRate}`);
+"""
+          if oldrapid not in b:
+              raise SystemExit('Rapid bot snippet not found')
+          bp.write_text(b.replace(oldrapid,newrapid,1))
+          PY
+          rm .github/workflows/fix-stale-aim-target.yml
+          git config user.name "Ghost QA"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/game.js scripts/gameplay-bot.mjs .github/workflows/fix-stale-aim-target.yml
+          git commit -m "fix: refresh stale autofire targets and harden Ghost regression"
+          git push
