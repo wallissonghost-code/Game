@@ -40,6 +40,12 @@ check = replaceOnce(
   "game=read('src/game.js')+'\\n'+read('src/core/skills.mjs')",
   'check-game skill source'
 );
+check = replaceOnce(
+  check,
+  "if(!gameHtml.includes(`src/game.js?v=${cacheTag}`)) fail('cache tag do game.js divergente'); else ok('cache tag game.js '+cacheTag);",
+  "if(!gameHtml.includes(`src/core/game-bootstrap.mjs?v=${cacheTag}`)) fail('cache tag do bootstrap modular divergente'); else ok('cache tag bootstrap modular '+cacheTag);",
+  'check-game bootstrap cache'
+);
 fs.writeFileSync(checkPath, check);
 
 console.log('Phase 2 migration applied: skills extracted + modular bootstrap enabled.');
