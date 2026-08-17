@@ -36,3 +36,4 @@ for(const token of ['ciLastShot={spawnX:player.x+m.x','liveBullets:bullets.filte
 }
 fs.writeFileSync(path,game);
 console.log('SHOT GEOMETRY CI HOOK INSTALLED');
+// trigger workflow after workflow file exists
