@@ -1,9 +1,9 @@
-name: Solo meteor admin fix v0.17.42
+name: Solo persistent meteor config v0.17.43
 on:
   push:
     paths:
       - '.github/workflows/combat-rebalance-v0175.yml'
-      - 'scripts/fix-meteor-admin-v01742.py'
+      - 'scripts/fix-meteor-persistence-v01743.py'
   workflow_dispatch:
 permissions:
   contents: write
@@ -18,39 +18,34 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Apply Solo v0.17.42 meteor admin fix
-        run: python3 scripts/fix-meteor-admin-v01742.py
-      - name: Validate editable config and simultaneous waves
+      - name: Apply Solo v0.17.43 meteor persistence
+        run: python3 scripts/fix-meteor-persistence-v01743.py
+      - name: Validate persistent meteor configuration
         run: |
           node --check src/game.js
           node --check src/panel.js
           node scripts/check-game.mjs
-          grep -q "VERSION='0.17.42'" src/game.js
-          grep -q "batch:1" src/game.js
-          grep -q "meteorConfig.batch" src/game.js
-          grep -q "for(let i=0;i<meteorConfig.batch;i++)scheduleMeteor()" src/game.js
-          grep -q "batch:meteorConfig.batch" src/game.js
-          grep -q "meteorBatch" painel.html
-          grep -q "METEOROS POR ONDA" painel.html
-          grep -q "meteorConfigDirty" src/panel.js
-          grep -q "meteorConfigGrid" src/styles/panel.css
-          grep -q "solo-meteor-admin-editable-simultaneous-waves" version.json
-          grep -q "src/game.js?v=01742" index.html
-          grep -q "src/panel.js?v=01742" painel.html
-          grep -q "backup/solo-v0.17.41-stable" docs/RECOVERY.md
+          grep -q "VERSION='0.17.43'" src/game.js
+          grep -q "METEOR_CONFIG_KEY='caos-meteor-config-v1'" src/game.js
+          grep -q "function saveMeteorConfig" src/game.js
+          grep -q "function loadMeteorConfig" src/game.js
+          grep -q "applyMeteorConfig(cfg,false)" src/game.js
+          grep -q "METEOR_CONFIG_KEY='caos-meteor-config-v1'" src/panel.js
+          grep -q "function persistMeteorPanelConfig" src/panel.js
+          grep -q "function loadMeteorPanelConfig" src/panel.js
+          grep -q "SALVO NESTE DISPOSITIVO" src/panel.js
+          grep -q "Configuração persistente neste dispositivo" painel.html
+          grep -q "solo-persistent-meteor-admin-config" version.json
+          grep -q "src/game.js?v=01743" index.html
+          grep -q "src/panel.js?v=01743" painel.html
+          grep -q "backup/solo-v0.17.42-stable" docs/RECOVERY.md
           grep -q "ONLINE_VERSION='0.17.37-online-v2.0.5'" src/multiplayer-v2.js
-          ! grep -q "ONLINE_VERSION='0.17.42" src/multiplayer-v2.js
-          python3 - <<'PY'
-          from pathlib import Path
-          h=Path('painel.html').read_text(encoding='utf-8')
-          assert h.index('id="specialEventsCard"') < h.index('id="controls"'), 'special events still inside disabled controls'
-          print('event editor is outside disabled controls')
-          PY
-      - name: Commit Solo v0.17.42
+          ! grep -q "ONLINE_VERSION='0.17.43" src/multiplayer-v2.js
+      - name: Commit Solo v0.17.43
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/game.js src/panel.js src/styles/panel.css index.html painel.html duo.html map-lab.html version.json docs/RECOVERY.md
+          git add src/game.js src/panel.js index.html painel.html duo.html map-lab.html version.json docs/RECOVERY.md
           git diff --cached --quiet && exit 0
-          git commit -m 'fix: editable meteor admin and simultaneous waves v0.17.42'
+          git commit -m 'fix: persist meteor admin configuration v0.17.43'
           git push
