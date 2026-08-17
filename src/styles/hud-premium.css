@@ -1,58 +1,17 @@
-/* Premium HUD preview - visual only. Compact hierarchy for mobile/desktop. */
-:root{--hud-bg:rgba(7,11,25,.88);--hud-border:rgba(93,105,160,.42);--hud-muted:#8f9abb;--hud-glow:rgba(124,58,237,.16)}
-
-.hudPreview{
-  position:fixed;z-index:6;
-  top:max(8px,env(safe-area-inset-top));
-  left:max(10px,env(safe-area-inset-left));
-  right:max(10px,env(safe-area-inset-right));
-  display:flex;flex-direction:column;gap:5px;
-  pointer-events:none;
-}
-.hudTopRow{display:flex;align-items:stretch;justify-content:space-between;gap:8px;height:48px}
-.hudBrand{
-  width:min(230px,58vw);min-width:0;height:48px;padding:6px 10px 5px;
-  overflow:hidden;
-  border:1px solid var(--hud-border);border-radius:13px;
-  background:linear-gradient(145deg,rgba(12,17,36,.95),rgba(7,10,23,.90));
-  box-shadow:0 8px 22px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.035),0 0 18px var(--hud-glow);
-  backdrop-filter:blur(9px)
-}
-.logo{font-size:14px!important;line-height:1;font-weight:950;letter-spacing:.02em}.logo b{color:#8b5cf6}
-.sub{display:block!important;position:static!important;margin-top:3px!important;font-size:6px!important;line-height:1!important;color:#8f9abb}
-.version{display:block!important;position:static!important;max-width:100%!important;height:auto!important;line-height:1!important;margin:4px 0 0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;color:#737f9f!important;font-size:5.2px!important;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pauseBtn{pointer-events:auto;flex:0 0 40px;width:40px!important;min-height:48px!important;height:48px!important;border:1px solid var(--hud-border)!important;border-radius:13px!important;background:linear-gradient(180deg,rgba(18,24,48,.96),rgba(8,12,27,.92))!important;color:#fff;font-size:16px!important;font-weight:900}
-
-/* Row 2: fixed order LV / XP / VIDA / MOBS */
-.hudStatsRow{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px!important;width:100%}
-.hudStatsRow>div{min-width:0!important;min-height:38px!important;height:38px!important;padding:4px 3px!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--hud-border)!important;border-radius:11px!important;background:linear-gradient(180deg,rgba(14,20,42,.94),rgba(8,12,27,.90))!important;box-shadow:none!important}
-.hudStatsRow span{font-size:5.5px!important;letter-spacing:.10em;color:#8f9abb!important;font-weight:850}.hudStatsRow strong{margin-top:1px!important;font-size:10px!important;line-height:1!important;white-space:nowrap}.hudStatsRow small{margin-top:2px!important;font-size:4.8px!important;color:#7f8ab4!important}
-
-/* Row 3: fixed visual status order DUO / PAINEL / RANK / FPS */
-.hudStatusRow{display:grid!important;grid-template-columns:1.08fr 1.18fr .82fr .56fr;gap:5px;width:100%;align-items:stretch}
-.hudStatus{position:static!important;display:flex!important;align-items:center;justify-content:center;min-width:0;height:25px!important;padding:0 5px!important;border:1px solid rgba(73,87,133,.48)!important;border-radius:9px!important;background:rgba(7,12,26,.86)!important;box-shadow:none!important;color:#aeb8d4!important;font-size:5.5px!important;font-weight:900!important;line-height:1!important;white-space:nowrap!important;text-align:center;text-shadow:none!important;pointer-events:none!important;overflow:hidden;text-overflow:ellipsis}
-.hudPanel{color:#8fd9ef!important}.hudRank{color:#a7f3d0!important}.hudFps{color:#7dd3fc!important;border-color:rgba(36,95,131,.62)!important}
-/* game.js also creates fpsMini next to connectionMini; preview already has fpsHud, so hide the duplicate. */
+/* Premium HUD preview - visual only. Ultra-compact mobile hierarchy. */
+:root{--hud-border:rgba(93,105,160,.42);--hud-glow:rgba(124,58,237,.14)}
+.hudPreview{position:fixed;z-index:6;top:max(2px,env(safe-area-inset-top));left:max(7px,env(safe-area-inset-left));right:max(7px,env(safe-area-inset-right));display:flex;flex-direction:column;gap:2px;pointer-events:none}
+.hudTopRow{display:flex;align-items:stretch;justify-content:space-between;gap:5px;height:36px}
+.hudBrand{width:min(215px,58vw);min-width:0;height:36px;padding:4px 8px 3px;overflow:hidden;border:1px solid var(--hud-border);border-radius:10px;background:linear-gradient(145deg,rgba(12,17,36,.95),rgba(7,10,23,.90));box-shadow:0 5px 14px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.03),0 0 12px var(--hud-glow);backdrop-filter:blur(8px)}
+.logo{font-size:12px!important;line-height:1!important;font-weight:950;letter-spacing:.02em}.logo b{color:#8b5cf6}.sub{display:block!important;position:static!important;margin-top:2px!important;font-size:5.2px!important;line-height:1!important;color:#8f9abb}.version{display:block!important;position:static!important;max-width:100%!important;margin:2px 0 0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;color:#737f9f!important;font-size:4.5px!important;line-height:1!important;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pauseBtn{pointer-events:auto;flex:0 0 34px;width:34px!important;min-height:36px!important;height:36px!important;border:1px solid var(--hud-border)!important;border-radius:10px!important;background:linear-gradient(180deg,rgba(18,24,48,.96),rgba(8,12,27,.92))!important;color:#fff;font-size:14px!important;font-weight:900}
+.hudStatsRow{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px!important;width:100%}
+.hudStatsRow>div{min-width:0!important;min-height:29px!important;height:29px!important;padding:2px 2px!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--hud-border)!important;border-radius:8px!important;background:linear-gradient(180deg,rgba(14,20,42,.94),rgba(8,12,27,.90))!important;box-shadow:none!important}
+.hudStatsRow span{font-size:4.7px!important;letter-spacing:.09em;color:#8f9abb!important;font-weight:850}.hudStatsRow strong{margin-top:1px!important;font-size:8.8px!important;line-height:1!important;white-space:nowrap}.hudStatsRow small{margin-top:1px!important;font-size:4.1px!important;color:#7f8ab4!important}
+.hudStatusRow{display:grid!important;grid-template-columns:1.08fr 1.18fr .82fr .56fr;gap:3px;width:100%;align-items:stretch}
+.hudStatus{position:static!important;display:flex!important;align-items:center;justify-content:center;min-width:0;height:19px!important;padding:0 3px!important;border:1px solid rgba(73,87,133,.46)!important;border-radius:7px!important;background:rgba(7,12,26,.86)!important;box-shadow:none!important;color:#aeb8d4!important;font-size:4.7px!important;font-weight:900!important;line-height:1!important;white-space:nowrap!important;text-align:center;text-shadow:none!important;pointer-events:none!important;overflow:hidden;text-overflow:ellipsis}.hudPanel{color:#8fd9ef!important}.hudRank{color:#a7f3d0!important}.hudFps{color:#7dd3fc!important;border-color:rgba(36,95,131,.60)!important}
 .hudPreview #fpsMini{display:none!important;position:absolute!important;visibility:hidden!important;width:0!important;height:0!important;overflow:hidden!important}
-
-/* Minimal XP progress, always last */
-.hudXp{position:static!important;width:100%!important;height:4px!important;margin:0!important;border:1px solid rgba(68,78,124,.50)!important;border-radius:999px!important;background:rgba(5,8,18,.76)!important;box-shadow:none!important;overflow:hidden!important}
-.hudXp i{display:block;height:100%;box-shadow:0 0 8px rgba(139,92,246,.35)}
-
-@media(min-width:701px){
-  .hudPreview{max-width:760px;right:auto;width:calc(100% - 20px)}
-  .hudTopRow{height:50px}.hudBrand{width:260px;height:50px}.pauseBtn{height:50px!important;min-height:50px!important}
-  .hudStatsRow>div{height:42px!important;min-height:42px!important}.hudStatsRow strong{font-size:11px!important}
-  .hudStatus{height:27px!important;font-size:6px!important}.hudXp{height:5px!important}
-}
-
-@media(max-width:430px){
-  .hudPreview{left:8px;right:8px;gap:4px}
-  .hudTopRow{height:46px}.hudBrand{width:54vw;height:46px;padding:6px 9px 4px;border-radius:12px}.logo{font-size:13px!important}.version{font-size:5px!important;margin-top:3px!important}.pauseBtn{flex-basis:37px;width:37px!important;height:46px!important;min-height:46px!important;border-radius:12px!important}
-  .hudStatsRow{gap:4px!important}.hudStatsRow>div{height:35px!important;min-height:35px!important;border-radius:10px!important}.hudStatsRow strong{font-size:9.5px!important}
-  .hudStatusRow{gap:4px;grid-template-columns:1.08fr 1.16fr .78fr .52fr}.hudStatus{height:23px!important;padding:0 4px!important;font-size:5.1px!important;border-radius:8px!important}
-}
-
-@media(max-width:370px){
-  .hudBrand{width:52vw}.logo{font-size:12px!important}.version{font-size:4.8px!important}.hudStatsRow strong{font-size:9px!important}.hudStatus{font-size:4.8px!important;padding:0 3px!important}
-}
+.hudXp{position:static!important;width:100%!important;height:3px!important;margin:0!important;border:1px solid rgba(68,78,124,.46)!important;border-radius:999px!important;background:rgba(5,8,18,.74)!important;box-shadow:none!important;overflow:hidden!important}.hudXp i{display:block;height:100%;box-shadow:0 0 6px rgba(139,92,246,.32)}
+@media(min-width:701px){.hudPreview{max-width:720px;right:auto;width:calc(100% - 14px);top:max(4px,env(safe-area-inset-top));gap:3px}.hudTopRow{height:40px}.hudBrand{width:250px;height:40px}.pauseBtn{height:40px!important;min-height:40px!important}.hudStatsRow>div{height:32px!important;min-height:32px!important}.hudStatus{height:21px!important;font-size:5px!important}.hudXp{height:4px!important}}
+@media(max-width:430px){.hudPreview{left:6px;right:6px;top:max(1px,env(safe-area-inset-top));gap:2px}.hudTopRow{height:34px}.hudBrand{width:55vw;height:34px;padding:4px 7px 2px;border-radius:9px}.logo{font-size:11px!important}.sub{font-size:4.8px!important}.version{font-size:4.2px!important}.pauseBtn{flex-basis:32px;width:32px!important;height:34px!important;min-height:34px!important;border-radius:9px!important}.hudStatsRow{gap:3px!important}.hudStatsRow>div{height:27px!important;min-height:27px!important;border-radius:7px!important}.hudStatsRow strong{font-size:8.3px!important}.hudStatusRow{gap:3px}.hudStatus{height:18px!important;padding:0 2px!important;font-size:4.4px!important;border-radius:6px!important}.hudXp{height:3px!important}}
+@media(max-width:370px){.hudBrand{width:53vw}.logo{font-size:10.5px!important}.hudStatsRow strong{font-size:8px!important}.hudStatus{font-size:4.1px!important}}
