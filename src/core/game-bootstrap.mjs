@@ -3,13 +3,19 @@
 import * as CaosSkills from './skills.mjs';
 import * as CaosMobs from './mobs.mjs';
 import * as CaosCombat from './combat.mjs';
+import * as CaosEvents from './events.mjs';
+import * as CaosEffects from './effects.mjs';
 
 CaosSkills.assertSkillCatalog();
 CaosMobs.assertMobDomain();
 CaosCombat.assertCombatDomain();
+CaosEvents.assertEventDomain();
+CaosEffects.assertEffectsDomain();
 globalThis.CaosSkills = Object.freeze(CaosSkills);
 globalThis.CaosMobs = Object.freeze(CaosMobs);
 globalThis.CaosCombat = Object.freeze(CaosCombat);
+globalThis.CaosEvents = Object.freeze(CaosEvents);
+globalThis.CaosEffects = Object.freeze(CaosEffects);
 
 const versionNode = document.getElementById('gameVersion');
 const versionText = versionNode?.textContent || '';
