@@ -1,0 +1,27 @@
+name: Add Shot Geometry CI
+on:
+  push:
+    paths:
+      - scripts/add-shot-geometry-ci.mjs
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node scripts/add-shot-geometry-ci.mjs
+      - run: npm run check
+      - run: |
+          if git diff --quiet; then
+            echo "No patch needed"
+            exit 0
+          fi
+          git config user.name "caos-live-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/game.js
+          git commit -m "test: add shot geometry telemetry"
+          git push
