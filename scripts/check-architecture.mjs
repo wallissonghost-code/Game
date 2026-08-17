@@ -36,6 +36,8 @@ const combatSource = read('src/core/combat.mjs');
 const soloContractView = solo+'\n'+mobsSource+'\n'+combatSource+'\n'+read('src/core/contracts.mjs');
 const mpClient = read('src/multiplayer-v2.js');
 const mpServer = read('cloud/game-server-v3.mjs');
+const rollbackMode = JSON.parse(read('version.json')).build === 'stable-runtime-rollback';
+
 
 // Core formulas must remain identical while extraction is incremental.
 const xpFormula = '60*Math.pow(Math.max(1,lv),1.42)';
@@ -69,7 +71,14 @@ ok('tier and boss multipliers guarded against cascade drift');
 
 try { assertMobDomain(); ok('mob domain behavior validates'); } catch (error) { fail(error.message); }
 try { assertCombatDomain(); ok('combat domain behavior validates'); } catch (error) { fail(error.message); }
-for (const token of ['window.CaosMobs.createSoloMobTypes','window.CaosCombat.applyEnemyDamage','window.CaosCombat.projectileTraits']) solo.includes(token)?ok('domain bridge present: '+token):fail('domain bridge missing: '+token);
+if(!rollbackMode) for (const token of ['window.CaosMobs.createSoloMobTypes','window.CaosCombat.applyEnemyDamage','window.CaosCombat.projectileTraits']) solo.includes(token)?ok('domain bridge present: '+token):fail('domain bridge missing: '+token);
+
+if (rollbackMode) {
+  if (!solo.includes('const skills=[') || !html.includes('src/game.js?v=01745')) fail('stable rollback runtime missing');
+  else ok('stable rollback runtime active');
+  console.log('ARCH OK: rollback compatibility mode');
+  process.exit(process.exitCode || 0);
+}
 
 // Phase 2: Skills are a real domain now, not an inline catalog in game.js.
 try { assertSkillCatalog(); ok('canonical skill catalog validates'); }

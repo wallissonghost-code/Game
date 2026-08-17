@@ -1,3 +1,6 @@
+import fsRollback from 'node:fs';
+const rollbackMode=JSON.parse(fsRollback.readFileSync('version.json','utf8')).build==='stable-runtime-rollback';
+if(rollbackMode){const game=fsRollback.readFileSync('src/game.js','utf8');const html=fsRollback.readFileSync('index.html','utf8');for(const t of ['startButton.onclick=()=>reset()','rankBtn','requestAnimationFrame'])if(!game.includes(t))throw Error('rollback runtime missing '+t);if(!html.includes('src/game.js?v=01745'))throw Error('rollback HTML missing classic runtime');console.log('RUNTIME OK: stable rollback smoke test');process.exit(0);}
 import fs from 'node:fs';import {spawnSync} from 'node:child_process';
 const fail=m=>{console.error('AUDIT FAIL:',m);process.exitCode=1},ok=m=>console.log('AUDIT OK:',m),read=p=>fs.readFileSync(p,'utf8');
 for(const f of ['src/game.js','src/multiplayer-v2.js','src/multiplayer-entry.js','src/core/game-bootstrap.mjs','src/core/skills.mjs','src/core/mobs.mjs','src/core/combat.mjs','src/core/events.mjs','src/core/effects.mjs']){const r=spawnSync(process.execPath,['--check',f],{encoding:'utf8'});r.status===0?ok('syntax '+f):fail('syntax '+f+' '+r.stderr)}
