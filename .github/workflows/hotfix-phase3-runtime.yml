@@ -1,0 +1,35 @@
+name: Hotfix Phase 3 Runtime
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/hotfix-phase3-runtime.yml'
+permissions:
+  contents: write
+jobs:
+  hotfix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Restore gameplay functions removed by phase 3
+        run: node scripts/hotfix-phase3-runtime.mjs
+      - name: Validate architecture
+        run: npm run check
+      - name: Install browser smoke dependencies
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Validate actual gameplay frames
+        run: npm run check:menu
+      - name: Commit hotfix
+        run: |
+          git config user.name "wallissonghost-code"
+          git config user.email "wallissonghost@gmail.com"
+          git add src/game.js
+          git commit -m "fix: restore gameplay runtime after phase 3 extraction"
+          git push origin HEAD:main
