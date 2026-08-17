@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-const replace=(p,a,b)=>{let s=fs.readFileSync(p,'utf8');const n=s.split(a).length-1;if(n<1)throw Error(`${p}: missing ${a}`);s=s.replaceAll(a,b);fs.writeFileSync(p,s)};
+const replace=(p,a,b)=>{let s=fs.readFileSync(p,'utf8');if(s.includes(b)&&!s.includes(a))return;const n=s.split(a).length-1;if(n<1)throw Error(`${p}: missing ${a}`);s=s.replaceAll(a,b);fs.writeFileSync(p,s)};
 replace('version.json','"version": "0.17.43"','"version": "0.17.44"');
 replace('version.json','"build": "solo-persistent-meteor-admin-config"','"build": "modular-runtime-cache-hotfix"');
 replace('index.html','Caos Live v0.17.43','Caos Live v0.17.44');
@@ -21,5 +21,5 @@ replace('duo.html','src/map-runtime.js?v=01743','src/map-runtime.js?v=01744');
 replace('duo.html','src/duo.js?v=01743','src/duo.js?v=01744');
 replace('src/game.js',"const VERSION='0.17.43'","const VERSION='0.17.44'");
 replace('src/core/game-bootstrap.mjs',"(match?.[1] || '01743').replace(/\\./g, '')","(match?.[1] || '01744').replace(/\\./g, '')");
-const arch='scripts/check-architecture.mjs';let a=fs.readFileSync(arch,'utf8');a=a.replace("if (!bootstrap.includes(\"await import(`../game.js?v=${tag}`)\")) fail('bootstrap does not start gameplay after core');\nelse ok('bootstrap starts gameplay after core');","if (!bootstrap.includes('await loadClassic(`src/game.js?v=${tag}`)')) fail('bootstrap does not start classic gameplay runtime after core');\nelse ok('bootstrap starts classic gameplay runtime after core');\nif (!bootstrap.includes('await loadClassic(`src/multiplayer-entry.js?v=${tag}`)')) fail('bootstrap does not start multiplayer entry after gameplay');\nelse ok('bootstrap starts multiplayer entry after gameplay');");fs.writeFileSync(arch,a);
+const arch='scripts/check-architecture.mjs';let a=fs.readFileSync(arch,'utf8');const old="if (!bootstrap.includes(\"await import(`../game.js?v=${tag}`)\")) fail('bootstrap does not start gameplay after core');\nelse ok('bootstrap starts gameplay after core');";const neu="if (!bootstrap.includes('await loadClassic(`src/game.js?v=${tag}`)')) fail('bootstrap does not start classic gameplay runtime after core');\nelse ok('bootstrap starts classic gameplay runtime after core');\nif (!bootstrap.includes('await loadClassic(`src/multiplayer-entry.js?v=${tag}`)')) fail('bootstrap does not start multiplayer entry after gameplay');\nelse ok('bootstrap starts multiplayer entry after gameplay');";if(a.includes(old))a=a.replace(old,neu);else if(!a.includes("bootstrap starts classic gameplay runtime after core"))throw Error('architecture bootstrap guard missing');fs.writeFileSync(arch,a);
 console.log('0.17.44 hotfix applied');
