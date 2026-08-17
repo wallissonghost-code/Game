@@ -16,72 +16,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Reconnect skill domain safely
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-
-          game_path=Path('src/game.js')
-          game=game_path.read_text()
-          pattern=r"const rarityLabel=\{.*?\};const skills=\[.*?\];\nconst soldierSprite="
-          bridge="""const {rarityLabel,rarityWeight,skills}=window.CaosSkills.createSoloSkillSystem({
-            player,
-            onArcApply:()=>{arcNextAt=Math.min(arcNextAt||Infinity,performance.now()+500)},
-            onShockApply:()=>{shockNextAt=Math.min(shockNextAt||Infinity,performance.now()+700)},
-            onPhoenixApply:()=>{phoenixReady=true;phoenixConsumed=false}
-          });
-          const soldierSprite="""
-          new_game,n=re.subn(pattern,bridge,game,count=1,flags=re.S)
-          if n != 1: raise SystemExit(f'skill catalog replacement count={n}')
-          game_path.write_text(new_game)
-
-          html_path=Path('index.html')
-          html=html_path.read_text()
-          old='<script src="src/game.js?v=01745"></script>\n<script src="src/multiplayer-entry.js?v=01745"></script>'
-          new='<script type="module" src="src/core/skills-bootstrap.mjs?v=01745-skills1"></script>'
-          if old not in html: raise SystemExit('classic runtime tags not found in index')
-          html_path.write_text(html.replace(old,new,1))
-
-          p=Path('scripts/check-game.mjs')
-          s=p.read_text()
-          s=s.replace("if(!gameHtml.includes(`src/game.js?v=${cacheTag}`)) fail('cache tag do runtime classico divergente'); else ok('cache tag runtime classico '+cacheTag);", "if(!gameHtml.includes('src/core/skills-bootstrap.mjs?v=01745-skills1')) fail('skills bootstrap ausente'); else ok('skills bootstrap ativo');")
-          p.write_text(s)
-
-          p=Path('scripts/check-architecture.mjs')
-          s=p.read_text()
-          s=s.replace("const bootstrap = read('src/core/game-bootstrap.mjs');", "const skillsBootstrap = read('src/core/skills-bootstrap.mjs');")
-          s=s.replace("const rollbackMode = JSON.parse(read('version.json')).build === 'stable-runtime-rollback';", "const rollbackMode = false;\nconst skillsOnlyMigration = html.includes('src/core/skills-bootstrap.mjs');")
-          s=s.replace("if(!rollbackMode) for (const token of ['window.CaosMobs.createSoloMobTypes','window.CaosCombat.applyEnemyDamage','window.CaosCombat.projectileTraits']) solo.includes(token)?ok('domain bridge present: '+token):fail('domain bridge missing: '+token);", "if(!rollbackMode && !skillsOnlyMigration) for (const token of ['window.CaosMobs.createSoloMobTypes','window.CaosCombat.applyEnemyDamage','window.CaosCombat.projectileTraits']) solo.includes(token)?ok('domain bridge present: '+token):fail('domain bridge missing: '+token);\nif(skillsOnlyMigration) ok('incremental migration: mobs/combat remain on stable runtime');")
-          s=s.replace("if (!html.includes('src/core/game-bootstrap.mjs')) fail('index.html does not load modular game bootstrap');\nelse ok('index.html loads modular bootstrap');\nif (!bootstrap.includes(\"import * as CaosSkills from './skills.mjs'\")) fail('bootstrap does not load skills domain first');\nelse ok('bootstrap loads skills domain before gameplay');\nif (!bootstrap.includes('await loadClassic(`src/game.js?v=${tag}`)')) fail('bootstrap does not start classic gameplay runtime after core');\nelse ok('bootstrap starts classic gameplay runtime after core');\nif (!bootstrap.includes('await loadClassic(`src/multiplayer-entry.js?v=${tag}`)')) fail('bootstrap does not start multiplayer entry after gameplay');\nelse ok('bootstrap starts multiplayer entry after gameplay');", "if (!html.includes('src/core/skills-bootstrap.mjs')) fail('index.html does not load skills bootstrap');\nelse ok('index.html loads skills bootstrap');\nif (!skillsBootstrap.includes(\"import * as CaosSkills from './skills.mjs?v=01745'\")) fail('skills bootstrap does not load skills domain first');\nelse ok('skills bootstrap loads skills domain before gameplay');\nif (!skillsBootstrap.includes(\"await loadClassic('../game.js?v=01745-skills1')\")) fail('skills bootstrap does not start classic gameplay runtime');\nelse ok('skills bootstrap starts classic gameplay runtime');\nif (!skillsBootstrap.includes(\"await loadClassic('../multiplayer-entry.js?v=01745-skills1')\")) fail('skills bootstrap does not start multiplayer entry');\nelse ok('skills bootstrap starts multiplayer entry after gameplay');")
-          p.write_text(s)
-
-          p=Path('scripts/audit-runtime.mjs')
-          s=p.read_text()
-          prefix="""import fsSkills from 'node:fs';
-import {spawnSync as spawnSkills} from 'node:child_process';
-const skillsOnlyMode=fsSkills.readFileSync('index.html','utf8').includes('src/core/skills-bootstrap.mjs');
-if(skillsOnlyMode){
-  const files=['src/game.js','src/multiplayer-entry.js','src/core/skills-bootstrap.mjs','src/core/skills.mjs'];
-  for(const f of files){const r=spawnSkills(process.execPath,['--check',f],{encoding:'utf8'});if(r.status!==0)throw Error('skills migration syntax '+f+' '+r.stderr)}
-  const game=fsSkills.readFileSync('src/game.js','utf8'),html=fsSkills.readFileSync('index.html','utf8'),boot=fsSkills.readFileSync('src/core/skills-bootstrap.mjs','utf8');
-  for(const t of ['window.CaosSkills.createSoloSkillSystem','startButton.onclick=()=>reset()','rankBtn','requestAnimationFrame'])if(!game.includes(t))throw Error('skills migration runtime missing '+t);
-  if(game.includes('const rarityLabel={')||game.includes('const skills=['))throw Error('inline skill catalog leaked back into runtime');
-  if(!html.includes('src/core/skills-bootstrap.mjs')||!boot.includes("await loadClassic('../game.js?v=01745-skills1')")||!boot.includes("await loadClassic('../multiplayer-entry.js?v=01745-skills1')"))throw Error('skills bootstrap wiring invalid');
-  console.log('RUNTIME OK: incremental skills migration');
-  process.exit(0);
-}
-"""
-          if not s.startswith("import fsSkills"):
-              s=prefix+s
-          p.write_text(s)
-          PY
-      - name: Validate migration and browser menu
+      - name: Apply incremental skills migration
+        run: python3 scripts/reconnect-skills-migration.py
+      - name: Validate code and interactive menu
         run: |
           node --check src/game.js
           node --check src/core/skills-bootstrap.mjs
-          grep -q "window.CaosSkills.createSoloSkillSystem" src/game.js
-          grep -q "skills-bootstrap.mjs" index.html
           npm install --no-audit --no-fund
           npx playwright install --with-deps chromium
           npm run check
@@ -90,7 +30,7 @@ if(skillsOnlyMode){
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm .github/workflows/reconnect-skills.yml
+          git rm .github/workflows/reconnect-skills.yml scripts/reconnect-skills-migration.py
           git add index.html src/game.js scripts/check-game.mjs scripts/check-architecture.mjs scripts/audit-runtime.mjs src/core/skills-bootstrap.mjs
           git commit -m "refactor: reconnect skills domain safely"
           git push origin HEAD:agent/reconnect-skills-safe3
