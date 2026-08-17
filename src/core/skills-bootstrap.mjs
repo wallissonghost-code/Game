@@ -1,4 +1,5 @@
 import * as CaosSkills from './skills.mjs?v=01745';
+import './hud-main.mjs?v=01745-main1';
 import './live-hud.mjs?v=01745-live1';
 window.CaosSkills = CaosSkills;
 
