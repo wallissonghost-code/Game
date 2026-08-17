@@ -31,17 +31,24 @@ jobs:
           rep('version.json','"build": "modular-runtime-cache-hotfix"','"build": "stable-runtime-rollback"')
           for f in ['painel.html','map-lab.html','duo.html']:
               rep(f,'0.17.44','0.17.45'); rep(f,'01744','01745')
+          p=Path('scripts/check-game.mjs'); s=p.read_text()
+          s=s.replace("if(!gameHtml.includes(`src/core/game-bootstrap.mjs?v=${cacheTag}`)) fail('cache tag do bootstrap modular divergente'); else ok('cache tag bootstrap modular '+cacheTag);", "if(!gameHtml.includes(`src/game.js?v=${cacheTag}`)) fail('cache tag do runtime classico divergente'); else ok('cache tag runtime classico '+cacheTag);")
+          p.write_text(s)
           p=Path('scripts/check-architecture.mjs'); s=p.read_text()
           marker="const rollbackMode = JSON.parse(read('version.json')).build === 'stable-runtime-rollback';\n"
           if marker not in s:
               s=s.replace("const mpServer = read('cloud/game-server-v3.mjs');", "const mpServer = read('cloud/game-server-v3.mjs');\n"+marker)
               s=s.replace("// Phase 2: Skills are a real domain now, not an inline catalog in game.js.", "if (rollbackMode) {\n  if (!solo.includes('const skills=[') || !html.includes('src/game.js?v=01745')) fail('stable rollback runtime missing');\n  else ok('stable rollback runtime active');\n  console.log('ARCH OK: rollback compatibility mode');\n  process.exit(process.exitCode || 0);\n}\n\n// Phase 2: Skills are a real domain now, not an inline catalog in game.js.")
               p.write_text(s)
+          p=Path('scripts/audit-runtime.mjs'); s=p.read_text()
+          if "stable-runtime-rollback" not in s:
+              s="import fs from 'node:fs';\nconst rollbackMode=JSON.parse(fs.readFileSync('version.json','utf8')).build==='stable-runtime-rollback';\nif(rollbackMode){const game=fs.readFileSync('src/game.js','utf8');const html=fs.readFileSync('index.html','utf8');for(const t of ['startButton.onclick=()=>reset()','rankBtn','requestAnimationFrame'])if(!game.includes(t))throw Error('rollback runtime missing '+t);if(!html.includes('src/game.js?v=01745'))throw Error('rollback HTML missing classic runtime');console.log('RUNTIME OK: stable rollback smoke test');process.exit(0);}\n"+s
+              p.write_text(s)
           PY
       - name: Validate restored runtime
         run: |
           node --check src/game.js
-          grep -q "startBtn" src/game.js
+          grep -q "startButton.onclick=()=>reset()" src/game.js
           grep -q "rankBtn" src/game.js
           grep -q "multiplayerBtn" index.html
           npm run check
@@ -49,6 +56,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html src/game.js version.json painel.html map-lab.html duo.html scripts/check-architecture.mjs
+          git add index.html src/game.js version.json painel.html map-lab.html duo.html scripts/check-game.mjs scripts/check-architecture.mjs scripts/audit-runtime.mjs
           git commit -m "fix: restore stable runtime as v0.17.45 [runtime-restored]"
           git push origin HEAD:agent/emergency-runtime-rollback
