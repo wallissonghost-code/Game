@@ -1,4 +1,5 @@
 import * as CaosSkills from './skills.mjs?v=01745';
+import './live-hud.mjs?v=01745-live1';
 window.CaosSkills = CaosSkills;
 
 function loadClassic(src) {
