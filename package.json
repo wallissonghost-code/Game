@@ -8,7 +8,8 @@
     "game-server": "node cloud/game-server-v2.mjs",
     "check:game": "node scripts/check-game.mjs",
     "check:architecture": "node scripts/check-architecture.mjs",
-    "check": "npm run check:game && npm run check:architecture",
+    "check:runtime": "node scripts/audit-runtime.mjs",
+    "check": "npm run check:game && npm run check:architecture && npm run check:runtime",
     "validate": "npm run check",
     "game-server-v3": "node cloud/game-server-v3.mjs"
   },
