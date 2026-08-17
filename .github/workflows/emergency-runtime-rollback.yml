@@ -44,7 +44,7 @@ jobs:
           p.write_text(s)
           p=Path('scripts/audit-runtime.mjs'); s=p.read_text()
           if "stable-runtime-rollback" not in s:
-              s="import fs from 'node:fs';\nconst rollbackMode=JSON.parse(fs.readFileSync('version.json','utf8')).build==='stable-runtime-rollback';\nif(rollbackMode){const game=fs.readFileSync('src/game.js','utf8');const html=fs.readFileSync('index.html','utf8');for(const t of ['startButton.onclick=()=>reset()','rankBtn','requestAnimationFrame'])if(!game.includes(t))throw Error('rollback runtime missing '+t);if(!html.includes('src/game.js?v=01745'))throw Error('rollback HTML missing classic runtime');console.log('RUNTIME OK: stable rollback smoke test');process.exit(0);}\n"+s
+              s="import fsRollback from 'node:fs';\nconst rollbackMode=JSON.parse(fsRollback.readFileSync('version.json','utf8')).build==='stable-runtime-rollback';\nif(rollbackMode){const game=fsRollback.readFileSync('src/game.js','utf8');const html=fsRollback.readFileSync('index.html','utf8');for(const t of ['startButton.onclick=()=>reset()','rankBtn','requestAnimationFrame'])if(!game.includes(t))throw Error('rollback runtime missing '+t);if(!html.includes('src/game.js?v=01745'))throw Error('rollback HTML missing classic runtime');console.log('RUNTIME OK: stable rollback smoke test');process.exit(0);}\n"+s
               p.write_text(s)
           PY
       - name: Validate restored runtime
