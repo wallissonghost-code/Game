@@ -1,7 +1,15 @@
 import * as CaosSkills from './skills.mjs?v=01745';
+import * as CaosMobs from './mobs.mjs?v=01745';
+import * as CaosCombat from './combat.mjs?v=01745';
 import './hud-main.mjs?v=01745-main1';
 import './live-hud.mjs?v=01745-live1';
-window.CaosSkills = CaosSkills;
+
+CaosSkills.assertSkillCatalog();
+CaosMobs.assertMobDomain();
+CaosCombat.assertCombatDomain();
+window.CaosSkills = Object.freeze(CaosSkills);
+window.CaosMobs = Object.freeze(CaosMobs);
+window.CaosCombat = Object.freeze(CaosCombat);
 
 function loadClassic(src) {
   return new Promise((resolve, reject) => {
@@ -14,16 +22,16 @@ function loadClassic(src) {
   });
 }
 
-const gameRuntimeUrl = new URL('../game.js?v=01745-skills1', import.meta.url).href;
-const multiplayerEntryUrl = new URL('../multiplayer-entry.js?v=01745-skills1', import.meta.url).href;
+const gameRuntimeUrl = new URL('../game.js?v=01745-core3', import.meta.url).href;
+const multiplayerEntryUrl = new URL('../multiplayer-entry.js?v=01745-core3', import.meta.url).href;
 
 try {
   await loadClassic(gameRuntimeUrl);
   await loadClassic(multiplayerEntryUrl);
   window.CaosRuntimeReady = true;
-  window.dispatchEvent(new CustomEvent('caos:runtime-ready', { detail: { skills: true } }));
+  window.dispatchEvent(new CustomEvent('caos:runtime-ready', { detail: { skills: true, mobs: true, combat: true } }));
 } catch (error) {
-  console.error('CAOS SKILLS BOOTSTRAP', error);
+  console.error('CAOS CORE BOOTSTRAP', error);
   window.CaosRuntimeReady = false;
   window.dispatchEvent(new CustomEvent('caos:runtime-error', { detail: { message: String(error?.message || error) } }));
 }
