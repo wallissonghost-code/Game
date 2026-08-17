@@ -4,6 +4,11 @@ import re, json
 GAME = Path('src/game.js')
 s = GAME.read_text(encoding='utf-8')
 
+# Safe to run after promotion: if the release is already present, do not patch twice.
+if "const VERSION='0.17.40'" in s and 'autoRetreatActive' in s and 'autoMoveStrength' in s and 'moveScale=autoDriving?Math.min(1,rawMove):1' in s:
+    print('Solo v0.17.40 movement smoothing already applied; validation-only run')
+    raise SystemExit(0)
+
 
 def once(old, new, label):
     global s
