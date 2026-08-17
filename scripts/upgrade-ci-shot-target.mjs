@@ -7,3 +7,4 @@ if(!game.includes(old)) throw Error('spawnTarget old hook not found');
 game=game.replace(old,repl);
 fs.writeFileSync(path,game);
 console.log('CI SHOT TARGET UPGRADED');
+// trigger workflow
