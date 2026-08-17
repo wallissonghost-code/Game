@@ -59,9 +59,13 @@ new_boot = """if (!html.includes('src/core/skills-bootstrap.mjs')) fail('index.h
 else ok('index.html loads skills bootstrap');
 if (!skillsBootstrap.includes(\"import * as CaosSkills from './skills.mjs?v=01745'\")) fail('skills bootstrap does not load skills domain first');
 else ok('skills bootstrap loads skills domain before gameplay');
-if (!skillsBootstrap.includes(\"await loadClassic('../game.js?v=01745-skills1')\")) fail('skills bootstrap does not start classic gameplay runtime');
+if (!skillsBootstrap.includes(\"new URL('../game.js?v=01745-skills1', import.meta.url)\")) fail('skills bootstrap does not resolve classic gameplay runtime from module URL');
+else ok('skills bootstrap resolves classic gameplay runtime safely');
+if (!skillsBootstrap.includes(\"new URL('../multiplayer-entry.js?v=01745-skills1', import.meta.url)\")) fail('skills bootstrap does not resolve multiplayer entry from module URL');
+else ok('skills bootstrap resolves multiplayer entry safely');
+if (!skillsBootstrap.includes('await loadClassic(gameRuntimeUrl)')) fail('skills bootstrap does not start classic gameplay runtime');
 else ok('skills bootstrap starts classic gameplay runtime');
-if (!skillsBootstrap.includes(\"await loadClassic('../multiplayer-entry.js?v=01745-skills1')\")) fail('skills bootstrap does not start multiplayer entry');
+if (!skillsBootstrap.includes('await loadClassic(multiplayerEntryUrl)')) fail('skills bootstrap does not start multiplayer entry');
 else ok('skills bootstrap starts multiplayer entry after gameplay');"""
 if old_boot not in s:
     raise SystemExit('architecture bootstrap block not found')
@@ -80,7 +84,8 @@ if(skillsOnlyMode){
   const game=fsSkills.readFileSync('src/game.js','utf8'),html=fsSkills.readFileSync('index.html','utf8'),boot=fsSkills.readFileSync('src/core/skills-bootstrap.mjs','utf8');
   for(const t of ['window.CaosSkills.createSoloSkillSystem','startButton.onclick=()=>reset()','rankBtn','requestAnimationFrame'])if(!game.includes(t))throw Error('skills migration runtime missing '+t);
   if(game.includes('const rarityLabel={')||game.includes('const skills=['))throw Error('inline skill catalog leaked back into runtime');
-  if(!html.includes('src/core/skills-bootstrap.mjs')||!boot.includes(\"await loadClassic('../game.js?v=01745-skills1')\")||!boot.includes(\"await loadClassic('../multiplayer-entry.js?v=01745-skills1')\"))throw Error('skills bootstrap wiring invalid');
+  for(const t of [\"new URL('../game.js?v=01745-skills1', import.meta.url)\",\"new URL('../multiplayer-entry.js?v=01745-skills1', import.meta.url)\",'await loadClassic(gameRuntimeUrl)','await loadClassic(multiplayerEntryUrl)'])if(!boot.includes(t))throw Error('skills bootstrap wiring invalid '+t);
+  if(!html.includes('src/core/skills-bootstrap.mjs'))throw Error('skills bootstrap missing from index');
   console.log('RUNTIME OK: incremental skills migration');
   process.exit(0);
 }
