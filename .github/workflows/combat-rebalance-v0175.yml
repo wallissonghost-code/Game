@@ -1,9 +1,9 @@
-name: Solo safe fix v0.17.39
+name: Solo auto movement smoothing v0.17.40
 on:
   push:
     paths:
       - '.github/workflows/combat-rebalance-v0175.yml'
-      - 'scripts/fix-solo-v01739.py'
+      - 'scripts/fix-auto-movement-v01740.py'
   workflow_dispatch:
 permissions:
   contents: write
@@ -18,28 +18,29 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Apply Solo v0.17.39 safe fix
-        run: python3 scripts/fix-solo-v01739.py
-      - name: Validate Solo gameplay and recovery
+      - name: Apply Solo v0.17.40 movement smoothing
+        run: python3 scripts/fix-auto-movement-v01740.py
+      - name: Validate movement fix and release isolation
         run: |
           node --check src/game.js
           node --check src/panel.js
           node scripts/check-game.mjs
-          grep -q "VERSION='0.17.39'" src/game.js
-          grep -q "if(!explosive&&pl)" src/game.js
-          grep -q "iceHits:0" src/game.js
-          grep -q "applyIceHit(e,(b.iceHits||0)===0)" src/game.js
-          grep -q "com Perfurante, os seguintes recebem lentidão" src/game.js
-          grep -q "solo-ice-pierce-safe-fix" version.json
-          grep -q "src/game.js?v=01739" index.html
-          grep -q "src/panel.js?v=01739" painel.html
-          grep -q "backup/solo-v0.17.38-stable" docs/RECOVERY.md
-          ! grep -q "ONLINE_VERSION='0.17.39" src/multiplayer-v2.js
-      - name: Commit Solo v0.17.39
+          grep -q "VERSION='0.17.40'" src/game.js
+          grep -q "autoRetreatActive" src/game.js
+          grep -q "autoMoveStrength" src/game.js
+          grep -q "release=engage+(bossThreat?95:70)" src/game.js
+          grep -q "moveScale=autoDriving?Math.min(1,rawMove):1" src/game.js
+          grep -q "solo-auto-movement-hysteresis-smoothing" version.json
+          grep -q "src/game.js?v=01740" index.html
+          grep -q "src/panel.js?v=01740" painel.html
+          grep -q "backup/solo-v0.17.39-stable" docs/RECOVERY.md
+          grep -q "ONLINE_VERSION='0.17.37-online-v2.0.5'" src/multiplayer-v2.js
+          ! grep -q "ONLINE_VERSION='0.17.40" src/multiplayer-v2.js
+      - name: Commit Solo v0.17.40
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add src/game.js index.html painel.html duo.html map-lab.html version.json docs/RECOVERY.md
           git diff --cached --quiet && exit 0
-          git commit -m 'fix: Ice + Pierce interaction and Solo recovery v0.17.39'
+          git commit -m 'fix: smooth Solo auto retreat movement v0.17.40'
           git push
