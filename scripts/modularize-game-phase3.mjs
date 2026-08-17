@@ -24,6 +24,24 @@ replaceCheck("const skillsOnlyMigration = html.includes('src/core/skills-bootstr
 replaceCheck("if(skillsOnlyMigration) ok('incremental migration: mobs/combat remain on stable runtime');","if(!mobsCombatMigration) fail('Phase 3 bootstrap missing mobs/combat domains');\nelse ok('Phase 3 bootstrap owns mobs/combat domains');",'guard phase 3 bootstrap');
 replaceCheck("if (!skillsBootstrap.includes(\"new URL('../game.js?v=01745-skills1', import.meta.url)\")) fail('skills bootstrap does not resolve classic gameplay runtime from module URL');","if (!skillsBootstrap.includes(\"new URL('../game.js?v=01745-core3', import.meta.url)\")) fail('skills bootstrap does not resolve classic gameplay runtime from module URL');",'update game cache tag guard');
 replaceCheck("if (!skillsBootstrap.includes(\"new URL('../multiplayer-entry.js?v=01745-skills1', import.meta.url)\")) fail('skills bootstrap does not resolve multiplayer entry from module URL');","if (!skillsBootstrap.includes(\"new URL('../multiplayer-entry.js?v=01745-core3', import.meta.url)\")) fail('skills bootstrap does not resolve multiplayer entry from module URL');",'update multiplayer cache tag guard');
+replaceCheck(
+  /const tierSignatures = \[[\s\S]*?ok\('tier and boss multipliers guarded against cascade drift'\);/,
+  `const tierExpectations = [
+  ['elite1', TIER_VARIANTS.elite1, {hp:3,dmg:1.7,speed:1.05}],
+  ['corrupted2', TIER_VARIANTS.corrupted2, {hp:7,dmg:2.75,speed:1.16}],
+  ['bossElite', BOSS_VARIANTS.elite, {hp:1.75,dmg:1.25,speed:1.05}],
+  ['bossCorrupted', BOSS_VARIANTS.corrupted, {hp:2.5,dmg:1.5,speed:1.10}]
+];
+for (const [name, actual, expected] of tierExpectations) {
+  for (const key of ['hp','dmg','speed']) {
+    if (actual[key] !== expected[key]) fail(\`canonical tier contract mismatch: \${name}.\${key}=\${actual[key]} expected \${expected[key]}\`);
+  }
+  const sig = \`hp:\${expected.hp},dmg:\${expected.dmg},speed:\${expected.speed}\`;
+  if (!mpServer.includes(sig)) fail(\`multiplayer tier contract mismatch: \${sig}\`);
+}
+ok('canonical tier/boss contracts validated; multiplayer duplicate guarded');`,
+  'validate canonical tier/boss contracts semantically'
+);
 
 const phase3Guard=`\n// Phase 3: duplicated Solo mob/combat rules must not return to game.js.\nfor (const token of [\"const types={wraith:\",\"function enemyTier(){const r=Math.random()\",\"function furyProfile(stage){stage=Math.max\",\"explosiveShotCounter++;const every=[0,14,13,12,11,10]\"]) if (solo.includes(token)) fail('Phase 3 duplicate logic returned to game.js: '+token);\nfor (const token of ['window.CaosMobs.createSoloMobTypes','window.CaosMobs.enemyTier','window.CaosMobs.variantFor','window.CaosCombat.furyProfile','window.CaosCombat.applyEnemyDamage','window.CaosCombat.projectileTraits']) if (!solo.includes(token)) fail('Phase 3 domain bridge missing: '+token);\nok('Phase 3 mobs/combat duplicate guards passed');\n`;
 const marker='// Behavioral smoke test of extracted modifiers without Canvas/DOM.';if(!check.includes(marker))throw new Error('Phase 3 architecture insertion marker missing');check=check.replace(marker,phase3Guard+'\n'+marker);
