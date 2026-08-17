@@ -67,6 +67,22 @@ async function testViewport(browser, name, viewport) {
   await fresh();
   await page.locator('#startBtn').click();
   await waitState(() => !document.getElementById('start')?.classList.contains('show'), 'Arena');
+  await sleep(1400);
+  const gameplayState = await page.evaluate(() => {
+    const c = document.getElementById('canvas');
+    const stage = document.getElementById('stage');
+    return {
+      runtimeReady: window.CaosRuntimeReady,
+      canvasW: c?.width || 0,
+      canvasH: c?.height || 0,
+      stageW: Math.round(stage?.getBoundingClientRect().width || 0),
+      stageH: Math.round(stage?.getBoundingClientRect().height || 0),
+      fps: document.getElementById('fpsMini')?.textContent || '',
+      mobs: document.getElementById('mobMini')?.textContent || ''
+    };
+  });
+  if (browserErrors.length) throw new Error(`[${name}] gameplay runtime error after Start; state=${JSON.stringify(gameplayState)}; browser=${browserErrors.join(' | ')}`);
+  if (!gameplayState.canvasW || !gameplayState.canvasH) throw new Error(`[${name}] gameplay canvas not initialized; state=${JSON.stringify(gameplayState)}`);
 
   await fresh();
   await page.locator('#rankBtn').click();
@@ -76,7 +92,7 @@ async function testViewport(browser, name, viewport) {
   await page.locator('#multiplayerBtn').click();
   await waitState(() => document.getElementById('multiplayerWake')?.classList.contains('show'), 'Multiplayer');
 
-  console.log(`SMOKE OK [${name}]: Arena + Rank + Multiplayer`);
+  console.log(`SMOKE OK [${name}]: gameplay frames + Rank + Multiplayer`);
   await context.close();
 }
 
@@ -86,7 +102,7 @@ try {
   browser = await chromium.launch({ headless: true });
   await testViewport(browser, 'mobile', { width: 390, height: 844 });
   await testViewport(browser, 'desktop', { width: 1440, height: 900 });
-  console.log('MENU SMOKE OK: interactive boot validated on mobile and desktop');
+  console.log('MENU/GAMEPLAY SMOKE OK: interactive boot validated on mobile and desktop');
 } finally {
   if (browser) await browser.close();
   server.kill('SIGTERM');
