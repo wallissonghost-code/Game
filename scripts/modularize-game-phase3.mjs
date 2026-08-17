@@ -47,12 +47,12 @@ replaceGame(
 
 // Combat: fury, damage mitigation and projectile sequencing now belong to combat.mjs.
 replaceGame(
-  /function furyProfile\(stage\)\{[\s\S]*?\}\nfunction triggerBossFury/,
+  /function furyProfile\(stage\)\{[\s\S]*?\}\s*function triggerBossFury/,
   "function furyProfile(stage){return window.CaosCombat.furyProfile(stage)}\nfunction triggerBossFury",
   'delegate fury profile'
 );
 replaceGame(
-  /function furyResist\(e\)\{[\s\S]*?\}function hurtEnemy\(e,amount,kind='normal'\)\{[\s\S]*?\}function applyIceHit/,
+  /function furyResist\(e\)\{[\s\S]*?\}\s*function hurtEnemy\(e,amount,kind='normal'\)\{[\s\S]*?\}\s*function applyIceHit/,
   "function furyResist(e){return window.CaosCombat.furyResist(e)}\nfunction hurtEnemy(e,amount,kind='normal'){const dealt=window.CaosCombat.applyEnemyDamage(e,amount);if(dealt>0)addDamageFx(e,dealt,kind);return dealt}\nfunction applyIceHit",
   'delegate fury resistance and enemy damage'
 );
