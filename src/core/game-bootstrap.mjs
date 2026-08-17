@@ -22,7 +22,7 @@ globalThis.CaosEffects = Object.freeze(CaosEffects);
 const versionNode = document.getElementById('gameVersion');
 const versionText = versionNode?.textContent || '';
 const match = versionText.match(/v(\d+\.\d+\.\d+)/i);
-const tag = (match?.[1] || '01743').replace(/\./g, '');
+const tag = (match?.[1] || '01744').replace(/\./g, '');
 
 function loadClassic(src) {
   return new Promise((resolve, reject) => {

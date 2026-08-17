@@ -96,8 +96,10 @@ if (!html.includes('src/core/game-bootstrap.mjs')) fail('index.html does not loa
 else ok('index.html loads modular bootstrap');
 if (!bootstrap.includes("import * as CaosSkills from './skills.mjs'")) fail('bootstrap does not load skills domain first');
 else ok('bootstrap loads skills domain before gameplay');
-if (!bootstrap.includes("await import(`../game.js?v=${tag}`)")) fail('bootstrap does not start gameplay after core');
-else ok('bootstrap starts gameplay after core');
+if (!bootstrap.includes('await loadClassic(`src/game.js?v=${tag}`)')) fail('bootstrap does not start classic gameplay runtime after core');
+else ok('bootstrap starts classic gameplay runtime after core');
+if (!bootstrap.includes('await loadClassic(`src/multiplayer-entry.js?v=${tag}`)')) fail('bootstrap does not start multiplayer entry after gameplay');
+else ok('bootstrap starts multiplayer entry after gameplay');
 
 // Behavioral smoke test of extracted modifiers without Canvas/DOM.
 const player = { speed:255, maxLife:100, life:50, fireRate:.28, regen:0, armorReduction:0, xpMult:1, bloodChance:0, bloodHeal:0, flashDamage:0 };
