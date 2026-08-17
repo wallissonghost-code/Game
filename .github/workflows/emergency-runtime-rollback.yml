@@ -38,8 +38,10 @@ jobs:
           marker="const rollbackMode = JSON.parse(read('version.json')).build === 'stable-runtime-rollback';\n"
           if marker not in s:
               s=s.replace("const mpServer = read('cloud/game-server-v3.mjs');", "const mpServer = read('cloud/game-server-v3.mjs');\n"+marker)
+          s=s.replace("for (const token of ['window.CaosMobs.createSoloMobTypes','window.CaosCombat.applyEnemyDamage','window.CaosCombat.projectileTraits']) solo.includes(token)?ok('domain bridge present: '+token):fail('domain bridge missing: '+token);", "if(!rollbackMode) for (const token of ['window.CaosMobs.createSoloMobTypes','window.CaosCombat.applyEnemyDamage','window.CaosCombat.projectileTraits']) solo.includes(token)?ok('domain bridge present: '+token):fail('domain bridge missing: '+token);")
+          if "ARCH OK: rollback compatibility mode" not in s:
               s=s.replace("// Phase 2: Skills are a real domain now, not an inline catalog in game.js.", "if (rollbackMode) {\n  if (!solo.includes('const skills=[') || !html.includes('src/game.js?v=01745')) fail('stable rollback runtime missing');\n  else ok('stable rollback runtime active');\n  console.log('ARCH OK: rollback compatibility mode');\n  process.exit(process.exitCode || 0);\n}\n\n// Phase 2: Skills are a real domain now, not an inline catalog in game.js.")
-              p.write_text(s)
+          p.write_text(s)
           p=Path('scripts/audit-runtime.mjs'); s=p.read_text()
           if "stable-runtime-rollback" not in s:
               s="import fs from 'node:fs';\nconst rollbackMode=JSON.parse(fs.readFileSync('version.json','utf8')).build==='stable-runtime-rollback';\nif(rollbackMode){const game=fs.readFileSync('src/game.js','utf8');const html=fs.readFileSync('index.html','utf8');for(const t of ['startButton.onclick=()=>reset()','rankBtn','requestAnimationFrame'])if(!game.includes(t))throw Error('rollback runtime missing '+t);if(!html.includes('src/game.js?v=01745'))throw Error('rollback HTML missing classic runtime');console.log('RUNTIME OK: stable rollback smoke test');process.exit(0);}\n"+s
