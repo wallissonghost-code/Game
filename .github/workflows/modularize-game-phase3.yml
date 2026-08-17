@@ -27,4 +27,4 @@ jobs:
           git add src/game.js scripts/check-architecture.mjs scripts/check-game.mjs
           git commit -m "refactor: extract solo mobs and combat from game runtime"
           git push origin HEAD:main
-# retry: contract-aware legacy checks
+# retry: endgame contract checks
