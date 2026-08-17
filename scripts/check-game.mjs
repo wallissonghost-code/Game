@@ -2,7 +2,7 @@ import fs from 'node:fs';
 const fail=m=>{console.error('FAIL:',m);process.exitCode=1};
 const ok=m=>console.log('OK:',m);
 const read=p=>fs.readFileSync(p,'utf8');
-const gameHtml=read('index.html'),panelHtml=read('painel.html'),game=read('src/game.js')+'\n'+read('src/core/skills.mjs'),panel=read('src/panel.js'),panelCss=read('src/styles/panel.css');
+const gameHtml=read('index.html'),panelHtml=read('painel.html'),game=read('src/game.js')+'\n'+read('src/core/skills.mjs')+'\n'+read('src/core/mobs.mjs')+'\n'+read('src/core/combat.mjs'),panel=read('src/panel.js'),panelCss=read('src/styles/panel.css');
 const version=JSON.parse(read('version.json')).version;
 const cacheTag=String(version).replace(/\./g,'');
 
