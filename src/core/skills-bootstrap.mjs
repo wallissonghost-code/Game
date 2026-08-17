@@ -12,9 +12,12 @@ function loadClassic(src) {
   });
 }
 
+const gameRuntimeUrl = new URL('../game.js?v=01745-skills1', import.meta.url).href;
+const multiplayerEntryUrl = new URL('../multiplayer-entry.js?v=01745-skills1', import.meta.url).href;
+
 try {
-  await loadClassic('../game.js?v=01745-skills1');
-  await loadClassic('../multiplayer-entry.js?v=01745-skills1');
+  await loadClassic(gameRuntimeUrl);
+  await loadClassic(multiplayerEntryUrl);
   window.CaosRuntimeReady = true;
   window.dispatchEvent(new CustomEvent('caos:runtime-ready', { detail: { skills: true } }));
 } catch (error) {
