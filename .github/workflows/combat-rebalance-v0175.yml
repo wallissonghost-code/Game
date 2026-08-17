@@ -19,7 +19,12 @@ jobs:
         with:
           python-version: '3.12'
       - name: Apply Solo v0.17.41 special events
-        run: python3 scripts/fix-special-events-v01741.py
+        run: |
+          if grep -q "VERSION='0.17.41'" src/game.js; then
+            echo 'v0.17.41 already applied; validation only'
+          else
+            python3 scripts/fix-special-events-v01741.py
+          fi
       - name: Validate special events and release isolation
         run: |
           node --check src/game.js
