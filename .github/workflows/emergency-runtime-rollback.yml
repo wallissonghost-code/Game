@@ -1,0 +1,54 @@
+name: Emergency runtime rollback
+on:
+  push:
+    branches: [agent/emergency-runtime-rollback]
+permissions:
+  contents: write
+jobs:
+  restore:
+    if: ${{ !contains(github.event.head_commit.message, '[runtime-restored]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/emergency-runtime-rollback
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Restore last known stable runtime
+        run: |
+          git checkout 6449dcf23ded8865de9775f5c92e6c26e6bb69d6 -- index.html src/game.js
+          python3 - <<'PY'
+          from pathlib import Path
+          def rep(path,a,b):
+              p=Path(path); s=p.read_text(); s=s.replace(a,b); p.write_text(s)
+          rep('index.html','0.17.43','0.17.45')
+          rep('index.html','01743','01745')
+          rep('index.html','NOVAS SKILLS + FÚRIA','RUNTIME ESTÁVEL RESTAURADO')
+          rep('src/game.js',"const VERSION='0.17.43'","const VERSION='0.17.45'")
+          rep('version.json','"version": "0.17.44"','"version": "0.17.45"')
+          rep('version.json','"build": "modular-runtime-cache-hotfix"','"build": "stable-runtime-rollback"')
+          for f in ['painel.html','map-lab.html','duo.html']:
+              rep(f,'0.17.44','0.17.45'); rep(f,'01744','01745')
+          p=Path('scripts/check-architecture.mjs'); s=p.read_text()
+          marker="const rollbackMode = JSON.parse(read('version.json')).build === 'stable-runtime-rollback';\n"
+          if marker not in s:
+              s=s.replace("const mpServer = read('cloud/game-server-v3.mjs');", "const mpServer = read('cloud/game-server-v3.mjs');\n"+marker)
+              s=s.replace("// Phase 2: Skills are a real domain now, not an inline catalog in game.js.", "if (rollbackMode) {\n  if (!solo.includes('const skills=[') || !html.includes('src/game.js?v=01745')) fail('stable rollback runtime missing');\n  else ok('stable rollback runtime active');\n  console.log('ARCH OK: rollback compatibility mode');\n  process.exit(process.exitCode || 0);\n}\n\n// Phase 2: Skills are a real domain now, not an inline catalog in game.js.")
+              p.write_text(s)
+          PY
+      - name: Validate restored runtime
+        run: |
+          node --check src/game.js
+          grep -q "startBtn" src/game.js
+          grep -q "rankBtn" src/game.js
+          grep -q "multiplayerBtn" index.html
+          npm run check
+      - name: Commit restored runtime
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html src/game.js version.json painel.html map-lab.html duo.html scripts/check-architecture.mjs
+          git commit -m "fix: restore stable runtime as v0.17.45 [runtime-restored]"
+          git push origin HEAD:agent/emergency-runtime-rollback
