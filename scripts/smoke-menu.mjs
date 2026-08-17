@@ -27,20 +27,21 @@ async function waitServer() {
 async function testViewport(browser, name, viewport) {
   const context = await browser.newContext({ viewport });
   const page = await context.newPage();
+  const browserErrors = [];
+  page.on('pageerror', error => browserErrors.push(`pageerror: ${error.message}`));
+  page.on('console', msg => {
+    if (msg.type() === 'error') browserErrors.push(`console: ${msg.text()}`);
+  });
 
-  // This smoke test validates boot + click handlers, not asset download speed.
-  // Replace sprites with a valid tiny PNG so the same test is deterministic in CI.
   await page.route(/\.png(?:\?|$)/, route => {
     route.fulfill({ status: 200, contentType: 'image/png', body: ONE_PIXEL_PNG });
   });
-
-  // Multiplayer only needs to prove its click handler opens the wake overlay.
-  // Avoid depending on Render availability during CI.
   await page.route('https://caos-live-game-server-va.onrender.com/**', route => {
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
   });
 
   async function fresh() {
+    browserErrors.length = 0;
     await page.goto(`${BASE}/?smoke=${Date.now()}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await page.locator('#startBtn').waitFor({ state: 'visible', timeout: 10000 });
     await page.waitForFunction(() => {
@@ -49,31 +50,31 @@ async function testViewport(browser, name, viewport) {
     }, null, { timeout: 10000 });
   }
 
-  // Arena: real click must dismiss the start overlay and initialize gameplay.
+  async function waitState(fn, label) {
+    try {
+      await page.waitForFunction(fn, null, { timeout: 5000 });
+    } catch (error) {
+      const ready = await page.evaluate(() => ({
+        runtimeReady: window.CaosRuntimeReady,
+        startClass: document.getElementById('start')?.className,
+        rankClass: document.getElementById('rankOverlay')?.className,
+        mpClass: document.getElementById('multiplayerWake')?.className
+      }));
+      throw new Error(`[${name}] ${label} timeout; state=${JSON.stringify(ready)}; browser=${browserErrors.join(' | ') || 'no browser error captured'}`);
+    }
+  }
+
   await fresh();
   await page.locator('#startBtn').click();
-  await page.waitForFunction(() => !document.getElementById('start')?.classList.contains('show'), null, { timeout: 5000 });
-  const arena = await page.evaluate(() => ({
-    hidden: !document.getElementById('start')?.classList.contains('show'),
-    canvas: !!document.getElementById('canvas')
-  }));
-  if (!arena.hidden || !arena.canvas) throw new Error(`[${name}] Arena button did not start the game`);
+  await waitState(() => !document.getElementById('start')?.classList.contains('show'), 'Arena');
 
-  // Rank: real click must open ranking overlay.
   await fresh();
   await page.locator('#rankBtn').click();
-  await page.waitForFunction(() => document.getElementById('rankOverlay')?.classList.contains('show'), null, { timeout: 5000 });
-  if (!(await page.locator('#rankOverlay').evaluate(el => el.classList.contains('show')))) {
-    throw new Error(`[${name}] Rank button did not open overlay`);
-  }
+  await waitState(() => document.getElementById('rankOverlay')?.classList.contains('show'), 'Rank');
 
-  // Multiplayer: real click must open wake overlay immediately.
   await fresh();
   await page.locator('#multiplayerBtn').click();
-  await page.waitForFunction(() => document.getElementById('multiplayerWake')?.classList.contains('show'), null, { timeout: 5000 });
-  if (!(await page.locator('#multiplayerWake').evaluate(el => el.classList.contains('show')))) {
-    throw new Error(`[${name}] Multiplayer button did not open wake overlay`);
-  }
+  await waitState(() => document.getElementById('multiplayerWake')?.classList.contains('show'), 'Multiplayer');
 
   console.log(`SMOKE OK [${name}]: Arena + Rank + Multiplayer`);
   await context.close();

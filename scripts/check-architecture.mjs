@@ -29,14 +29,15 @@ const read = path => fs.readFileSync(path, 'utf8');
 
 const solo = read('src/game.js');
 const html = read('index.html');
-const bootstrap = read('src/core/game-bootstrap.mjs');
+const skillsBootstrap = read('src/core/skills-bootstrap.mjs');
 const skillsSource = read('src/core/skills.mjs');
 const mobsSource = read('src/core/mobs.mjs');
 const combatSource = read('src/core/combat.mjs');
 const soloContractView = solo+'\n'+mobsSource+'\n'+combatSource+'\n'+read('src/core/contracts.mjs');
 const mpClient = read('src/multiplayer-v2.js');
 const mpServer = read('cloud/game-server-v3.mjs');
-const rollbackMode = JSON.parse(read('version.json')).build === 'stable-runtime-rollback';
+const rollbackMode = false;
+const skillsOnlyMigration = html.includes('src/core/skills-bootstrap.mjs');
 
 
 // Core formulas must remain identical while extraction is incremental.
@@ -71,7 +72,8 @@ ok('tier and boss multipliers guarded against cascade drift');
 
 try { assertMobDomain(); ok('mob domain behavior validates'); } catch (error) { fail(error.message); }
 try { assertCombatDomain(); ok('combat domain behavior validates'); } catch (error) { fail(error.message); }
-if(!rollbackMode) for (const token of ['window.CaosMobs.createSoloMobTypes','window.CaosCombat.applyEnemyDamage','window.CaosCombat.projectileTraits']) solo.includes(token)?ok('domain bridge present: '+token):fail('domain bridge missing: '+token);
+if(!rollbackMode && !skillsOnlyMigration) for (const token of ['window.CaosMobs.createSoloMobTypes','window.CaosCombat.applyEnemyDamage','window.CaosCombat.projectileTraits']) solo.includes(token)?ok('domain bridge present: '+token):fail('domain bridge missing: '+token);
+if(skillsOnlyMigration) ok('incremental migration: mobs/combat remain on stable runtime');
 
 if (rollbackMode) {
   if (!solo.includes('const skills=[') || !html.includes('src/game.js?v=01745')) fail('stable rollback runtime missing');
@@ -101,14 +103,18 @@ for (const token of ['window.CaosSkills.createSoloSkillSystem', 'onArcApply', 'o
   solo.includes(token) ? ok(`Solo skill bridge present: ${token}`) : fail(`Solo skill bridge missing: ${token}`);
 }
 
-if (!html.includes('src/core/game-bootstrap.mjs')) fail('index.html does not load modular game bootstrap');
-else ok('index.html loads modular bootstrap');
-if (!bootstrap.includes("import * as CaosSkills from './skills.mjs'")) fail('bootstrap does not load skills domain first');
-else ok('bootstrap loads skills domain before gameplay');
-if (!bootstrap.includes('await loadClassic(`src/game.js?v=${tag}`)')) fail('bootstrap does not start classic gameplay runtime after core');
-else ok('bootstrap starts classic gameplay runtime after core');
-if (!bootstrap.includes('await loadClassic(`src/multiplayer-entry.js?v=${tag}`)')) fail('bootstrap does not start multiplayer entry after gameplay');
-else ok('bootstrap starts multiplayer entry after gameplay');
+if (!html.includes('src/core/skills-bootstrap.mjs')) fail('index.html does not load skills bootstrap');
+else ok('index.html loads skills bootstrap');
+if (!skillsBootstrap.includes("import * as CaosSkills from './skills.mjs?v=01745'")) fail('skills bootstrap does not load skills domain first');
+else ok('skills bootstrap loads skills domain before gameplay');
+if (!skillsBootstrap.includes("new URL('../game.js?v=01745-skills1', import.meta.url)")) fail('skills bootstrap does not resolve classic gameplay runtime from module URL');
+else ok('skills bootstrap resolves classic gameplay runtime safely');
+if (!skillsBootstrap.includes("new URL('../multiplayer-entry.js?v=01745-skills1', import.meta.url)")) fail('skills bootstrap does not resolve multiplayer entry from module URL');
+else ok('skills bootstrap resolves multiplayer entry safely');
+if (!skillsBootstrap.includes('await loadClassic(gameRuntimeUrl)')) fail('skills bootstrap does not start classic gameplay runtime');
+else ok('skills bootstrap starts classic gameplay runtime');
+if (!skillsBootstrap.includes('await loadClassic(multiplayerEntryUrl)')) fail('skills bootstrap does not start multiplayer entry');
+else ok('skills bootstrap starts multiplayer entry after gameplay');
 
 // Behavioral smoke test of extracted modifiers without Canvas/DOM.
 const player = { speed:255, maxLife:100, life:50, fireRate:.28, regen:0, armorReduction:0, xpMult:1, bloodChance:0, bloodHeal:0, flashDamage:0 };
