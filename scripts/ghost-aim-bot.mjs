@@ -26,6 +26,12 @@ async function run(browser,name,viewport){
   const assert=(ok,msg)=>{if(!ok)throw Error(`[GHOST ${name}] ${msg}`)};
   const shotAngle=ls=>Math.atan2(ls.targetY-ls.playerY,ls.targetX-ls.playerX);
   const correctFor=(ls,wanted,tolerance=.20)=>!!ls&&Number.isFinite(ls.targetX)&&angleDiff(shotAngle(ls),wanted)<tolerance&&angleDiff(ls.aim,wanted)<tolerance;
+  const diagAngle=s=>s?.diagnostics?.target?Math.atan2(s.diagnostics.target.y-s.diagnostics.player.y,s.diagnostics.target.x-s.diagnostics.player.x):null;
+  const shotMatchesLiveTarget=(s,tolerance=.28)=>{
+    const a=diagAngle(s),ls=s?.test?.lastShot;
+    if(a===null||!ls||!Number.isFinite(ls.targetX))return true;
+    return angleDiff(shotAngle(ls),a)<tolerance;
+  };
 
   await cmd({command:'horde',value:false});
   await cmd({command:'clear'});
@@ -33,7 +39,6 @@ async function run(browser,name,viewport){
   await cmd({command:'autofire',value:false});
 
   // Keep enough stationary targets alive for the full observation window.
-  // spawnTarget freezes them and delays their attacks for 60s, so Ghost cannot die here.
   for(let i=0;i<28;i++)assert(await target(150+(i%5)*8,0),'could not spawn initial front target');
   await cmd({command:'autofire',value:true});
   const warm0=await snap();
@@ -42,24 +47,20 @@ async function run(browser,name,viewport){
   assert(warm1.test.shotsFired>warm0.test.shotsFired,`initial front target produced no shots`);
   assert(correctFor(warm1.test.lastShot,0),`initial aim was not pointing at front target`);
 
-  // Reproduce the visual bug: old firing line disappears, valid mobs are now in another direction.
+  // Original movement-unlock reproduction.
   await cmd({command:'autofire',value:false});
   await cmd({command:'clear'});
   const NEW_ANGLE=Math.PI*.78;
   for(let i=0;i<32;i++)assert(await target(105+(i%5)*7,NEW_ANGLE),'could not spawn replacement target');
   await cmd({command:'autofire',value:true});
   const hold0=await snap();
-
-  // User-observed window: leave the player completely still for 4 seconds.
   await sleep(4000);
   const hold1=await snap();
   const shotsWhileStill=hold1.test.shotsFired-hold0.test.shotsFired;
   const correctStill=correctFor(hold1.test.lastShot,NEW_ANGLE);
   const staleStill=!correctStill || shotsWhileStill===0;
-
   console.log(`GHOST 4S STILL [${name}] shots=${shotsWhileStill} correct=${correctStill} aim=${Number(hold1.test.aim).toFixed(3)}`);
 
-  // If it stayed stale, mimic the real workaround: move a few pixels and see if aim wakes up.
   let recoveredAfterMove=false,moveShots=0;
   if(staleStill){
     const beforeMove=await snap();
@@ -72,19 +73,49 @@ async function run(browser,name,viewport){
     recoveredAfterMove=moveShots>0&&correctFor(afterMove.test.lastShot,NEW_ANGLE);
     console.log(`GHOST MOVE RECOVERY [${name}] shots=${moveShots} recovered=${recoveredAfterMove} playerX=${afterMove.test.playerX.toFixed(1)}`);
   }
-
-  // This failure is intentional: it gives us a precise signature when movement fixes a stale aim.
-  if(staleStill&&recoveredAfterMove){
-    throw Error(`[GHOST ${name}] MOVEMENT UNLOCK CONFIRMED: aim stayed stale for 4s, then recovered after movement`);
-  }
-  if(staleStill&&!recoveredAfterMove){
-    throw Error(`[GHOST ${name}] AIM STUCK: stale for 4s and movement did not recover it`);
-  }
-
-  // Once fixed, the correct behavior is to retarget while stationary within the 4s window.
+  if(staleStill&&recoveredAfterMove)throw Error(`[GHOST ${name}] MOVEMENT UNLOCK CONFIRMED: aim stayed stale for 4s, then recovered after movement`);
+  if(staleStill&&!recoveredAfterMove)throw Error(`[GHOST ${name}] AIM STUCK: stale for 4s and movement did not recover it`);
   assert(shotsWhileStill>=3,`stationary retarget fired too few shots: ${shotsWhileStill}`);
+
+  // Bug22 reproduction: Classic mode, stationary player, dense close-range crowd and constant target churn.
+  // The user's replay showed mobs at ~37-150 px while bullets could keep an old direction.
+  await cmd({command:'autofire',value:false});
+  await cmd({command:'clear'});
+  await cmd({command:'gameplay',value:'classic'});
+  const crowdAngles=[0,Math.PI*.33,Math.PI*.66,Math.PI,Math.PI*1.33,Math.PI*1.66];
+  for(let i=0;i<18;i++)assert(await target(48+(i%4)*22,crowdAngles[i%crowdAngles.length]),'could not spawn Bug22 crowd target');
+  await cmd({command:'autofire',value:true});
+
+  let mismatches=0,observedTargets=0,lastMismatch=null;
+  const crowdStart=await snap();
+  for(let i=0;i<24;i++){
+    await sleep(250);
+    const s=await snap();
+    if(s.diagnostics?.target){
+      observedTargets++;
+      if(!shotMatchesLiveTarget(s)){
+        mismatches++;
+        lastMismatch={
+          t:i*250,
+          aim:s.test.aim,
+          shot:shotAngle(s.test.lastShot),
+          target:diagAngle(s),
+          targetDist:s.diagnostics.target.dist,
+          mobs:s.test.enemies
+        };
+      }else mismatches=Math.max(0,mismatches-1);
+    }
+    if(mismatches>=3)break;
+  }
+  const crowdEnd=await snap();
+  const crowdShots=crowdEnd.test.shotsFired-crowdStart.test.shotsFired;
+  console.log(`GHOST BUG22 CROWD [${name}] shots=${crowdShots} targets=${observedTargets} mismatchStreak=${mismatches}`,lastMismatch||'');
+  assert(observedTargets>=4,'Bug22 crowd did not produce enough live target observations');
+  assert(crowdShots>=5,`Bug22 crowd fired too few shots: ${crowdShots}`);
+  assert(mismatches<3,`BUG22 REPRODUCED: projectile direction stayed out of sync with live close target ${JSON.stringify(lastMismatch)}`);
+
   assert(errors.length===0,`runtime errors: ${errors.join(' | ')}`);
-  console.log(`GHOST AIM OK [${name}] stationary retarget works without movement`);
+  console.log(`GHOST AIM OK [${name}] stationary retarget + Bug22 crowd churn passed`);
   await context.close();
 }
 
