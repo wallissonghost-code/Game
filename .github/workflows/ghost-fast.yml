@@ -5,18 +5,8 @@ on:
     branches:
       - main
       - 'ci/**'
-    paths:
-      - 'game.js'
-      - 'src/**'
-      - 'scripts/ghost-aim-bot.mjs'
-      - '.github/workflows/ghost-fast.yml'
   pull_request:
     branches: [main]
-    paths:
-      - 'game.js'
-      - 'src/**'
-      - 'scripts/ghost-aim-bot.mjs'
-      - '.github/workflows/ghost-fast.yml'
   workflow_dispatch:
 
 permissions:
