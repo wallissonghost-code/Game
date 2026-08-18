@@ -1,3 +1,4 @@
+// CI trigger: corrected target-spawn reproduction
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 
@@ -28,20 +29,16 @@ async function run(browser,name,viewport){
 
   await cmd({command:'horde',value:false});await cmd({command:'clear'});await cmd({command:'skillreset'});await cmd({command:'autofire',value:false});
 
-  // 1) Baseline cadence, isolated targets at the intended distances.
   for(let i=0;i<10;i++)assert(await target(110+(i%3)*12,(i%4)*Math.PI/2),'could not spawn baseline target');
   await cmd({command:'autofire',value:true});const b0=await snap();await sleep(2200);const b1=await snap();const base=b1.test.shotsFired-b0.test.shotsFired;
   assert(base>=4,`baseline autofire too low: ${base}`);
 
-  // 2) Rapid LV5 must fire faster in a fresh scenario.
   await cmd({command:'autofire',value:false});await cmd({command:'clear'});await cmd({command:'skillreset'});await cmd({command:'skilltest',skill:'rapid',level:5});
   for(let i=0;i<14;i++)assert(await target(110+(i%3)*12,(i%6)*Math.PI/3),'could not spawn rapid target');
   await cmd({command:'autofire',value:true});const r0=await snap();await sleep(2200);const r1=await snap();const rapid=r1.test.shotsFired-r0.test.shotsFired;
   assert(rapid>base*1.20,`RAPID REGRESSION: base=${base}, rapid=${rapid}`);
   validateShot(r1.test.lastShot);
 
-  // 3) Exact stale-target reproduction: acquire a far target to the right,
-  // then introduce a much closer target behind/diagonal while player is stationary.
   await cmd({command:'autofire',value:false});await cmd({command:'clear'});await cmd({command:'skillreset'});
   assert(await target(170,0),'could not spawn far target');
   await cmd({command:'autofire',value:true});const f0=await snap();await page.waitForFunction(n=>window.CaosTest.snapshot().test.shotsFired>n,f0.test.shotsFired,{timeout:1800});
@@ -56,7 +53,6 @@ async function run(browser,name,viewport){
   const chosen=targetDistance(p1.test.lastShot);
   assert(chosen<105,`CLOSE TARGET IGNORED: last shot still chose target ${chosen.toFixed(1)}px away (far was ${farDist.toFixed(1)}px)`);
 
-  // 4) Repeated target switching around the player without movement.
   const angles=[-Math.PI*.75,Math.PI*.55,-Math.PI*.15,Math.PI*.95];
   for(let i=0;i<angles.length;i++){
     assert(await target(82+i*3,angles[i]),`could not spawn switch target ${i}`);
@@ -68,7 +64,6 @@ async function run(browser,name,viewport){
     assert(targetDistance(after.test.lastShot)<115,`STALE TARGET AFTER SWITCH ${i}: chose ${targetDistance(after.test.lastShot).toFixed(1)}px target`);
   }
 
-  // 5) Keep shooting stationary: movement must not be required to wake aim.
   const s0=await snap();await sleep(1400);const s1=await snap();const continued=s1.test.shotsFired-s0.test.shotsFired;
   assert(continued>=3,`MOVEMENT-DEPENDENT AIM: stationary autofire stopped again; shots=${continued}`);
   validateShot(s1.test.lastShot);
