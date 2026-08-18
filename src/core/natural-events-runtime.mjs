@@ -92,9 +92,8 @@ export function patchNaturalEvents(source) {
 
   one("function broadcast(){const s=state();", "window.CaosStateSnapshot=()=>state();function broadcast(){const s=state();", 'state-export');
 
-  // Aim hardening: the real bug is intermittent under live crowd pressure, so never let a cached
-  // auto target own the shot direction. Every shot reacquires the nearest valid visible mob and
-  // computes its projectile vector directly from that target's current coordinates.
+  // Aim hardening: classic mode is also auto-targeted. The captured bug happened with autoMode=false
+  // and gameplayMode='classic', so classic must reacquire the nearest visible mob on every shot too.
   one(
     "function focusedTarget(){const now=performance.now(),near=nearestVisible();if(!near){autoTarget=null;autoTargetUntil=0;return null}if(autoTarget&&(!autoTarget.dead)&&enemies.includes(autoTarget)&&targetVisible(autoTarget)){const ad=Math.hypot(autoTarget.x-player.x,autoTarget.y-player.y),nd=Math.hypot(near.x-player.x,near.y-player.y);if(ad<=FIRE_RANGE&&now<autoTargetUntil&&nd>ad*.72)return autoTarget}autoTarget=near;autoTargetUntil=now+550;return autoTarget}",
     "function focusedTarget(){const near=nearestVisible();if(!near){autoTarget=null;autoTargetUntil=0;return null}autoTarget=near;autoTargetUntil=performance.now()+120;return near}",
@@ -102,7 +101,7 @@ export function patchNaturalEvents(source) {
   );
   one(
     "if(autoMode){target=focusedTarget();if(!target)return;player.aim=Math.atan2(target.y-player.y,target.x-player.x)}else if(gameplayMode==='sweep')",
-    "if(autoMode){target=focusedTarget();if(!target)return;const shotAim=Math.atan2(target.y-player.y,target.x-player.x);if(!Number.isFinite(shotAim))return;player.aim=shotAim}else if(gameplayMode==='sweep')",
+    "if(autoMode||gameplayMode==='classic'){target=focusedTarget();if(!target)return;const shotAim=Math.atan2(target.y-player.y,target.x-player.x);if(!Number.isFinite(shotAim))return;player.aim=shotAim}else if(gameplayMode==='sweep')",
     'aim-shot-vector'
   );
 
