@@ -1,0 +1,1 @@
+Trigger Ghost Fast CI: 4s stationary stale-aim reproduction, then movement recovery probe.
