@@ -23,11 +23,24 @@ function loadClassic(src) {
   });
 }
 
+function fixClassicAimSync(source) {
+  let patched = String(source || '');
+  const staleClassic = "if(autoMode||gameplayMode==='classic'){target=focusedTarget();";
+  if (!patched.includes(staleClassic)) throw new Error('Classic aim sync: patched shoot branch not found');
+  patched = patched.replace(staleClassic, "if(autoMode){target=focusedTarget();");
+
+  const staleDiagnostic = "const alive=enemies.filter(e=>!e.dead),target=autoTarget&&!autoTarget.dead?autoTarget:null,near=";
+  const liveDiagnostic = "const alive=enemies.filter(e=>!e.dead),target=!autoMode&&gameplayMode==='classic'?nearestVisible():(autoTarget&&!autoTarget.dead?autoTarget:null),near=";
+  if (!patched.includes(staleDiagnostic)) throw new Error('Classic aim sync: diagnostic target branch not found');
+  patched = patched.replace(staleDiagnostic, liveDiagnostic);
+  return patched;
+}
+
 async function loadPatchedClassic(src) {
   const response = await fetch(src, { cache: 'no-store' });
   if (!response.ok) throw new Error(`Failed to fetch runtime ${response.status}`);
   const original = await response.text();
-  const patched = patchNaturalEvents(original);
+  const patched = fixClassicAimSync(patchNaturalEvents(original));
   const blobUrl = URL.createObjectURL(new Blob([patched], { type: 'text/javascript' }));
   try { await loadClassic(blobUrl); } finally { URL.revokeObjectURL(blobUrl); }
 }
