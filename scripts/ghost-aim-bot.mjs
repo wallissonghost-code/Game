@@ -1,3 +1,4 @@
+// Ghost Fast CI push trigger branch
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 
