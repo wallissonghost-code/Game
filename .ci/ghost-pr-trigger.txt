@@ -1,0 +1,1 @@
+Force PR-triggered Ghost regression run for rapid cadence, close-target priority, stale aim, and movement-independent autofire.
