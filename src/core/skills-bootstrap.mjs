@@ -39,11 +39,11 @@ function fixClassicAimSync(source) {
   );
 
   // Replace shoot as one atomic transaction: select target -> calculate angle -> set visual aim -> create projectile.
-  // No later read of player.aim is allowed to change the projectile vector.
+  // The projectile receives that vector once and then travels straight; later target changes cannot steer it.
   const shootRe = /function shoot\(\)\{[\s\S]*?\}function setPaused\(/;
   const shootMatches = patched.match(shootRe);
   if (!shootMatches || shootMatches.length !== 1) throw new Error('ClassicAim/shoot: function boundary not found');
-  const shootFn = `function shoot(){if(player.down||(choosing&&duoPlayer.connected))return false;let target=null,shotAim=player.aim;if(autoMode||gameplayMode==='classic'){target=focusedTarget();if(!target)return false;shotAim=Math.atan2(target.y-player.y,target.x-player.x)}else if(gameplayMode==='sweep'){target=sweepTarget();if(!target)return false;shotAim=Math.atan2(target.y-player.y,target.x-player.x)}else if(gameplayMode==='hardcore'){shotAim=movementAimAngle}else{target=nearestVisible();if(!target)return false;shotAim=Math.atan2(target.y-player.y,target.x-player.x)}if(!Number.isFinite(shotAim))return false;player.aim=shotAim;player.shotFlash=.1;const dir=playerFacing(shotAim),m=muzzleLocal(dir),bs=berserkerState(),traits=window.CaosCombat.projectileTraits(skillLv,{pierce:pierceShotCounter,ice:iceShotCounter,explosive:explosiveShotCounter});pierceShotCounter=traits.counters.pierce;iceShotCounter=traits.counters.ice;explosiveShotCounter=traits.counters.explosive;const {pierceLeft,ice,explosive}=traits;ciShotsFired++;if(pierceLeft)ciPierceShots++;if(ice)ciIceShots++;if(explosive)ciExplosiveShots++;ciLastShot={spawnX:player.x+m.x,spawnY:player.y+m.y,playerX:player.x,playerY:player.y,aim:shotAim,vx:Math.cos(shotAim)*610,vy:Math.sin(shotAim)*610,targetX:target?.x??null,targetY:target?.y??null,targetType:target?.type??null,at:performance.now()};bullets.push({x:player.x+m.x,y:player.y+m.y,vx:Math.cos(shotAim)*610,vy:Math.sin(shotAim)*610,r:4,dead:false,ammo:1,born:performance.now(),pierceLeft,hits:[],iceHits:0,damage:player.damage*bs.damageMul,ice,explosive,owner:'p1',targetRef:target||null,homing:!!target&&(autoMode||gameplayMode==='classic'),shotAim});if(player.flashDamage&&++flashCounter%5===0)flash();return true}`;
+  const shootFn = `function shoot(){if(player.down||(choosing&&duoPlayer.connected))return false;let target=null,shotAim=player.aim;if(autoMode||gameplayMode==='classic'){target=focusedTarget();if(!target)return false;shotAim=Math.atan2(target.y-player.y,target.x-player.x)}else if(gameplayMode==='sweep'){target=sweepTarget();if(!target)return false;shotAim=Math.atan2(target.y-player.y,target.x-player.x)}else if(gameplayMode==='hardcore'){shotAim=movementAimAngle}else{target=nearestVisible();if(!target)return false;shotAim=Math.atan2(target.y-player.y,target.x-player.x)}if(!Number.isFinite(shotAim))return false;player.aim=shotAim;player.shotFlash=.1;const dir=playerFacing(shotAim),m=muzzleLocal(dir),bs=berserkerState(),traits=window.CaosCombat.projectileTraits(skillLv,{pierce:pierceShotCounter,ice:iceShotCounter,explosive:explosiveShotCounter});pierceShotCounter=traits.counters.pierce;iceShotCounter=traits.counters.ice;explosiveShotCounter=traits.counters.explosive;const {pierceLeft,ice,explosive}=traits;ciShotsFired++;if(pierceLeft)ciPierceShots++;if(ice)ciIceShots++;if(explosive)ciExplosiveShots++;ciLastShot={spawnX:player.x+m.x,spawnY:player.y+m.y,playerX:player.x,playerY:player.y,aim:shotAim,vx:Math.cos(shotAim)*610,vy:Math.sin(shotAim)*610,targetX:target?.x??null,targetY:target?.y??null,targetType:target?.type??null,at:performance.now()};bullets.push({x:player.x+m.x,y:player.y+m.y,vx:Math.cos(shotAim)*610,vy:Math.sin(shotAim)*610,r:4,dead:false,ammo:1,born:performance.now(),pierceLeft,hits:[],iceHits:0,damage:player.damage*bs.damageMul,ice,explosive,owner:'p1'});if(player.flashDamage&&++flashCounter%5===0)flash();return true}`;
   patched = patched.replace(shootRe, shootFn + 'function setPaused(');
 
   // If a frame briefly has no valid target, retry quickly instead of consuming a full fire interval.
@@ -54,12 +54,11 @@ function fixClassicAimSync(source) {
     'shot-watchdog'
   );
 
-  // Classic projectiles retain the selected target. If it dies between shots, the projectile reacquires the current
-  // nearest visible target. This removes the 'bullets keep flying into empty space until I move' failure mode.
+  // Keep normal-play expiration telemetry, but never alter vx/vy after projectile creation.
   replaceOne(
     "for(const b of bullets){if(b.flash){b.t-=dt;continue}b.x+=b.vx*dt;b.y+=b.vy*dt;if(Math.abs(b.x-player.x)>W||Math.abs(b.y-player.y)>H){if(!b.dead&&new URLSearchParams(location.search).get('ci')==='1')ciShotsExpired++;b.dead=true}}const frozen=",
-    "for(const b of bullets){if(b.flash){b.t-=dt;continue}if(b.homing){let bt=b.targetRef;if(!bt||bt.dead||!enemies.includes(bt)||Math.hypot(bt.x-player.x,bt.y-player.y)>FIRE_RANGE*1.35){bt=focusedTarget();b.targetRef=bt||null}if(bt){const desired=Math.atan2(bt.y-b.y,bt.x-b.x),current=Math.atan2(b.vy,b.vx),speed=Math.hypot(b.vx,b.vy)||610,maxTurn=Math.min(Math.PI,dt*18),turn=angleDelta(desired,current),next=current+Math.max(-maxTurn,Math.min(maxTurn,turn));b.vx=Math.cos(next)*speed;b.vy=Math.sin(next)*speed}}b.x+=b.vx*dt;b.y+=b.vy*dt;if(Math.abs(b.x-player.x)>W||Math.abs(b.y-player.y)>H){if(!b.dead)ciShotsExpired++;b.dead=true}}const frozen=",
-    'projectile-reacquire'
+    "for(const b of bullets){if(b.flash){b.t-=dt;continue}b.x+=b.vx*dt;b.y+=b.vy*dt;if(Math.abs(b.x-player.x)>W||Math.abs(b.y-player.y)>H){if(!b.dead)ciShotsExpired++;b.dead=true}}const frozen=",
+    'projectile-straight'
   );
 
   // Runtime diagnostics must work in normal play, not only ?ci=1.
@@ -127,7 +126,7 @@ function startDiagnosticsFeed(){
   },250);
 }
 
-const gameRuntimeUrl = new URL('../game.js?v=01746-aim-final1', import.meta.url).href;
+const gameRuntimeUrl = new URL('../game.js?v=01746-aim-straight1', import.meta.url).href;
 const multiplayerEntryUrl = new URL('../multiplayer-entry.js?v=01745-core3', import.meta.url).href;
 
 try {
