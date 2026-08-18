@@ -1,0 +1,2 @@
+Trigger GitHub Pages deploy after restoring painel.html and diagnostics bootstrap.
+Timestamp: 2026-08-18
