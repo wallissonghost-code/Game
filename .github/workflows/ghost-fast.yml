@@ -1,0 +1,52 @@
+name: Ghost Fast CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'game.js'
+      - 'src/**'
+      - 'scripts/ghost-aim-bot.mjs'
+      - '.github/workflows/ghost-fast.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'game.js'
+      - 'src/**'
+      - 'scripts/ghost-aim-bot.mjs'
+      - '.github/workflows/ghost-fast.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ghost-fast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Cache Playwright Chromium
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-1.55.0-chromium
+
+      - name: Install Playwright package
+        run: npm install --no-audit --no-fund --ignore-scripts
+
+      - name: Install Chromium if cache missed
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install chromium
+
+      - name: Install Chromium system deps
+        run: npx playwright install-deps chromium
+
+      - name: Ghost aim regression
+        run: node scripts/ghost-aim-bot.mjs
