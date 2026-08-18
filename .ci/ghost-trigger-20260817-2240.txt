@@ -1,0 +1,1 @@
+Trigger Ghost regression suite: rapid cadence, close-target priority, stale aim, movement-independent recovery.
