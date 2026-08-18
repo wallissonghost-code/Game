@@ -37,12 +37,37 @@ async function run(browser,name,viewport){
   const shotAngle=ls=>Math.atan2(ls.targetY-ls.playerY,ls.targetX-ls.playerX);
   const shotSelfConsistent=(ls,tolerance=.08)=>!!ls&&Number.isFinite(ls.targetX)&&Number.isFinite(ls.targetY)&&angleDiff(shotAngle(ls),ls.aim)<tolerance;
   const correctFor=(ls,wanted,tolerance=.18)=>shotSelfConsistent(ls)&&angleDiff(shotAngle(ls),wanted)<tolerance;
+  const vectorAngle=v=>Math.atan2(v.vy,v.vx);
 
   await cmd({command:'horde',value:false});
   await cmd({command:'clear'});
   await cmd({command:'skillreset'});
   await cmd({command:'gameplaymode',value:'classic'});
   await cmd({command:'autofire',value:false});
+
+  // Straight-projectile invariant: the selected direction is locked at spawn and vx/vy must never steer afterward.
+  assert(await target(320,0),'could not spawn straight-projectile target');
+  const straight0=await snap();
+  await cmd({command:'autofire',value:true});
+  let straightShot=null,straightBullet=null;
+  for(let i=0;i<20;i++){
+    await sleep(35);
+    const s=await snap();
+    if(s.test.shotsFired>straight0.test.shotsFired&&s.test.liveBullets?.length){straightShot=s.test.lastShot;straightBullet=s.test.liveBullets[s.test.liveBullets.length-1];break}
+  }
+  assert(straightShot&&straightBullet,'could not capture a live straight projectile');
+  await cmd({command:'autofire',value:false});
+  const spawnVectorError=angleDiff(vectorAngle(straightBullet),vectorAngle(straightShot));
+  await sleep(130);
+  const straightLater=await snap();
+  const laterBullet=straightLater.test.liveBullets?.find(b=>Math.abs((b.born||0)-(straightBullet.born||0))<2);
+  const laterVectorError=laterBullet?angleDiff(vectorAngle(laterBullet),vectorAngle(straightShot)):0;
+  console.log(`GHOST STRAIGHT BULLET [${name}] spawnErr=${spawnVectorError.toFixed(4)} laterErr=${laterVectorError.toFixed(4)} alive=${!!laterBullet}`);
+  assert(spawnVectorError<.025,`projectile already curved after spawn: ${spawnVectorError}`);
+  assert(!laterBullet||laterVectorError<.025,`projectile became homing after spawn: ${laterVectorError}`);
+
+  await cmd({command:'clear'});
+  await sleep(250);
 
   // Baseline: a single frozen target. This avoids enemy-separation physics corrupting the expected angle.
   assert(await target(120,0),'could not spawn baseline target');
@@ -116,7 +141,7 @@ async function run(browser,name,viewport){
   assert(correctFor(r1.test.lastShot,RECOVERY_ANGLE),`recovery target used stale direction: ${JSON.stringify(r1.test.lastShot)}`);
 
   assert(errors.length===0,`runtime errors: ${errors.join(' | ')}`);
-  console.log(`GHOST AIM OK [${name}] stationary retarget + Bug22 crowd + recovery passed`);
+  console.log(`GHOST AIM OK [${name}] straight bullet + stationary retarget + Bug22 crowd + recovery passed`);
   await context.close();
 }
 
