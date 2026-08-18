@@ -1,4 +1,4 @@
 {
-  "version": "0.17.45",
-  "build": "stable-runtime-rollback"
+  "version": "0.17.46",
+  "build": "events-diagnostics"
 }
