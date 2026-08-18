@@ -1,3 +1,4 @@
+// Trigger Ghost 4s stationary aim reproduction
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 
