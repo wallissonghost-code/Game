@@ -32,23 +32,45 @@ async function loadPatchedClassic(src) {
   try { await loadClassic(blobUrl); } finally { URL.revokeObjectURL(blobUrl); }
 }
 
+const num=id=>Number(String(document.getElementById(id)?.textContent||'0').replace(/[^0-9.-]/g,''))||0;
+function normalGameSnapshot(){
+  const start=document.getElementById('start'),over=document.getElementById('over'),pause=document.getElementById('pause');
+  const started=!!start&&!start.classList.contains('show');
+  const ended=!!over?.classList.contains('show');
+  return {
+    type:'state',version:'0.17.46',running:started&&!ended,paused:!!pause?.classList.contains('show'),
+    level:num('level'),xp:num('xp'),health:num('life'),maxHealth:100,mobs:num('mobCount'),
+    kills:num('deathKills'),wave:num('deathWave'),score:0,fps:Number(window.__caosFps||window.caosCurrentFps||0)||0,
+    autoMode:false,autofire:true,gameplayMode:'classic',events:null
+  };
+}
+function readDiagnosticState(){return window.CaosStateSnapshot?.()||window.CaosTest?.snapshot?.()||normalGameSnapshot()}
+
 function startDiagnosticsFeed(){
-  let wasRunning=false,lastLevel=0,lastKills=0;
+  let wasRunning=false,lastLevel=0,lastKills=0,finishedSession='';
   setInterval(()=>{
     try{
-      const state=window.CaosTest?.snapshot?.();
-      const rec=window.CaosSessionRecorder;
+      const state=readDiagnosticState(),rec=window.CaosSessionRecorder;
       if(!state||!rec)return;
-      if(state.running&&!wasRunning){rec.start();rec.mark('run-start',{version:state.version||''});lastLevel=+state.level||0;lastKills=+state.kills||0}
+      if(state.running&&!wasRunning){
+        rec.start();finishedSession='';
+        rec.mark('run-start',{version:state.version||'0.17.46'});
+        lastLevel=+state.level||0;lastKills=+state.kills||0;
+      }
       if(state.running){
         rec.sample(state);
         if(+state.level>lastLevel&&lastLevel>0)rec.mark('level-up',{from:lastLevel,to:+state.level});
         if(+state.kills>lastKills+10)rec.mark('kill-burst',{from:lastKills,to:+state.kills});
         lastLevel=+state.level||lastLevel;lastKills=+state.kills||lastKills;
       }
-      if(!state.running&&wasRunning){rec.mark('run-end',{level:state.level,kills:state.kills,score:state.score});rec.finish({level:state.level,kills:state.kills,score:state.score})}
+      const overVisible=!!document.getElementById('over')?.classList.contains('show');
+      if(((!state.running&&wasRunning)||overVisible)&&rec.id&&finishedSession!==rec.id){
+        finishedSession=rec.id;
+        rec.mark('run-end',{level:state.level,kills:state.kills,score:state.score});
+        rec.finish({level:state.level,kills:state.kills,score:state.score});
+      }
       wasRunning=!!state.running;
-    }catch{}
+    }catch(e){console.warn('CAOS LOCAL DIAGNOSTICS',e)}
   },250);
 }
 
