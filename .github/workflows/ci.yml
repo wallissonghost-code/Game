@@ -24,6 +24,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Smoke test menu and short gameplay
         run: npm run check:menu
+      - name: Ghost aim regression · Rapid + close target + stale aim
+        run: npm run check:ghost-aim
       - name: Full gameplay bot · mobile + desktop
         id: gameplay
         continue-on-error: true
