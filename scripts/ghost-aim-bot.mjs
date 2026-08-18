@@ -35,8 +35,8 @@ async function run(browser,name,viewport){
   await cmd({command:'gameplaymode',value:'classic'});
   await cmd({command:'autofire',value:false});
 
-  // Projectile invariant: capture by shotId with tight polling, then prove launch vector never changes.
-  assert(await target(360,0),'could not spawn straight projectile target');
+  // Keep this target inside both mobile and desktop visible bounds.
+  assert(await target(300,Math.PI/2),'could not spawn straight projectile target');
   const before=await snap();
   await cmd({command:'autofire',value:true});
   let shot=null,bullet=null;
