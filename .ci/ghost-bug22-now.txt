@@ -1,0 +1,1 @@
+Force Ghost Fast CI for Bug22 classic crowd aim lock reproduction.
