@@ -39,14 +39,14 @@ function startDiagnosticsFeed(){
       const state=window.CaosTest?.snapshot?.();
       const rec=window.CaosSessionRecorder;
       if(!state||!rec)return;
-      if(state.running&&!wasRunning){rec.start();rec.mark('run-start',{version:state.version||''})}
+      if(state.running&&!wasRunning){rec.start();rec.mark('run-start',{version:state.version||''});lastLevel=+state.level||0;lastKills=+state.kills||0}
       if(state.running){
         rec.sample(state);
         if(+state.level>lastLevel&&lastLevel>0)rec.mark('level-up',{from:lastLevel,to:+state.level});
         if(+state.kills>lastKills+10)rec.mark('kill-burst',{from:lastKills,to:+state.kills});
         lastLevel=+state.level||lastLevel;lastKills=+state.kills||lastKills;
       }
-      if(!state.running&&wasRunning){rec.mark('run-end',{level:state.level,kills:state.kills,score:state.score});rec.uploadLatest(true).catch(()=>{})}
+      if(!state.running&&wasRunning){rec.mark('run-end',{level:state.level,kills:state.kills,score:state.score});rec.finish({level:state.level,kills:state.kills,score:state.score})}
       wasRunning=!!state.running;
     }catch{}
   },250);
