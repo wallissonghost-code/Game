@@ -2,7 +2,9 @@ name: Ghost Fast CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'ci/**'
     paths:
       - 'game.js'
       - 'src/**'
