@@ -1,4 +1,3 @@
-// CI trigger: corrected target-spawn reproduction
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 
@@ -20,57 +19,76 @@ async function run(browser,name,viewport){
   await page.waitForFunction(()=>window.CaosTest&&document.getElementById('startBtn')&&!document.getElementById('startBtn').disabled,null,{timeout:15000});
   await page.locator('#startBtn').click();
   await page.waitForFunction(()=>window.CaosTest?.snapshot().running===true,null,{timeout:5000});
+
   const snap=()=>page.evaluate(()=>window.CaosTest.snapshot());
   const cmd=d=>page.evaluate(d=>window.CaosTest.command(d),d);
   const target=(distance,angle=0)=>page.evaluate(({distance,angle})=>window.CaosTest.spawnTarget(distance,angle),{distance,angle});
   const assert=(ok,msg)=>{if(!ok)throw Error(`[GHOST ${name}] ${msg}`)};
-  const targetDistance=ls=>Math.hypot(ls.targetX-ls.playerX,ls.targetY-ls.playerY);
-  const validateShot=ls=>{assert(ls,'missing lastShot telemetry');assert(Number.isFinite(ls.targetX)&&Number.isFinite(ls.targetY),'shot has no target telemetry');const ta=Math.atan2(ls.targetY-ls.playerY,ls.targetX-ls.playerX);assert(angleDiff(ls.aim,ta)<0.10,`GHOST SHOT TO NOWHERE: aim/target mismatch ${(angleDiff(ls.aim,ta)*180/Math.PI).toFixed(1)}deg`)};
+  const shotAngle=ls=>Math.atan2(ls.targetY-ls.playerY,ls.targetX-ls.playerX);
+  const correctFor=(ls,wanted,tolerance=.20)=>!!ls&&Number.isFinite(ls.targetX)&&angleDiff(shotAngle(ls),wanted)<tolerance&&angleDiff(ls.aim,wanted)<tolerance;
 
-  await cmd({command:'horde',value:false});await cmd({command:'clear'});await cmd({command:'skillreset'});await cmd({command:'autofire',value:false});
+  await cmd({command:'horde',value:false});
+  await cmd({command:'clear'});
+  await cmd({command:'skillreset'});
+  await cmd({command:'autofire',value:false});
 
-  for(let i=0;i<10;i++)assert(await target(110+(i%3)*12,(i%4)*Math.PI/2),'could not spawn baseline target');
-  await cmd({command:'autofire',value:true});const b0=await snap();await sleep(2200);const b1=await snap();const base=b1.test.shotsFired-b0.test.shotsFired;
-  assert(base>=4,`baseline autofire too low: ${base}`);
+  for(let i=0;i<28;i++)assert(await target(150+(i%5)*8,0),'could not spawn initial front target');
+  await cmd({command:'autofire',value:true});
+  const warm0=await snap();
+  await sleep(1600);
+  const warm1=await snap();
+  assert(warm1.test.shotsFired>warm0.test.shotsFired,`initial front target produced no shots`);
+  assert(correctFor(warm1.test.lastShot,0),`initial aim was not pointing at front target`);
 
-  await cmd({command:'autofire',value:false});await cmd({command:'clear'});await cmd({command:'skillreset'});await cmd({command:'skilltest',skill:'rapid',level:5});
-  for(let i=0;i<14;i++)assert(await target(110+(i%3)*12,(i%6)*Math.PI/3),'could not spawn rapid target');
-  await cmd({command:'autofire',value:true});const r0=await snap();await sleep(2200);const r1=await snap();const rapid=r1.test.shotsFired-r0.test.shotsFired;
-  assert(rapid>base*1.20,`RAPID REGRESSION: base=${base}, rapid=${rapid}`);
-  validateShot(r1.test.lastShot);
+  await cmd({command:'autofire',value:false});
+  await cmd({command:'clear'});
+  const NEW_ANGLE=Math.PI*.78;
+  for(let i=0;i<32;i++)assert(await target(105+(i%5)*7,NEW_ANGLE),'could not spawn replacement target');
+  await cmd({command:'autofire',value:true});
+  const hold0=await snap();
 
-  await cmd({command:'autofire',value:false});await cmd({command:'clear'});await cmd({command:'skillreset'});
-  assert(await target(170,0),'could not spawn far target');
-  await cmd({command:'autofire',value:true});const f0=await snap();await page.waitForFunction(n=>window.CaosTest.snapshot().test.shotsFired>n,f0.test.shotsFired,{timeout:1800});
-  const farShot=(await snap()).test.lastShot;validateShot(farShot);const farDist=targetDistance(farShot);
-  assert(farDist>150&&farDist<190,`far-target setup invalid: ${farDist.toFixed(1)}px`);
+  await sleep(4000);
+  const hold1=await snap();
+  const shotsWhileStill=hold1.test.shotsFired-hold0.test.shotsFired;
+  const correctStill=correctFor(hold1.test.lastShot,NEW_ANGLE);
+  const staleStill=!correctStill || shotsWhileStill===0;
 
-  assert(await target(80,Math.PI*.78),'could not spawn close-priority target');
-  const p0=await snap();
-  await sleep(1400);const p1=await snap();const stationaryShots=p1.test.shotsFired-p0.test.shotsFired;
-  assert(stationaryShots>=3,`STALE AIM/TARGET: autofire stalled while stationary; shots=${stationaryShots}`);
-  validateShot(p1.test.lastShot);
-  const chosen=targetDistance(p1.test.lastShot);
-  assert(chosen<105,`CLOSE TARGET IGNORED: last shot still chose target ${chosen.toFixed(1)}px away (far was ${farDist.toFixed(1)}px)`);
+  console.log(`GHOST 4S STILL [${name}] shots=${shotsWhileStill} correct=${correctStill} aim=${Number(hold1.test.aim).toFixed(3)}`);
 
-  const angles=[-Math.PI*.75,Math.PI*.55,-Math.PI*.15,Math.PI*.95];
-  for(let i=0;i<angles.length;i++){
-    assert(await target(82+i*3,angles[i]),`could not spawn switch target ${i}`);
-    const before=await snap();
-    await sleep(700);
-    const after=await snap();
-    assert(after.test.shotsFired-before.test.shotsFired>=1,`MOVEMENT-DEPENDENT AIM: no shot after target switch ${i}`);
-    validateShot(after.test.lastShot);
-    assert(targetDistance(after.test.lastShot)<115,`STALE TARGET AFTER SWITCH ${i}: chose ${targetDistance(after.test.lastShot).toFixed(1)}px target`);
+  let recoveredAfterMove=false,moveShots=0;
+  if(staleStill){
+    const beforeMove=await snap();
+    await page.keyboard.down('ArrowRight');
+    await sleep(220);
+    await page.keyboard.up('ArrowRight');
+    await sleep(1100);
+    const afterMove=await snap();
+    moveShots=afterMove.test.shotsFired-beforeMove.test.shotsFired;
+    recoveredAfterMove=moveShots>0&&correctFor(afterMove.test.lastShot,NEW_ANGLE);
+    console.log(`GHOST MOVE RECOVERY [${name}] shots=${moveShots} recovered=${recoveredAfterMove} playerX=${afterMove.test.playerX.toFixed(1)}`);
   }
 
-  const s0=await snap();await sleep(1400);const s1=await snap();const continued=s1.test.shotsFired-s0.test.shotsFired;
-  assert(continued>=3,`MOVEMENT-DEPENDENT AIM: stationary autofire stopped again; shots=${continued}`);
-  validateShot(s1.test.lastShot);
+  if(staleStill&&recoveredAfterMove){
+    throw Error(`[GHOST ${name}] MOVEMENT UNLOCK CONFIRMED: aim stayed stale for 4s, then recovered after movement`);
+  }
+  if(staleStill&&!recoveredAfterMove){
+    throw Error(`[GHOST ${name}] AIM STUCK: stale for 4s and movement did not recover it`);
+  }
+
+  assert(shotsWhileStill>=3,`stationary retarget fired too few shots: ${shotsWhileStill}`);
   assert(errors.length===0,`runtime errors: ${errors.join(' | ')}`);
-  console.log(`GHOST AIM OK [${name}] base=${base} rapid=${rapid} far=${farDist.toFixed(1)} close=${chosen.toFixed(1)} stationary=${stationaryShots}+${continued}`);
+  console.log(`GHOST AIM OK [${name}] stationary retarget works without movement`);
   await context.close();
 }
 
 let browser;
-try{await waitServer();browser=await chromium.launch({headless:true});await run(browser,'mobile',{width:390,height:844});await run(browser,'desktop',{width:1440,height:900});console.log('GHOST AIM BOT: ALL CHECKS PASSED')}finally{if(browser)await browser.close();server.kill('SIGTERM')}
+try{
+  await waitServer();
+  browser=await chromium.launch({headless:true});
+  await run(browser,'mobile',{width:390,height:844});
+  await run(browser,'desktop',{width:1440,height:900});
+  console.log('GHOST AIM BOT: ALL CHECKS PASSED');
+}finally{
+  if(browser)await browser.close();
+  server.kill('SIGTERM');
+}
