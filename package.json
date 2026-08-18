@@ -11,11 +11,12 @@
     "check:game": "node scripts/check-game.mjs",
     "check:architecture": "node scripts/check-architecture.mjs",
     "check:runtime": "node scripts/audit-runtime.mjs",
+    "check:events": "node scripts/check-natural-events.mjs",
     "check:menu": "node scripts/smoke-menu.mjs",
     "check:gameplay": "node scripts/gameplay-bot.mjs",
     "check:ghost-aim": "node scripts/ghost-aim-bot.mjs",
     "check:progression": "node scripts/progression-bot.mjs",
-    "check": "npm run check:game && npm run check:architecture && npm run check:runtime",
+    "check": "npm run check:game && npm run check:architecture && npm run check:runtime && npm run check:events",
     "validate": "npm run check"
   },
   "dependencies": {
