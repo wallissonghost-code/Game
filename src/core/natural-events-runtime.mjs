@@ -84,6 +84,14 @@ export function patchNaturalEvents(source) {
     'telemetry'
   );
 
+  one(
+    "fps:Math.max(0,Math.round(window.caosCurrentFps||0)),perfMode,skillLv:{...skillLv}",
+    "diagnostics:(()=>{const alive=enemies.filter(e=>!e.dead),target=autoTarget&&!autoTarget.dead?autoTarget:null,near=alive.slice().sort((a,b)=>Math.hypot(a.x-player.x,a.y-player.y)-Math.hypot(b.x-player.x,b.y-player.y)).slice(0,5);return{player:{x:Math.round(player.x*10)/10,y:Math.round(player.y*10)/10,aim:player.aim,moving:!!player.moving,life:Math.round(player.life*100)/100},target:target?{type:target.type,x:Math.round(target.x*10)/10,y:Math.round(target.y*10)/10,hp:Math.round(target.hp*100)/100,dist:Math.round(Math.hypot(target.x-player.x,target.y-player.y)*10)/10}:null,lastShot:ciLastShot?{...ciLastShot}:null,shots:{fired:ciShotsFired,hit:ciShotsHit,expired:ciShotsExpired},bullets:bullets.filter(b=>!b.flash&&!b.dead).slice(0,6).map(b=>({x:Math.round(b.x*10)/10,y:Math.round(b.y*10)/10,vx:Math.round(b.vx*10)/10,vy:Math.round(b.vy*10)/10,owner:b.owner||'p1'})),nearby:near.map(e=>({type:e.type,x:Math.round(e.x*10)/10,y:Math.round(e.y*10)/10,hp:Math.round(e.hp*100)/100,dist:Math.round(Math.hypot(e.x-player.x,e.y-player.y)*10)/10}))}})(),fps:Math.max(0,Math.round(window.caosCurrentFps||0)),perfMode,skillLv:{...skillLv}",
+    'diagnostic-telemetry'
+  );
+
+  one("function broadcast(){const s=state();", "window.CaosStateSnapshot=()=>state();function broadcast(){const s=state();", 'state-export');
+
   // Aim hardening: the real bug is intermittent under live crowd pressure, so never let a cached
   // auto target own the shot direction. Every shot reacquires the nearest valid visible mob and
   // computes its projectile vector directly from that target's current coordinates.
@@ -98,6 +106,6 @@ export function patchNaturalEvents(source) {
     'aim-shot-vector'
   );
 
-  if (changes !== 19) throw new Error(`NaturalEvents: unexpected patch count ${changes}`);
+  if (changes !== 21) throw new Error(`NaturalEvents: unexpected patch count ${changes}`);
   return `${s}\n//# sourceURL=caos-game-runtime-v01746-events.js`;
 }
