@@ -31,3 +31,4 @@ fs.writeFileSync(archPath,a);
 console.log('SPECIAL MOB LOD APPLIED');
 console.log('LOD 0: <24 specials; LOD 1: >=24; LOD 2: >=60 or perfMode 2');
 console.log('ARCHITECTURE CHECK ALIGNED WITH CURRENT BOOTSTRAP');
+// trigger: rerun materializer after CI #541 used pre-materialized head
