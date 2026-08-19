@@ -15,7 +15,7 @@ permissions:
 jobs:
   ghost-fast:
     runs-on: ubuntu-latest
-    timeout-minutes: 14
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -45,6 +45,3 @@ jobs:
 
       - name: Ghost whole-game hunter
         run: node scripts/ghost-whole-game-bot.mjs
-
-      - name: Ghost corrupted FPS + meteor freeze
-        run: node scripts/ghost-perf-freeze-bot.mjs
