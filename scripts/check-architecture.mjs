@@ -104,8 +104,8 @@ for (const token of ['window.CaosSkills.createSoloSkillSystem', 'onArcApply', 'o
 
 if (!html.includes('src/core/skills-bootstrap.mjs')) fail('index.html does not load skills bootstrap');
 else ok('index.html loads skills bootstrap');
-if (!skillsBootstrap.includes("import * as CaosSkills from './skills.mjs?v=01745'")) fail('skills bootstrap does not load skills domain first');
-else ok('skills bootstrap loads skills domain before gameplay');
+if (!skillsBootstrap.includes("import * as CaosSkills from './skills.mjs?v=01746-guardian1'")) fail('skills bootstrap does not load active skills domain first');
+else ok('skills bootstrap loads active skills domain before gameplay');
 if (!skillsBootstrap.includes("new URL('../game.js?v=01746-close-parallax2',import.meta.url)")) fail('skills bootstrap does not resolve active classic gameplay runtime from module URL');
 else ok('skills bootstrap resolves active classic gameplay runtime safely');
 if (!skillsBootstrap.includes("new URL('../multiplayer-entry.js?v=01745-core3',import.meta.url)")) fail('skills bootstrap does not resolve multiplayer entry from module URL');
@@ -142,13 +142,13 @@ if (player.bloodChance !== .20 || player.bloodHeal !== 2 || player.flashDamage !
 if (arc !== 1 || shock !== 1 || phoenix !== 1) fail('skill runtime hooks drifted');
 else ok('extracted skill behavior smoke test passed');
 
-if (RARITY_WEIGHT.secret !== .35 || SKILL_BALANCE.explosiveRadius[5] !== 95) fail('skill balance constants drifted');
+if (RARITY_WEIGHT.secret !== .35 || SKILL_BALANCE.explosiveRadius[5] !== 95 || SKILL_BALANCE.guardianReduction[5] !== .45 || SKILL_BALANCE.guardianIntercept[5] !== .20) fail('skill balance constants drifted');
 else ok('skill balance constants validated');
 
 for (const id of MULTIPLAYER_SKILL_IDS) {
   if (!mpServer.includes(`${id}:`) && !mpServer.includes(`id:'${id}'`)) fail(`multiplayer canonical skill missing: ${id}`);
 }
-const expectedGap = ['ghost', 'dodge', 'ice', 'shock', 'berserker', 'explosive'];
+const expectedGap = ['ghost', 'dodge', 'ice', 'shock', 'berserker', 'explosive', 'guardian'];
 if (JSON.stringify(MULTIPLAYER_SKILL_GAP) !== JSON.stringify(expectedGap)) {
   fail(`multiplayer skill gap changed unexpectedly: ${MULTIPLAYER_SKILL_GAP.join(', ')}`);
 } else {
