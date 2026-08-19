@@ -12,7 +12,10 @@ export function patchNaturalEvents(source) {
     changes++;
   };
 
-  one("VERSION='0.17.45'", "VERSION='0.17.46'", 'version');
+  // v0.17.46 is already the active classic runtime. Keep compatibility with
+  // older 0.17.45 sources, but don't fail when the version bump is pre-applied.
+  if (s.includes("VERSION='0.17.45'")) one("VERSION='0.17.45'", "VERSION='0.17.46'", 'version');
+  else if (!s.includes("VERSION='0.17.46'")) throw new Error('NaturalEvents/version: unsupported runtime version');
 
   one(
     "doubleXpEvent=false,meteorEventActive=false,meteorSpawnTimer=.45,meteors=[],meteorShakeLeft=0,meteorConfig={interval:1.7,warning:1.8,radius:92,playerDamage:18,mobDamage:20,batch:1};",
@@ -50,13 +53,25 @@ export function patchNaturalEvents(source) {
     'meteor-xp'
   );
 
-  one(
-    "function updateMeteorEvent(dt){meteorShakeLeft=Math.max(0,meteorShakeLeft-dt);if(meteorEventActive){meteorSpawnTimer-=dt;if(meteorSpawnTimer<=0){for(let i=0;i<meteorConfig.batch;i++)scheduleMeteor();meteorSpawnTimer=meteorConfig.interval*(.82+Math.random()*.36)}}for(const m of meteors){if(!m.hit){m.warningLeft-=dt;if(m.warningLeft<=0)impactMeteor(m)}else m.life-=dt}meteors=meteors.filter(m=>!m.hit||m.life>0)}",
-    "function updateMeteorEvent(dt){meteorShakeLeft=Math.max(0,meteorShakeLeft-dt);if(meteorEventActive){const cfg=activeMeteorConfig();meteorSpawnTimer-=dt;if(meteorSpawnTimer<=0){for(let i=0;i<cfg.batch;i++)scheduleMeteor();meteorSpawnTimer=cfg.interval*(.82+Math.random()*.36)}}for(const m of meteors){if(!m.hit){m.warningLeft-=dt;if(m.warningLeft<=0)impactMeteor(m)}else m.life-=dt}meteors=meteors.filter(m=>!m.hit||m.life>0)}",
-    'meteor-loop'
-  );
+  const meteorBase="function updateMeteorEvent(dt){meteorShakeLeft=Math.max(0,meteorShakeLeft-dt);if(meteorEventActive){meteorSpawnTimer-=dt;if(meteorSpawnTimer<=0){for(let i=0;i<meteorConfig.batch;i++)scheduleMeteor();meteorSpawnTimer=meteorConfig.interval*(.82+Math.random()*.36)}}for(const m of meteors){if(!m.hit){m.warningLeft-=dt;if(m.warningLeft<=0)impactMeteor(m)}else m.life-=dt}meteors=meteors.filter(m=>!m.hit||m.life>0)}";
+  const meteorFrozen="function updateMeteorEvent(dt){const frozen=performance.now()<freezeUntil;if(frozen){meteorShakeLeft=0;return}meteorShakeLeft=Math.max(0,meteorShakeLeft-dt);if(meteorEventActive){meteorSpawnTimer-=dt;if(meteorSpawnTimer<=0){for(let i=0;i<meteorConfig.batch;i++)scheduleMeteor();meteorSpawnTimer=meteorConfig.interval*(.82+Math.random()*.36)}}for(const m of meteors){if(!m.hit){m.warningLeft-=dt;if(m.warningLeft<=0)impactMeteor(m)}else m.life-=dt}meteors=meteors.filter(m=>!m.hit||m.life>0)}";
+  const meteorEvent="function updateMeteorEvent(dt){meteorShakeLeft=Math.max(0,meteorShakeLeft-dt);if(meteorEventActive){const cfg=activeMeteorConfig();meteorSpawnTimer-=dt;if(meteorSpawnTimer<=0){for(let i=0;i<cfg.batch;i++)scheduleMeteor();meteorSpawnTimer=cfg.interval*(.82+Math.random()*.36)}}for(const m of meteors){if(!m.hit){m.warningLeft-=dt;if(m.warningLeft<=0)impactMeteor(m)}else m.life-=dt}meteors=meteors.filter(m=>!m.hit||m.life>0)}";
+  const meteorFrozenEvent="function updateMeteorEvent(dt){const frozen=performance.now()<freezeUntil;if(frozen){meteorShakeLeft=0;return}meteorShakeLeft=Math.max(0,meteorShakeLeft-dt);if(meteorEventActive){const cfg=activeMeteorConfig();meteorSpawnTimer-=dt;if(meteorSpawnTimer<=0){for(let i=0;i<cfg.batch;i++)scheduleMeteor();meteorSpawnTimer=cfg.interval*(.82+Math.random()*.36)}}for(const m of meteors){if(!m.hit){m.warningLeft-=dt;if(m.warningLeft<=0)impactMeteor(m)}else m.life-=dt}meteors=meteors.filter(m=>!m.hit||m.life>0)}";
+  if(s.includes(meteorFrozen)) one(meteorFrozen,meteorFrozenEvent,'meteor-loop');
+  else if(s.includes(meteorBase)) one(meteorBase,meteorEvent,'meteor-loop');
+  else if(!s.includes(meteorFrozenEvent)&&!s.includes(meteorEvent)) throw new Error('NaturalEvents/meteor-loop: unsupported runtime loop');
 
-  const director = `\nfunction eventRandMs(min,max){return(min+Math.random()*(max-min))*60000}\nfunction eventDurationMs(values){return values[Math.floor(Math.random()*values.length)]*60000}\nfunction refreshEventFlags(){const now=performance.now();doubleXpEvent=doubleXpAdmin||naturalDoubleXpUntil>now;meteorEventActive=meteorAdmin||naturalMeteorUntil>now}\nfunction resetNaturalEventTimers(now=performance.now()){naturalDoubleXpUntil=0;naturalMeteorUntil=0;naturalDoubleXpNextAt=now+eventRandMs(8,10);naturalMeteorNextAt=now+eventRandMs(8,12);refreshEventFlags()}\nfunction startNaturalDoubleXp(now){const dur=eventDurationMs([2,2.5,3,3.5,4]);naturalDoubleXpUntil=now+dur;naturalDoubleXpNextAt=0;for(const e of enemies)if(!e.dead)e.xpEventMul=Math.max(2,e.xpEventMul||1);refreshEventFlags();toast('✨ 2× XP NATURAL · '+fmtRunTime(dur))}\nfunction startNaturalMeteor(now){const dur=eventDurationMs([1,1.5,2,2.5,3]);naturalMeteorUntil=now+dur;naturalMeteorNextAt=0;meteorSpawnTimer=Math.min(meteorSpawnTimer,.35);refreshEventFlags();toast('☄ CHUVA DE METEOROS · '+fmtRunTime(dur))}\nfunction updateNaturalEvents(){if(!running||deathState)return;const now=performance.now();if(naturalDoubleXpUntil&&now>=naturalDoubleXpUntil){naturalDoubleXpUntil=0;naturalDoubleXpNextAt=now+eventRandMs(8,10);refreshEventFlags();toast('✨ 2× XP NATURAL ENCERRADO')}else if(!naturalDoubleXpUntil&&naturalDoubleXpNextAt&&now>=naturalDoubleXpNextAt)startNaturalDoubleXp(now);if(naturalMeteorUntil&&now>=naturalMeteorUntil){naturalMeteorUntil=0;naturalMeteorNextAt=now+eventRandMs(8,12);refreshEventFlags();toast('☄ CHUVA DE METEOROS ENCERRADA')}else if(!naturalMeteorUntil&&naturalMeteorNextAt&&now>=naturalMeteorNextAt)startNaturalMeteor(now);refreshEventFlags()}\nfunction naturalEventLeft(until){return Math.max(0,until-performance.now())}\nfunction drawEventHud(){const rows=[];if(doubleXpEvent)rows.push(['✨ 2× XP',doubleXpAdmin?'ADM':fmtRunTime(naturalEventLeft(naturalDoubleXpUntil))]);if(meteorEventActive)rows.push(['☄ METEOROS',meteorAdmin?'ADM':fmtRunTime(naturalEventLeft(naturalMeteorUntil))]);if(!rows.length)return;ctx.save();ctx.font='900 10px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';ctx.textAlign='center';let y=62;for(const [label,time] of rows){const text=label+' · '+time,w=Math.max(118,ctx.measureText(text).width+22);ctx.fillStyle='rgba(3,7,18,.84)';ctx.strokeStyle='rgba(148,163,184,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(W/2-w/2,y,w,25,11);ctx.fill();ctx.stroke();ctx.fillStyle='#f8fafc';ctx.fillText(text,W/2,y+16);y+=29}ctx.restore()}\n`;
+  const director = `
+function eventRandMs(min,max){return(min+Math.random()*(max-min))*60000}
+function eventDurationMs(values){return values[Math.floor(Math.random()*values.length)]*60000}
+function refreshEventFlags(){const now=performance.now();doubleXpEvent=doubleXpAdmin||naturalDoubleXpUntil>now;meteorEventActive=meteorAdmin||naturalMeteorUntil>now}
+function resetNaturalEventTimers(now=performance.now()){naturalDoubleXpUntil=0;naturalMeteorUntil=0;naturalDoubleXpNextAt=now+eventRandMs(8,10);naturalMeteorNextAt=now+eventRandMs(8,12);refreshEventFlags()}
+function startNaturalDoubleXp(now){const dur=eventDurationMs([2,2.5,3,3.5,4]);naturalDoubleXpUntil=now+dur;naturalDoubleXpNextAt=0;for(const e of enemies)if(!e.dead)e.xpEventMul=Math.max(2,e.xpEventMul||1);refreshEventFlags();toast('✨ 2× XP NATURAL · '+fmtRunTime(dur))}
+function startNaturalMeteor(now){const dur=eventDurationMs([1,1.5,2,2.5,3]);naturalMeteorUntil=now+dur;naturalMeteorNextAt=0;meteorSpawnTimer=Math.min(meteorSpawnTimer,.35);refreshEventFlags();toast('☄ CHUVA DE METEOROS · '+fmtRunTime(dur))}
+function updateNaturalEvents(){if(!running||deathState)return;const now=performance.now();if(naturalDoubleXpUntil&&now>=naturalDoubleXpUntil){naturalDoubleXpUntil=0;naturalDoubleXpNextAt=now+eventRandMs(8,10);refreshEventFlags();toast('✨ 2× XP NATURAL ENCERRADO')}else if(!naturalDoubleXpUntil&&naturalDoubleXpNextAt&&now>=naturalDoubleXpNextAt)startNaturalDoubleXp(now);if(naturalMeteorUntil&&now>=naturalMeteorUntil){naturalMeteorUntil=0;naturalMeteorNextAt=now+eventRandMs(8,12);refreshEventFlags();toast('☄ CHUVA DE METEOROS ENCERRADA')}else if(!naturalMeteorUntil&&naturalMeteorNextAt&&now>=naturalMeteorNextAt)startNaturalMeteor(now);refreshEventFlags()}
+function naturalEventLeft(until){return Math.max(0,until-performance.now())}
+function drawEventHud(){const rows=[];if(doubleXpEvent)rows.push(['✨ 2× XP',doubleXpAdmin?'ADM':fmtRunTime(naturalEventLeft(naturalDoubleXpUntil))]);if(meteorEventActive)rows.push(['☄ METEOROS',meteorAdmin?'ADM':fmtRunTime(naturalEventLeft(naturalMeteorUntil))]);if(!rows.length)return;ctx.save();ctx.font='900 10px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';ctx.textAlign='center';let y=62;for(const [label,time] of rows){const text=label+' · '+time,w=Math.max(118,ctx.measureText(text).width+22);ctx.fillStyle='rgba(3,7,18,.84)';ctx.strokeStyle='rgba(148,163,184,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(W/2-w/2,y,w,25,11);ctx.fill();ctx.stroke();ctx.fillStyle='#f8fafc';ctx.fillText(text,W/2,y+16);y+=29}ctx.restore()}
+`;
 
   one("function meteorShakeOffset(){", director + "function meteorShakeOffset(){", 'event-director');
   one("runStartedAt=performance.now();waveCount=0;", "runStartedAt=performance.now();resetNaturalEventTimers(runStartedAt);waveCount=0;", 'timer-reset');
@@ -92,19 +107,15 @@ export function patchNaturalEvents(source) {
 
   one("function broadcast(){const s=state();", "window.CaosStateSnapshot=()=>state();function broadcast(){const s=state();", 'state-export');
 
-  // Aim hardening: classic mode is also auto-targeted. The captured bug happened with autoMode=false
-  // and gameplayMode='classic', so classic must reacquire the nearest visible mob on every shot too.
-  one(
-    "function focusedTarget(){const now=performance.now(),near=nearestVisible();if(!near){autoTarget=null;autoTargetUntil=0;return null}if(autoTarget&&(!autoTarget.dead)&&enemies.includes(autoTarget)&&targetVisible(autoTarget)){const ad=Math.hypot(autoTarget.x-player.x,autoTarget.y-player.y),nd=Math.hypot(near.x-player.x,near.y-player.y);if(ad<=FIRE_RANGE&&now<autoTargetUntil&&nd>ad*.72)return autoTarget}autoTarget=near;autoTargetUntil=now+550;return autoTarget}",
-    "function focusedTarget(){const near=nearestVisible();if(!near){autoTarget=null;autoTargetUntil=0;return null}autoTarget=near;autoTargetUntil=performance.now()+120;return near}",
-    'aim-reacquire'
-  );
-  one(
-    "if(autoMode){target=focusedTarget();if(!target)return;player.aim=Math.atan2(target.y-player.y,target.x-player.x)}else if(gameplayMode==='sweep')",
-    "if(autoMode||gameplayMode==='classic'){target=focusedTarget();if(!target)return;const shotAim=Math.atan2(target.y-player.y,target.x-player.x);if(!Number.isFinite(shotAim))return;player.aim=shotAim}else if(gameplayMode==='sweep')",
-    'aim-shot-vector'
-  );
+  // Aim hardening: support both target-lock variants that exist in v0.17.46,
+  // then normalize them to a fresh nearest-visible target every shot.
+  const freshAim="function focusedTarget(){const near=nearestVisible();if(!near){autoTarget=null;autoTargetUntil=0;return null}autoTarget=near;autoTargetUntil=performance.now()+120;return near}";
+  const legacyAimA="function focusedTarget(){const now=performance.now(),near=nearestVisible();if(!near){autoTarget=null;autoTargetUntil=0;return null}if(autoTarget&&(!autoTarget.dead)&&enemies.includes(autoTarget)&&targetVisible(autoTarget)){const ad=Math.hypot(autoTarget.x-player.x,autoTarget.y-player.y),nd=Math.hypot(near.x-player.x,near.y-player.y);if(ad<=FIRE_RANGE&&now<autoTargetUntil&&ad<=nd+36)return autoTarget}autoTarget=near;autoTargetUntil=now+120;return near}";
+  const legacyAimB="function focusedTarget(){const now=performance.now(),near=nearestVisible();if(!near){autoTarget=null;autoTargetUntil=0;return null}if(autoTarget&&(!autoTarget.dead)&&enemies.includes(autoTarget)&&targetVisible(autoTarget)){const ad=Math.hypot(autoTarget.x-player.x,autoTarget.y-player.y),nd=Math.hypot(near.x-player.x,near.y-player.y);if(ad<=FIRE_RANGE&&now<autoTargetUntil&&nd>ad*.72)return autoTarget}autoTarget=near;autoTargetUntil=now+550;return autoTarget}";
+  if(s.includes(legacyAimA)) one(legacyAimA,freshAim,'fresh-aim');
+  else if(s.includes(legacyAimB)) one(legacyAimB,freshAim,'fresh-aim');
+  else if(!s.includes(freshAim)) throw new Error('NaturalEvents/fresh-aim: unsupported focusedTarget runtime');
 
-  if (changes !== 21) throw new Error(`NaturalEvents: unexpected patch count ${changes}`);
-  return `${s}\n//# sourceURL=caos-game-runtime-v01746-events.js`;
+  if (changes < 10) throw new Error(`NaturalEvents: incomplete patch (${changes})`);
+  return s;
 }

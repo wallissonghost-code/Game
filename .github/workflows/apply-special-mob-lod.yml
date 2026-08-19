@@ -1,0 +1,34 @@
+name: Apply Special Mob LOD
+on:
+  push:
+    branches: [perf/special-mob-lod]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: perf/special-mob-lod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Apply special mob LOD
+        run: node scripts/apply-special-mob-lod.mjs
+      - name: Verify runtime and architecture
+        run: |
+          grep -F "let specialFxLod=0,specialVisibleCount=0" src/game.js
+          grep -F "specialVisibleCount>=60" src/game.js
+          grep -F "await loadPatchedClassic(gameRuntimeUrl)" src/core/skills-bootstrap.mjs
+          node --check src/game.js
+          npm run check:architecture
+      - name: Commit runtime and remove one-shot files
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/game.js scripts/check-architecture.mjs
+          git rm scripts/apply-special-mob-lod.mjs .github/workflows/apply-special-mob-lod.yml PERF_LOD_PLAN.md README_PERF_TRIGGER.tmp
+          git commit -m "perf: dynamic LOD for elite and corrupted mobs"
+          git push origin HEAD:perf/special-mob-lod
