@@ -14,7 +14,20 @@ const drawOld="for(const e of enemies){const p=world(e.x,e.y),m=e.r+46;if(p.x<-m
 const drawNew="const visibleEnemies=[];specialVisibleCount=0;for(const e of enemies){const p=world(e.x,e.y),m=e.r+46;if(p.x<-m||p.x>W+m||p.y<-m||p.y>H+m)continue;visibleEnemies.push([e,p]);if(e.tier>0&&!types[e.type]?.boss)specialVisibleCount++}specialFxLod=(specialVisibleCount>=60||perfMode>=2)?2:(specialVisibleCount>=24||perfMode>=1)?1:0;for(const [e,p] of visibleEnemies)drawEnemy(e,p)";
 if(!s.includes(drawOld))throw new Error('SPECIAL LOD: draw loop not found');
 s=s.replace(drawOld,drawNew);
-
 fs.writeFileSync(path,s);
+
+// Keep architecture CI aligned with the current bootstrap. The runtime is intentionally
+// loaded through loadPatchedClassic() so natural-events/aim compatibility patches apply.
+const archPath='scripts/check-architecture.mjs';
+let a=fs.readFileSync(archPath,'utf8');
+const replacements=[
+  ["new URL('../game.js?v=01745-core3', import.meta.url)","new URL('../game.js?v=01746-close-parallax2', import.meta.url)"],
+  ["if (!skillsBootstrap.includes('await loadClassic(gameRuntimeUrl)')) fail('skills bootstrap does not start classic gameplay runtime');","if (!skillsBootstrap.includes('await loadPatchedClassic(gameRuntimeUrl)')) fail('skills bootstrap does not start patched classic gameplay runtime');"],
+  ["else ok('skills bootstrap starts classic gameplay runtime');","else ok('skills bootstrap starts patched classic gameplay runtime');"]
+];
+for(const [from,to] of replacements){if(!a.includes(from))throw new Error('ARCH PATCH missing: '+from);a=a.replace(from,to)}
+fs.writeFileSync(archPath,a);
+
 console.log('SPECIAL MOB LOD APPLIED');
 console.log('LOD 0: <24 specials; LOD 1: >=24; LOD 2: >=60 or perfMode 2');
+console.log('ARCHITECTURE CHECK ALIGNED WITH CURRENT BOOTSTRAP');
