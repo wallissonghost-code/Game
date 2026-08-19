@@ -20,7 +20,7 @@ function fixClassicAimSync(source){
 
   replaceOne(
     "else if(autoFire){const target=autoMode?focusedTarget():nearestVisible();if(target){const wanted=Math.atan2(target.y-player.y,target.x-player.x);let da=angleDelta(wanted,player.aim);player.aim+=da*Math.min(1,dt*7)}}else if(player.moving)",
-    "else if(autoFire){const target=autoMode?focusedTarget():nearestVisible();if(target){const wanted=Math.atan2(target.y-player.y,target.x-player.x);if(gameplayMode==='classic'&&!autoMode)player.aim=wanted;else{let da=angleDelta(wanted,player.aim);player.aim+=da*Math.min(1,dt*7)}}}else if(player.moving)",
+    "else if(autoFire){const target=autoMode?focusedTarget():nearestVisible();if(target){let wanted=Math.atan2(target.y-player.y,target.x-player.x);if(gameplayMode==='classic'&&!autoMode){let d=playerFacing(wanted),m=muzzleLocal(d),sx=player.x+m.x,sy=player.y+m.y;wanted=Math.atan2(target.y-sy,target.x-sx);d=playerFacing(wanted);m=muzzleLocal(d);sx=player.x+m.x;sy=player.y+m.y;wanted=Math.atan2(target.y-sy,target.x-sx);player.aim=wanted}else{let da=angleDelta(wanted,player.aim);player.aim+=da*Math.min(1,dt*7)}}}else if(player.moving)",
     'frame-aim'
   );
 
@@ -61,6 +61,6 @@ function normalGameSnapshot(){const start=document.getElementById('start'),over=
 function readDiagnosticState(){return window.CaosStateSnapshot?.()||window.CaosTest?.snapshot?.()||normalGameSnapshot()}
 function startDiagnosticsFeed(){let wasRunning=false,lastLevel=0,lastKills=0,finishedSession='';setInterval(()=>{try{const state=readDiagnosticState(),rec=window.CaosSessionRecorder;if(!state||!rec)return;if(state.running&&!wasRunning){rec.start();finishedSession='';rec.mark('run-start',{version:state.version||'0.17.46'});lastLevel=+state.level||0;lastKills=+state.kills||0}if(state.running){rec.sample(state);if(+state.level>lastLevel&&lastLevel>0)rec.mark('level-up',{from:lastLevel,to:+state.level});if(+state.kills>lastKills+10)rec.mark('kill-burst',{from:lastKills,to:+state.kills});lastLevel=+state.level||lastLevel;lastKills=+state.kills||lastKills}const overVisible=!!document.getElementById('over')?.classList.contains('show');if(((!state.running&&wasRunning)||overVisible)&&rec.id&&finishedSession!==rec.id){finishedSession=rec.id;rec.mark('run-end',{level:state.level,kills:state.kills,score:state.score});rec.finish({level:state.level,kills:state.kills,score:state.score})}wasRunning=!!state.running}catch(e){console.warn('CAOS LOCAL DIAGNOSTICS',e)}},250)}
 
-const gameRuntimeUrl=new URL('../game.js?v=01746-muzzle-origin1',import.meta.url).href;
+const gameRuntimeUrl=new URL('../game.js?v=01746-visual-muzzle1',import.meta.url).href;
 const multiplayerEntryUrl=new URL('../multiplayer-entry.js?v=01745-core3',import.meta.url).href;
 try{await loadPatchedClassic(gameRuntimeUrl);await loadClassic(multiplayerEntryUrl);startDiagnosticsFeed();window.CaosRuntimeReady=true;window.dispatchEvent(new CustomEvent('caos:runtime-ready',{detail:{skills:true,mobs:true,combat:true,naturalEvents:true,diagnostics:true}}))}catch(error){console.error('CAOS CORE BOOTSTRAP',error);window.CaosRuntimeReady=false;window.dispatchEvent(new CustomEvent('caos:runtime-error',{detail:{message:String(error?.message||error)}}))}
