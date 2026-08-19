@@ -38,7 +38,7 @@ export const RARITY_WEIGHT = Object.freeze({
 
 export const SOLO_SKILL_IDS = Object.freeze([
   'speed', 'medic', 'rapid', 'xp', 'flash', 'regen', 'blood', 'arc', 'phoenix',
-  'armor', 'pierce', 'ghost', 'dodge', 'ice', 'shock', 'berserker', 'explosive'
+  'armor', 'pierce', 'ghost', 'dodge', 'ice', 'shock', 'berserker', 'explosive', 'guardian'
 ]);
 
 export const MULTIPLAYER_SKILL_IDS = Object.freeze([
