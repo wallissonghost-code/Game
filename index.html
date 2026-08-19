@@ -20,7 +20,7 @@
 <section id="pause" class="overlay"><div class="card"><h1>Pausar né.</h1><p>Código para conectar o painel.</p><div class="session"><small>CÓDIGO DA SESSÃO</small><b id="roomCode">--------</b><div id="remoteStatus">ABRINDO SALA...</div></div><a class="btn" id="duoInviteBtn" href="duo.html" style="display:block;text-align:center;text-decoration:none;margin-bottom:8px">ABRIR ENTRADA PLAYER 2</a><small style="display:block;margin-bottom:12px">O mesmo código conecta ADM e P2.</small><button class="btn" id="resumeBtn">CONTINUAR</button></div></section>
 <section id="skillPick" class="overlay"><div class="card"><h1>LEVEL UP!</h1><p>Repetir a mesma skill aumenta seu nível. No Lv5 ela sai do sorteio.</p><div class="skills" id="skillChoices"></div></div></section>
 <section id="deathCam" class="deathCam"><div class="deathBox"><button id="deathClose" class="deathClose" aria-label="Fechar">×</button><div class="killed">VOCÊ FOI ELIMINADO POR</div><h2 id="deathKiller">—</h2><div class="deathStats"><div><small>LEVEL</small><b id="deathLevel">1</b></div><div><small>TEMPO</small><b id="deathTime">00:00</b></div><div><small>HORDA</small><b id="deathWave">0</b></div><div><small>ABATES</small><b id="deathKills">0</b></div></div><div class="deathHint">Câmera focada no golpe final</div></div></section>
-<section id="over" class="overlay"><div class="card"><h1>Fim de jogo</h1><p id="finalText"></p><button class="btn" id="restartBtn">JOGAR NOVAMENTE</button></div></section>
+<section id="over" class="overlay"><div class="card"><h1>Fim de jogo</h1><p id="finalText"></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px"><button class="btn" id="restartBtn">JOGAR NOVAMENTE</button><button class="btn" id="saveMatchBtn" type="button" style="background:#111827;border:1px solid #4c1d95;color:#ddd6fe">SALVAR PARTIDA</button></div><small style="display:block;margin-top:10px;color:#7f8ab4">Opcional · apenas 1 partida fica salva localmente.</small></div></section>
 <section id="rankOverlay" class="overlay"><div class="card" style="width:min(680px,94vw);max-height:82vh;overflow:auto"><h1>🏆 RANKING</h1><p id="rankStatus">Ranking global · conectando ao Firebase...</p><div style="display:flex;gap:8px;margin:12px 0"><button id="rankSoloBtn" class="btn" style="flex:1">SOLITÁRIO</button><button id="rankDuoBtn" class="btn" style="flex:1">DUPLA</button></div><div id="rankList" style="display:grid;gap:8px"></div><button id="rankClose" class="btn" style="margin-top:14px">FECHAR</button></div></section>
 </main>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -29,7 +29,7 @@
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore-compat.js"></script>
 <script src="src/firebase-ranking.js?v=01745"></script>
-<script src="src/core/session-recorder.js?v=4"></script>
+<script src="src/core/session-recorder.js?v=5"></script>
 <script src="src/map-runtime.js?v=01745"></script>
 <script type="module" src="src/core/skills-bootstrap.mjs?v=01746-tracer-muzzle2"></script>
 </body>
