@@ -52,6 +52,18 @@ function fixClassicAimSync(source){
   replaceOne("map(b=>({x:b.x,y:b.y,vx:b.vx,vy:b.vy,born:b.born,pierceLeft:b.pierceLeft,ice:!!b.ice,explosive:!!b.explosive}))","map(b=>({shotId:b.shotId||null,x:b.x,y:b.y,prevX:b.prevX,prevY:b.prevY,vx:b.vx,vy:b.vy,launchVx:b.launchVx,launchVy:b.launchVy,born:b.born,pierceLeft:b.pierceLeft,ice:!!b.ice,explosive:!!b.explosive}))",'diagnostic-projectiles');
   replaceOne("fireRate:player.fireRate,aim:player.aim,lastShot:ciLastShot","fireRate:player.fireRate,aim:player.aim,visualAim:player.aim,lastShot:ciLastShot",'diagnostic-visual-aim');
   replaceOne("dist=Math.max(80,Math.min(360,+distance||180))","dist=Math.max(24,Math.min(360,+distance||180))",'ci-close-target');
+
+  replaceOne(
+    "const trail=ctx.createLinearGradient(-22,0,5,0);trail.addColorStop(0,'rgba(34,211,238,0)');",
+    "const trailAge=Math.max(0,performance.now()-(b.born||performance.now())),trailLen=Math.max(0,Math.min(22,trailAge*.55)),trail=ctx.createLinearGradient(-Math.max(1,trailLen),0,5,0);trail.addColorStop(0,'rgba(34,211,238,0)');",
+    'tracer-origin-growth'
+  );
+  replaceOne(
+    "ctx.beginPath();ctx.moveTo(-22,-2.2);ctx.lineTo(2,-3.5);ctx.lineTo(5,0);ctx.lineTo(2,3.5);ctx.lineTo(-22,2.2);ctx.closePath();ctx.fill();",
+    "ctx.beginPath();ctx.moveTo(-trailLen,-2.2);ctx.lineTo(2,-3.5);ctx.lineTo(5,0);ctx.lineTo(2,3.5);ctx.lineTo(-trailLen,2.2);ctx.closePath();ctx.fill();",
+    'tracer-tail-growth'
+  );
+
   return patched;
 }
 
@@ -62,6 +74,6 @@ function normalGameSnapshot(){const start=document.getElementById('start'),over=
 function readDiagnosticState(){return window.CaosStateSnapshot?.()||window.CaosTest?.snapshot?.()||normalGameSnapshot()}
 function startDiagnosticsFeed(){let wasRunning=false,lastLevel=0,lastKills=0,finishedSession='';setInterval(()=>{try{const state=readDiagnosticState(),rec=window.CaosSessionRecorder;if(!state||!rec)return;if(state.running&&!wasRunning){rec.start();finishedSession='';rec.mark('run-start',{version:state.version||'0.17.46'});lastLevel=+state.level||0;lastKills=+state.kills||0}if(state.running){rec.sample(state);if(+state.level>lastLevel&&lastLevel>0)rec.mark('level-up',{from:lastLevel,to:+state.level});if(+state.kills>lastKills+10)rec.mark('kill-burst',{from:lastKills,to:+state.kills});lastLevel=+state.level||lastLevel;lastKills=+state.kills||lastKills}const overVisible=!!document.getElementById('over')?.classList.contains('show');if(((!state.running&&wasRunning)||overVisible)&&rec.id&&finishedSession!==rec.id){finishedSession=rec.id;rec.mark('run-end',{level:state.level,kills:state.kills,score:state.score});rec.finish({level:state.level,kills:state.kills,score:state.score})}wasRunning=!!state.running}catch(e){console.warn('CAOS LOCAL DIAGNOSTICS',e)}},250)}
 
-const gameRuntimeUrl=new URL('../game.js?v=01746-close-parallax1',import.meta.url).href;
+const gameRuntimeUrl=new URL('../game.js?v=01746-close-parallax2',import.meta.url).href;
 const multiplayerEntryUrl=new URL('../multiplayer-entry.js?v=01745-core3',import.meta.url).href;
 try{await loadPatchedClassic(gameRuntimeUrl);await loadClassic(multiplayerEntryUrl);startDiagnosticsFeed();window.CaosRuntimeReady=true;window.dispatchEvent(new CustomEvent('caos:runtime-ready',{detail:{skills:true,mobs:true,combat:true,naturalEvents:true,diagnostics:true}}))}catch(error){console.error('CAOS CORE BOOTSTRAP',error);window.CaosRuntimeReady=false;window.dispatchEvent(new CustomEvent('caos:runtime-error',{detail:{message:String(error?.message||error)}}))}
