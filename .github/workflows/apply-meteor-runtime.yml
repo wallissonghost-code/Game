@@ -15,19 +15,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Apply meteor freeze to real runtime
-        run: node scripts/apply-safe-perf-v2.mjs
-      - name: Bump runtime version
-        run: node -e "const fs=require('fs');const p='src/game.js';let s=fs.readFileSync(p,'utf8');s=s.replace(\"const VERSION='0.17.45'\",\"const VERSION='0.17.46'\");fs.writeFileSync(p,s)"
-      - name: Verify runtime contains freeze
+      - name: Apply bootstrap compatibility
+        run: node scripts/fix-meteor-bootstrap-compat.mjs
+      - name: Verify materialized runtime and bootstrap
         run: |
           grep -F "function updateMeteorEvent(dt){const frozen=performance.now()<freezeUntil" src/game.js
-          grep -F "const VERSION='0.17.46'" src/game.js
+          grep -F "MeteorCompat: natural event loop not found after patch" src/core/skills-bootstrap.mjs
           node --check src/game.js
-      - name: Commit materialized runtime
+          node --check src/core/skills-bootstrap.mjs
+      - name: Commit compatibility fix
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add src/game.js
-          git commit -m "fix: materialize meteor freeze runtime v0.17.46"
+          git add src/core/skills-bootstrap.mjs
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "fix: bootstrap materialized meteor runtime"
           git push origin HEAD:fix/meteor-freeze-runtime-apply
