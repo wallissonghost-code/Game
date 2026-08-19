@@ -104,10 +104,19 @@ async function runScenario(browser,name,viewport){
   assert(expiredNormal<=Math.max(5,Math.floor(firedNormal*.75)),`too many controlled shots miss/expire: fired=${firedNormal} hit=${hitNormal} expired=${expiredNormal}`);
   noErrors('shot geometry/collision runtime error');
 
-  await cmd({command:'clear'});await cmd({command:'autofire',value:false});for(let i=0;i<16;i++)await spawnTarget(120+(i%5)*10);await cmd({command:'autofire',value:true});
+  // Cadence comparison must start from equivalent combat states. Previously the
+  // baseline phase could consume/kill the shared target pack, leaving Rapid with
+  // zero valid targets and producing a false red CI despite the skill working.
+  await cmd({command:'clear'});await cmd({command:'skillreset'});await cmd({command:'autofire',value:false});
+  for(let i=0;i<40;i++)await spawnTarget(150+(i%5)*8);
+  await cmd({command:'autofire',value:true});
   const base0=await snap();await sleep(2200);const base1=await snap();const baseRate=base1.test.shotsFired-base0.test.shotsFired;
-  await cmd({command:'skilltest',skill:'rapid',level:5});for(let i=0;i<16;i++)await spawnTarget(120+(i%5)*10);
+
+  await cmd({command:'clear'});await cmd({command:'autofire',value:false});await cmd({command:'skilltest',skill:'rapid',level:5});
+  for(let i=0;i<40;i++)await spawnTarget(150+(i%5)*8);
+  await cmd({command:'autofire',value:true});
   const rapid0=await snap();await sleep(2200);const rapid1=await snap();const rapidRate=rapid1.test.shotsFired-rapid0.test.shotsFired;
+  assert(baseRate>=5,`baseline cadence sample too small: ${baseRate}`);
   assert(rapidRate>baseRate*1.20,`Rapid did not increase fire cadence enough: base=${baseRate}, rapid=${rapidRate}`);
 
   await cmd({command:'skillreset'});await cmd({command:'clear'});for(let i=0;i<30;i++)await spawnTarget(120+(i%6)*8);await cmd({command:'autofire',value:true});
