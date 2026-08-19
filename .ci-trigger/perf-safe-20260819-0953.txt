@@ -1,0 +1,3 @@
+Safe performance pass requested after rollback.
+Do not change stable gameplay yet. Ghost must validate current baseline first.
+Target: corrupted mob FPS + meteor freeze in isolated follow-up.
