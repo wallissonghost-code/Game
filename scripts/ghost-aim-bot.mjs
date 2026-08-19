@@ -27,6 +27,8 @@ async function run(browser,name,viewport){
   const shotAngle=ls=>Math.atan2(ls.targetY-ls.spawnY,ls.targetX-ls.spawnX);
   const shotOK=(ls,t=.08)=>!!ls&&Number.isFinite(ls.targetX)&&Number.isFinite(ls.targetY)&&Number.isFinite(ls.spawnX)&&Number.isFinite(ls.spawnY)&&angleDiff(shotAngle(ls),ls.aim)<t;
   const centerAngle=ls=>Math.atan2(ls.targetY-ls.playerY,ls.targetX-ls.playerX);
+  const visualAim=s=>Number(s?.player?.aim);
+  const visualShotOK=(s,ls,t=.055)=>Number.isFinite(visualAim(s))&&!!ls&&angleDiff(visualAim(s),ls.aim)<t;
   const dismissSkillPick=async()=>{for(let i=0;i<5;i++){const v=await page.evaluate(()=>document.getElementById('skillPick')?.classList.contains('show')||false);if(!v)return;await page.evaluate(()=>document.querySelector('#skillChoices button')?.click());await sleep(100)}};
 
   await cmd({command:'horde',value:false});
@@ -66,26 +68,30 @@ async function run(browser,name,viewport){
   console.log(`GHOST STRAIGHT [${name}] shotId=${shot.shotId} samples=${observed} maxErr=${maxVectorError.toFixed(5)}`);
   assert(maxVectorError<.02,`projectile curved in flight: ${maxVectorError}`);
 
-  // Reproduce Pqp.json geometry: target extremely close, muzzle heavily offset from player center.
-  await cmd({command:'clear'});await sleep(120);
-  const CLOSE_ANGLE=1.99;
-  assert(await target(40,CLOSE_ANGLE),'could not spawn close muzzle target');
-  const close0=await snap();
-  await cmd({command:'autofire',value:true});
-  let closeShot=null;
-  for(let i=0;i<80;i++){
-    await sleep(10);
-    const s=await snap();
-    if(s.test.shotsFired>close0.test.shotsFired){closeShot=s.test.lastShot;break}
+  // Close-range matrix: this catches the real Bugnovo/Pqp class, including visual body/gun aim.
+  const closeAngles=[0,.45*Math.PI,.85*Math.PI,1.2*Math.PI,1.55*Math.PI,1.9*Math.PI];
+  for(const CLOSE_ANGLE of closeAngles){
+    await cmd({command:'autofire',value:false});await cmd({command:'clear'});await sleep(90);
+    assert(await target(40,CLOSE_ANGLE),`could not spawn close target at ${CLOSE_ANGLE}`);
+    const close0=await snap();
+    await cmd({command:'autofire',value:true});
+    let closeShot=null,closeState=null;
+    for(let i=0;i<100;i++){
+      await sleep(8);
+      const s=await snap();
+      if(s.test.shotsFired>close0.test.shotsFired){closeShot=s.test.lastShot;closeState=s;break}
+    }
+    assert(closeShot,`close target ${CLOSE_ANGLE} produced no shot`);
+    const centerErr=angleDiff(closeShot.aim,centerAngle(closeShot));
+    const muzzleErr=angleDiff(closeShot.aim,shotAngle(closeShot));
+    const visualErr=Number.isFinite(visualAim(closeState))?angleDiff(visualAim(closeState),closeShot.aim):Infinity;
+    console.log(`GHOST CLOSE [${name}] angle=${CLOSE_ANGLE.toFixed(3)} shot=${closeShot.shotId} centerErr=${centerErr.toFixed(4)} muzzleErr=${muzzleErr.toFixed(4)} visualErr=${visualErr.toFixed(4)}`);
+    assert(muzzleErr<.025,`close shot used player center instead of muzzle: ${JSON.stringify(closeShot)}`);
+    assert(visualShotOK(closeState,closeShot),`player/gun visual aim disagrees with shot by ${visualErr}: ${JSON.stringify({player:closeState?.player,lastShot:closeShot})}`);
+    await sleep(360);
+    const close1=await snap();
+    assert(close1.test.shotsHit>close0.test.shotsHit,`close target ${CLOSE_ANGLE} was fired at but not hit`);
   }
-  assert(closeShot,'close muzzle target produced no shot');
-  const centerErr=angleDiff(closeShot.aim,centerAngle(closeShot));
-  const muzzleErr=angleDiff(closeShot.aim,shotAngle(closeShot));
-  console.log(`GHOST MUZZLE [${name}] shotId=${closeShot.shotId} centerErr=${centerErr.toFixed(4)} muzzleErr=${muzzleErr.toFixed(4)}`);
-  assert(muzzleErr<.025,`close shot used player center instead of muzzle: ${JSON.stringify(closeShot)}`);
-  await sleep(420);
-  const close1=await snap();
-  assert(close1.test.shotsHit>close0.test.shotsHit,'close muzzle shot did not register a hit');
   await cmd({command:'autofire',value:false});
 
   await cmd({command:'clear'});await sleep(180);
@@ -120,8 +126,16 @@ async function run(browser,name,viewport){
   assert(r1.test.shotsFired-r0.test.shotsFired>=2,'new target did not wake stationary fire');
   assert(shotOK(r1.test.lastShot),`recovery stale: ${JSON.stringify(r1.test.lastShot)}`);
 
+  // Sanity accounting: no projectile may disappear without hit, expiry, or still being live.
+  await cmd({command:'autofire',value:false});await sleep(700);
+  const end=await snap();
+  const live=end.test.liveBullets?.filter(b=>b.owner==='p1'||!b.owner).length||0;
+  const accounted=end.test.shotsHit+end.test.shotsExpired+live;
+  assert(accounted<=end.test.shotsFired,`projectile accounting exceeded fired: fired=${end.test.shotsFired} accounted=${accounted}`);
+  assert(end.test.shotsFired-accounted<=2,`too many player shots vanished without hit/expiry: fired=${end.test.shotsFired} hit=${end.test.shotsHit} expired=${end.test.shotsExpired} live=${live}`);
+
   assert(errors.length===0,`runtime errors: ${errors.join(' | ')}`);
-  console.log(`GHOST AIM OK [${name}] muzzle-origin + straight + close crowd + recovery passed`);
+  console.log(`GHOST AIM OK [${name}] visual-sync + muzzle-origin + straight + close-matrix + crowd + recovery passed`);
   await context.close();
 }
 
