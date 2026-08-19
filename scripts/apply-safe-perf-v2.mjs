@@ -12,10 +12,10 @@ function replaceOnce(oldText,newText,label){
 }
 
 replaceOnce(
-"function updateMeteorEvent(dt){meteorShakeLeft=Math.max(0,meteorShakeLeft-dt);if(meteorEventActive){meteorSpawnTimer-=dt;if(meteorSpawnTimer<=0){for(let i=0;i<meteorConfig.batch;i++)scheduleMeteor();meteorSpawnTimer=meteorConfig.interval*(.82+Math.random()*.36)}}for(const m of meteors){if(!m.hit){m.warningLeft-=dt;if(m.warningLeft<=0)impactMeteor(m)}else m.life-=dt}meteors=meteors.filter(m=>!m.hit||m.life>0)}",
-"function updateMeteorEvent(dt){const frozen=performance.now()<freezeUntil;if(frozen){meteorShakeLeft=0;return}meteorShakeLeft=Math.max(0,meteorShakeLeft-dt);if(meteorEventActive){meteorSpawnTimer-=dt;if(meteorSpawnTimer<=0){for(let i=0;i<meteorConfig.batch;i++)scheduleMeteor();meteorSpawnTimer=meteorConfig.interval*(.82+Math.random()*.36)}}for(const m of meteors){if(!m.hit){m.warningLeft-=dt;if(m.warningLeft<=0)impactMeteor(m)}else m.life-=dt}meteors=meteors.filter(m=>!m.hit||m.life>0)}",
-'meteor freeze only'
+"function tunePerformance(t){perfFrames++;if(t-perfWindowStart<800)return;perfLastFps=Math.max(1,Math.round(perfFrames*1000/(t-perfWindowStart)));window.__caosFps=perfLastFps;perfFrames=0;perfWindowStart=t;const mobs=enemies.length;let next=perfMode;if(perfLastFps<40||mobs>=165)next=2;else if(perfLastFps<53||mobs>=90)next=Math.max(1,perfMode);else if(perfLastFps>58&&mobs<70)next=0;else if(perfLastFps>55&&mobs<110&&perfMode===2)next=1;if(next!==perfMode){perfMode=next;const target=perfMode===2?.56:perfMode===1?.76:1;if(Math.abs(renderScale-target)>.01){renderScale=target;resize()}}}",
+"function tunePerformance(t){perfFrames++;if(t-perfWindowStart<800)return;perfLastFps=Math.max(1,Math.round(perfFrames*1000/(t-perfWindowStart)));window.__caosFps=perfLastFps;perfFrames=0;perfWindowStart=t;const mobs=enemies.length,corrupted=enemies.reduce((n,e)=>n+(!e.dead&&e.tier===2?1:0),0),load=mobs+corrupted*.75;let next=perfMode;if(perfLastFps<40||load>=165)next=2;else if(perfLastFps<53||load>=90)next=Math.max(1,perfMode);else if(perfLastFps>58&&load<70)next=0;else if(perfLastFps>55&&load<110&&perfMode===2)next=1;if(next!==perfMode){perfMode=next;const target=perfMode===2?.56:perfMode===1?.76:1;if(Math.abs(renderScale-target)>.01){renderScale=target;resize()}}}",
+'corrupted weighted perf load'
 );
 
 fs.writeFileSync(path,s);
-console.log('METEOR FREEZE PATCH APPLIED');
+console.log('CORRUPTED WEIGHTED PERF PATCH APPLIED');
