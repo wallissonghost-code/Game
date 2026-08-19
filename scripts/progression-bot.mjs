@@ -5,7 +5,7 @@ const PORT=4175, BASE=`http://127.0.0.1:${PORT}`;
 const server=spawn('python3',['-m','http.server',String(PORT),'--bind','127.0.0.1'],{stdio:['ignore','pipe','pipe']});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const expectedXpNeed=lv=>Math.floor(60*Math.pow(Math.max(1,lv),1.42)*(lv>=90?1.70:lv>=80?1.50:lv>=60?1.30:lv>=40?1.12:1));
-const caps={speed:5,medic:5,rapid:5,xp:5,flash:5,regen:5,blood:5,arc:5,phoenix:1,armor:4,pierce:5,ghost:5,dodge:1,ice:5,shock:5,berserker:5,explosive:5};
+const caps={speed:5,medic:5,rapid:5,xp:5,flash:5,regen:5,blood:5,arc:5,phoenix:1,armor:4,pierce:5,ghost:5,dodge:1,ice:5,shock:5,berserker:5,explosive:5,guardian:5};
 
 async function waitServer(){for(let i=0;i<40;i++){try{const r=await fetch(BASE,{cache:'no-store'});if(r.ok)return}catch{}await sleep(250)}throw Error('progression bot server did not start')}
 
