@@ -1,0 +1,1 @@
+Ghost: validate aura-only corrupted optimization after isolating meteor freeze and weighted perf load.
