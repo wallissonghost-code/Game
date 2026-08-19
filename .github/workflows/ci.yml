@@ -16,12 +16,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Validate game and architecture
-        run: npm run check
-      - name: Install browser test dependencies
+      - name: Install test dependencies first
         run: |
           npm install --no-audit --no-fund
           npx playwright install --with-deps chromium
+      - name: Validate current architecture
+        run: |
+          node scripts/check-ci-sanity.mjs
+          npm run check:architecture
+          npm run check:runtime
+          npm run check:events
       - name: Smoke test menu and short gameplay
         run: npm run check:menu
       - name: Ghost aim regression · Rapid + close target + stale aim
