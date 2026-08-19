@@ -15,7 +15,7 @@ permissions:
 jobs:
   ghost-fast:
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -42,3 +42,6 @@ jobs:
 
       - name: Ghost aim regression
         run: node scripts/ghost-aim-bot.mjs
+
+      - name: Ghost whole-game hunter
+        run: node scripts/ghost-whole-game-bot.mjs
