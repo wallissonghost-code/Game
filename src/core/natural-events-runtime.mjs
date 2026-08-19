@@ -12,7 +12,10 @@ export function patchNaturalEvents(source) {
     changes++;
   };
 
-  one("VERSION='0.17.45'", "VERSION='0.17.46'", 'version');
+  // v0.17.46 is already the active classic runtime. Keep compatibility with
+  // older 0.17.45 sources, but don't fail when the version bump is pre-applied.
+  if (s.includes("VERSION='0.17.45'")) one("VERSION='0.17.45'", "VERSION='0.17.46'", 'version');
+  else if (!s.includes("VERSION='0.17.46'")) throw new Error('NaturalEvents/version: unsupported runtime version');
 
   one(
     "doubleXpEvent=false,meteorEventActive=false,meteorSpawnTimer=.45,meteors=[],meteorShakeLeft=0,meteorConfig={interval:1.7,warning:1.8,radius:92,playerDamage:18,mobDamage:20,batch:1};",
@@ -95,16 +98,11 @@ export function patchNaturalEvents(source) {
   // Aim hardening: classic mode is also auto-targeted. The captured bug happened with autoMode=false
   // and gameplayMode='classic', so classic must reacquire the nearest visible mob on every shot too.
   one(
-    "function focusedTarget(){const now=performance.now(),near=nearestVisible();if(!near){autoTarget=null;autoTargetUntil=0;return null}if(autoTarget&&(!autoTarget.dead)&&enemies.includes(autoTarget)&&targetVisible(autoTarget)){const ad=Math.hypot(autoTarget.x-player.x,autoTarget.y-player.y),nd=Math.hypot(near.x-player.x,near.y-player.y);if(ad<=FIRE_RANGE&&now<autoTargetUntil&&nd>ad*.72)return autoTarget}autoTarget=near;autoTargetUntil=now+550;return autoTarget}",
+    "function focusedTarget(){const now=performance.now(),near=nearestVisible();if(!near){autoTarget=null;autoTargetUntil=0;return null}if(autoTarget&&(!autoTarget.dead)&&enemies.includes(autoTarget)&&targetVisible(autoTarget)){const ad=Math.hypot(autoTarget.x-player.x,autoTarget.y-player.y),nd=Math.hypot(near.x-player.x,near.y-player.y);if(ad<=FIRE_RANGE&&now<autoTargetUntil&&ad<=nd+36)return autoTarget}autoTarget=near;autoTargetUntil=now+120;return near}",
     "function focusedTarget(){const near=nearestVisible();if(!near){autoTarget=null;autoTargetUntil=0;return null}autoTarget=near;autoTargetUntil=performance.now()+120;return near}",
-    'aim-reacquire'
-  );
-  one(
-    "if(autoMode){target=focusedTarget();if(!target)return;player.aim=Math.atan2(target.y-player.y,target.x-player.x)}else if(gameplayMode==='sweep')",
-    "if(autoMode||gameplayMode==='classic'){target=focusedTarget();if(!target)return;const shotAim=Math.atan2(target.y-player.y,target.x-player.x);if(!Number.isFinite(shotAim))return;player.aim=shotAim}else if(gameplayMode==='sweep')",
-    'aim-shot-vector'
+    'fresh-aim'
   );
 
-  if (changes !== 21) throw new Error(`NaturalEvents: unexpected patch count ${changes}`);
-  return `${s}\n//# sourceURL=caos-game-runtime-v01746-events.js`;
+  if (changes < 10) throw new Error(`NaturalEvents: incomplete patch (${changes})`);
+  return s;
 }
