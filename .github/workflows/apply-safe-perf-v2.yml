@@ -1,0 +1,34 @@
+name: Apply Safe Perf V2
+
+on:
+  push:
+    branches:
+      - 'ci/perf-safe-v2'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ci/perf-safe-v2
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Isolate aura-only optimization
+        run: node scripts/isolate-aura-only.mjs
+      - name: Syntax check
+        run: node --check src/game.js
+      - name: Commit isolated game patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/game.js
+          git diff --cached --quiet && exit 0
+          git commit -m "perf: isolate corrupted aura optimization"
+          git push origin HEAD:ci/perf-safe-v2
