@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import {createLandMarket,LandMarketError} from '../src/core/land-market.mjs';
+import {createPropertyLifecycle} from '../src/core/property-lifecycle.mjs';
+import {createBusinessOperations} from '../src/core/business-operations.mjs';
+
+let t=1_800_000_000_000;const now=()=>t++;
+const market=createLandMarket({now});
+const lifecycle=createPropertyLifecycle({market,now});
+market.setBalance('owner',1_000_000);market.setBalance('customer',50_000);market.setBalance('intruder',50_000);
+market.registerLand({uid:'biz-land-01',ownerUid:'owner',neighborhood:'Centro',zone:'Sul',areaM2:500,baseValue:120_000,status:'empty'});
+lifecycle.construct({landUid:'biz-land-01',ownerUid:'owner',plan:{type:'commercial',quality:'standard',floors:1,footprintM2:160,name:'Loja Teste'}});
+const ops=createBusinessOperations({market,now});
+const before=market.getBalance('owner');
+const biz=ops.openBusiness({ownerUid:'owner',landUid:'biz-land-01',name:'Ghost Market',type:'retail',initialCapital:20_000});
+assert.equal(biz.status,'active');assert.equal(biz.occupancyMode,'owner');assert.equal(market.getBalance('owner'),before-25_000);
+assert.throws(()=>ops.openBusiness({ownerUid:'owner',landUid:'biz-land-01',name:'Outra',type:'retail',initialCapital:1000}),e=>e instanceof LandMarketError&&e.code==='BUSINESS_ALREADY_ACTIVE');
+ops.defineProduct({businessId:biz.id,ownerUid:'owner',sku:'cafe',name:'Café',salePrice:20,unitCost:8});
+const stocked=ops.restock({businessId:biz.id,ownerUid:'owner',sku:'cafe',quantity:100});assert.equal(stocked.product.stock,100);assert.equal(stocked.cost,800);
+const customerBefore=market.getBalance('customer');
+const sale=ops.sell({businessId:biz.id,sku:'cafe',quantity:3,customerUid:'customer'});assert.equal(sale.gross,60);assert.equal(sale.tax,3);assert.equal(market.getBalance('customer'),customerBefore-60);
+let view=ops.inspect(biz.id);assert.equal(view.products.cafe.stock,97);assert.equal(view.stats.salesCount,1);assert.equal(view.stats.unitsSold,3);assert.equal(view.stats.grossRevenue,60);assert.equal(view.stats.taxPaid,3);
+assert.throws(()=>ops.defineProduct({businessId:biz.id,ownerUid:'intruder',sku:'x',salePrice:1}),e=>e instanceof LandMarketError&&e.code==='NOT_BUSINESS_OWNER');
+const ownerBalance=market.getBalance('owner');ops.withdrawProfit({businessId:biz.id,ownerUid:'owner',amount:500});assert.equal(market.getBalance('owner'),ownerBalance+500);
+const snapshot=ops.snapshot();const restored=createBusinessOperations({market,now});restored.hydrate(snapshot);assert.equal(restored.inspect(biz.id).name,'Ghost Market');
+restored.closeBusiness({businessId:biz.id,ownerUid:'owner'});assert.equal(restored.inspect(biz.id).status,'closed');
+console.log('BUSINESS OPERATIONS OK',{businessId:biz.id,gross:sale.gross,tax:sale.tax,stock:97});
