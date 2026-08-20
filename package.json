@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "tiktok": "node scripts/tiktok-bridge.mjs",
-    "cloud": "node cloud/connector-server.mjs",
+    "cloud": "node cloud/connector-bootstrap.mjs",
     "game-server": "npm run game-server-v2",
     "game-server-v2": "node cloud/game-server-v2.mjs",
     "game-server-v3": "node cloud/game-server-v3.mjs",
@@ -13,7 +13,7 @@
     "check:runtime": "node scripts/audit-runtime.mjs",
     "check:events": "node scripts/check-natural-events.mjs",
     "check:admin": "node scripts/check-admin-contract.mjs",
-    "check:live": "node --check cloud/connector-server.mjs && node --check src/panel-live-v2.js && node --check src/panel-guardian.js",
+    "check:live": "node --check cloud/connector-bootstrap.mjs && node --check cloud/connector-server.mjs && node --check src/panel-live-v2.js && node --check src/panel-guardian.js",
     "check:land-market": "node scripts/check-land-market.mjs",
     "check:property-lifecycle": "node scripts/check-property-lifecycle.mjs",
     "check:property-market": "node scripts/check-property-market.mjs",
