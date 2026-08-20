@@ -33,6 +33,11 @@ function activeListing(snapshot,landUid){
   return (snapshot.listings||[]).find(x=>x.landUid===landUid&&x.status==='active')||null;
 }
 
+function activeRental(land){
+  const rental=land?.metadata?.rentalContract;
+  return rental&&['active','delinquent'].includes(rental.status)?rental:null;
+}
+
 function mutableLand(snapshot,landUid){
   return (snapshot.lands||[]).find(x=>x.uid===landUid)||null;
 }
@@ -60,6 +65,7 @@ export function quoteConstruction(land,plan,policy={}){
 export function quoteDemolition(land,policy={}){
   assert(land,'LAND_NOT_FOUND','Terreno não encontrado.');
   assert(land.status==='built'&&land.metadata?.structure,'NO_STRUCTURE','Não existe construção para demolir.');
+  assert(!activeRental(land),'PROPERTY_RENTED','Não é possível demolir um imóvel com locação ativa.');
   const p={...POLICY,...policy},structure=land.metadata.structure;
   const basis=Math.max(0,finite(structure.buildCost,0));
   return clone({
@@ -92,6 +98,7 @@ export function createPropertyLifecycle(options={}){
   function construct({landUid,ownerUid,plan}){
     const land=market.getLand(landUid);ensureOwner(land,ownerUid);
     assert(land.status==='empty','LAND_NOT_EMPTY','O terreno precisa estar vazio para construir.');
+    assert(!activeRental(land),'PROPERTY_RENTED','Não é possível construir enquanto existir locação ativa.');
     const snap=market.snapshot();assert(!activeListing(snap,land.uid),'LAND_LISTED_FOR_SALE','Remova o terreno do mercado antes de construir.');
     const quote=quoteConstruction(land,plan,policy);
     assert(market.getBalance(ownerUid)>=quote.constructionCost,'INSUFFICIENT_FUNDS','Saldo insuficiente para construir.',{required:quote.constructionCost,balance:market.getBalance(ownerUid)});
@@ -113,6 +120,7 @@ export function createPropertyLifecycle(options={}){
 
   function demolish({landUid,ownerUid}){
     const land=market.getLand(landUid);ensureOwner(land,ownerUid);
+    assert(!activeRental(land),'PROPERTY_RENTED','Não é possível demolir um imóvel alugado.');
     const quote=quoteDemolition(land,policy);
     assert(market.getBalance(ownerUid)>=quote.cost,'INSUFFICIENT_FUNDS','Saldo insuficiente para demolir.',{required:quote.cost,balance:market.getBalance(ownerUid)});
     const at=now();
@@ -129,6 +137,7 @@ export function createPropertyLifecycle(options={}){
 
   function reconstruct({landUid,ownerUid,plan}){
     const land=market.getLand(landUid);ensureOwner(land,ownerUid);
+    assert(!activeRental(land),'PROPERTY_RENTED','Não é possível reconstruir um imóvel alugado.');
     assert(land.status==='built'&&land.metadata?.structure,'NO_STRUCTURE','É necessário existir uma construção para reconstruir.');
     const demolition=quoteDemolition(land,policy),construction=quoteConstruction(land,plan,policy);
     const totalCost=money(demolition.cost+construction.constructionCost);
