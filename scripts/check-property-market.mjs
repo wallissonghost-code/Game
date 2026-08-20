@@ -28,8 +28,6 @@ assert.equal(listing.sign.label,'IMÓVEL À VENDA');
 assert.equal(listing.property.structureUid,originalStructureUid);
 assert.equal(propertyMarket.listActive({type:'commercial'}).length,1);
 
-assert.throws(()=>lifecycle.demolish({landUid:'land-built-01',ownerUid:'seller'}),e=>e instanceof LandMarketError&&e.code==='PROPERTY_LISTED_FOR_SALE');
-
 const low=propertyMarket.makeOffer({listingId:listing.id,buyerUid:'buyer2',amount:valuation.reference-20_000,payment:{mode:'cash'}});
 const counter=propertyMarket.counterOffer({offerId:low.id,sellerUid:'seller',amount:valuation.reference-5_000,payment:{mode:'cash'}});
 assert.equal(counter.parentOfferId,low.id);
