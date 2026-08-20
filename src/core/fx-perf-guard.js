@@ -3,10 +3,10 @@
 const P=globalThis.CanvasRenderingContext2D?.prototype;
 if(!P||window.__caosFxPerfGuard)return;
 window.__caosFxPerfGuard=true;
-window.__caosFxPerfGuardVersion=3;
+window.__caosFxPerfGuardVersion=4;
 
 let fps=60,frames=0,last=performance.now();
-let phoenixParticleSeq=0,furySeenAt=0;
+let phoenixParticleSeq=0,furySeenAt=0,bossAuraSkip=0;
 let furyBadge=null;
 
 function ensureFuryBadge(){
@@ -48,7 +48,33 @@ function pressure(){
 }
 function normColor(v){return String(v||'').replace(/\s+/g,'').toLowerCase();}
 
-const rawStroke=P.stroke,rawFill=P.fill,rawFillText=P.fillText;
+const rawStroke=P.stroke,rawFill=P.fill,rawFillText=P.fillText,rawDrawImage=P.drawImage;
+
+P.drawImage=function(...args){
+  const c=normColor(this.shadowColor),old=this.shadowBlur,mode=pressure();
+  const rareAuraStart=(c==='#172554'||c==='#09090b')&&old>=20;
+  const rareAuraContinuation=(c==='#3b82f6'||c==='#a855f7'||c==='#7f1d1d'||c==='#ef4444')&&old>=10;
+
+  // Boss Elite/Corrompido: o runtime original redesenha a mesma sprite 3x
+  // com blurs diferentes para formar a aura. Mantemos só a primeira passada.
+  // As duas seguintes são descartadas; o draw normal do Boss continua intacto.
+  if(rareAuraStart){
+    bossAuraSkip=2;
+    this.shadowBlur=mode>=2?2:mode===1?4:7;
+    try{return rawDrawImage.apply(this,args)}finally{this.shadowBlur=old;}
+  }
+  if(bossAuraSkip>0&&rareAuraContinuation){
+    bossAuraSkip--;
+    return;
+  }
+
+  // Glow geral do Boss normal: limita apenas o blur, sem remover a sprite.
+  if(c==='#ef4444'&&old>=20){
+    this.shadowBlur=mode>=2?2:mode===1?5:9;
+    try{return rawDrawImage.apply(this,args)}finally{this.shadowBlur=old;}
+  }
+  return rawDrawImage.apply(this,args);
+};
 
 P.stroke=function(...args){
   const c=normColor(this.shadowColor),stroke=normColor(this.strokeStyle),old=this.shadowBlur;
@@ -56,14 +82,12 @@ P.stroke=function(...args){
 
   // FÚRIA PÓS-BOSS: o estado continua aplicado a TODOS os mobs no gameplay,
   // porém a representação visual agora é apenas global. Nenhum mob recebe aura individual.
-  // O conjunto exato abaixo identifica o anel de Fúria sem remover a aura Berserker do player.
   if(c==='#dc2626'&&stroke==='#ef4444'&&Math.abs(width-2.5)<.01){
     noteFury();
     return;
   }
 
   // FÊNIX: os dois anéis continuam visíveis, mas sem shadowBlur por frame.
-  // Em aparelhos fracos o blur do Canvas era o principal pico de GPU no revive.
   if((c==='#f59e0b'||c==='#fb923c')&&this.globalCompositeOperation==='screen'&&old>0){
     this.shadowBlur=0;
     try{return rawStroke.apply(this,args)}finally{this.shadowBlur=old;}
@@ -76,7 +100,6 @@ P.fill=function(...args){
   const mode=pressure(),c=normColor(this.shadowColor),old=this.shadowBlur;
 
   // FÊNIX: no máximo 2 partículas por frame; sob pressão fica apenas 1.
-  // As partículas restantes são cosméticas e não alteram escudo, revive ou duração.
   if(c==='#fbbf24'&&this.globalCompositeOperation==='screen'){
     phoenixParticleSeq++;
     const cap=mode>=1?1:2;
@@ -96,7 +119,6 @@ P.fill=function(...args){
 };
 
 P.fillText=function(text,...args){
-  // Remove o texto repetido em cada mob. A informação é mostrada uma única vez no evento global.
   if(String(text)==='FÚRIA'){
     noteFury();
     return;
@@ -105,11 +127,12 @@ P.fillText=function(text,...args){
 };
 
 window.CaosFxPerfGuard={
-  version:3,
+  version:4,
   get fps(){return fps},
   get pressure(){return pressure()},
   get mobs(){return mobCount()},
   furyVisualMode:'global-only',
-  phoenixFxMode:'low-cost'
+  phoenixFxMode:'low-cost',
+  bossAuraMode:'single-pass-adaptive'
 };
 })();
