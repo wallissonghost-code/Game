@@ -13,6 +13,7 @@
     "check:runtime": "node scripts/audit-runtime.mjs",
     "check:events": "node scripts/check-natural-events.mjs",
     "check:admin": "node scripts/check-admin-contract.mjs",
+    "check:live": "node --check cloud/connector-server.mjs && node --check src/panel-live-v2.js && node --check src/panel-guardian.js",
     "check:land-market": "node scripts/check-land-market.mjs",
     "check:property-lifecycle": "node scripts/check-property-lifecycle.mjs",
     "check:property-market": "node scripts/check-property-market.mjs",
@@ -24,7 +25,7 @@
     "check:gameplay": "node scripts/gameplay-bot.mjs",
     "check:ghost-aim": "node scripts/ghost-aim-bot.mjs",
     "check:progression": "node scripts/progression-bot.mjs",
-    "check": "npm run check:game && npm run check:architecture && npm run check:runtime && npm run check:events && npm run check:admin && npm run check:land-market && npm run check:property-lifecycle && npm run check:property-market && npm run check:property-rental && npm run check:business && npm run check:business-employment && npm run check:business-production",
+    "check": "npm run check:game && npm run check:architecture && npm run check:runtime && npm run check:events && npm run check:admin && npm run check:live && npm run check:land-market && npm run check:property-lifecycle && npm run check:property-market && npm run check:property-rental && npm run check:business && npm run check:business-employment && npm run check:business-production",
     "validate": "npm run check"
   },
   "dependencies": {
