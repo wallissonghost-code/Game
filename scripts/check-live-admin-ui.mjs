@@ -15,7 +15,14 @@ try{
   await page.goto(`http://127.0.0.1:${port}/painel.html`,{waitUntil:'domcontentloaded'});
   await page.evaluate(()=>{const gifts=Array.from({length:700},(_,i)=>({id:String(5000+i),name:i===123?'Galaxy Test':`Gift ${i}`,diamondCount:(i%50)+1,icon:'',liveVerified:i<30,liveVerifiedCount:2}));localStorage.setItem('caos-gift-catalog-v2',JSON.stringify({capturedAt:Date.now(),gifts}))});
   await page.reload({waitUntil:'domcontentloaded'});
-  await page.waitForSelector('#giftCatalogSearch',{timeout:5000});
+
+  // The Live panel is tab-scoped and intentionally hidden on initial load.
+  // Activate the real Live tab before asserting visibility/interactivity.
+  const liveTab=page.locator('[data-admin-tab="live"], [data-tab="live"], #tabLive, button').filter({hasText:/LIVE/i}).first();
+  if(await liveTab.count())await liveTab.click();
+  else await page.evaluate(()=>{document.querySelectorAll('[data-admin-area="live"]').forEach(el=>{el.style.display='';el.hidden=false})});
+
+  await page.waitForSelector('#giftCatalogSearch',{state:'visible',timeout:5000});
   const t0=Date.now();
   await page.locator('#giftCatalogSearch').fill('Galaxy Test');
   await page.waitForTimeout(250);
