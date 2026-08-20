@@ -32,7 +32,37 @@ function getComment(data={}){return deepValue(data,['comment','content','text','
 function normalizeGift(data={}){const user=getUser(data),gift=data.giftName||data.extendedGiftInfo?.name||data.gift?.name||deepValue(data,['giftName','gift_name'])||`gift-${data.giftId||'unknown'}`,count=Number(data.repeatCount||data.repeat_count||data.count||1)||1,repeatEnd=data.repeatEnd??data.repeat_end??true,giftType=Number(data.giftType??data.gift_type??data.extendedGiftInfo?.type??0)||0,diamondCount=Number(data.diamondCount??data.diamond_count??data.extendedGiftInfo?.diamondCount??data.extendedGiftInfo?.diamond_count??0)||0;return{type:'gift',user,gift,count,giftId:data.giftId||data.gift_id||null,diamondCount,repeatEnd,giftType}}
 function catalogGift(g={}){const id=g.id??g.giftId??g.gift_id??g.gift?.id??null,name=g.name??g.giftName??g.gift_name??g.gift?.name??`gift-${id??'unknown'}`,diamondCount=Number(g.diamondCount??g.diamond_count??g.diamondCost??g.cost??g.gift?.diamondCount??0)||0,type=Number(g.type??g.giftType??g.gift_type??0)||0;const icon=g.icon?.urlList?.[0]||g.icon?.url_list?.[0]||g.image?.urlList?.[0]||g.image?.url_list?.[0]||g.iconUrl||g.imageUrl||'';return{id:id==null?null:String(id),name:String(name),diamondCount,type,icon:String(icon||''),isCombo:!!(g.isCombo??g.combo??type===1)}}
 function normalizeCatalog(raw,live){let list=Array.isArray(raw)?raw:raw?.gifts||raw?.giftList||raw?.availableGifts||[];if(!Array.isArray(list)&&Array.isArray(live?.availableGifts))list=live.availableGifts;if(!Array.isArray(list))list=[];const seen=new Set();return list.map(catalogGift).filter(g=>{const k=g.id||g.name.toLowerCase();if(!k||seen.has(k))return false;seen.add(k);return true}).sort((a,b)=>(a.diamondCount-b.diamondCount)||a.name.localeCompare(b.name))}
-async function fetchGiftCatalog(username,existingLive=null){const u=String(username||'').trim().replace(/^@/,'');if(!u)throw Error('Informe o @ da Live para capturar presentes.');let live=existingLive,owned=false;if(!live||typeof live.fetchAvailableGifts!=='function'){live=new TikTokLiveConnection(u,{enableExtendedGiftInfo:false,processInitialData:false,fetchRoomInfoOnConnect:true});owned=true}try{if(typeof live.fetchAvailableGifts!=='function')throw Error('Esta versão do Connector não expõe fetchAvailableGifts().');const raw=await live.fetchAvailableGifts();const gifts=normalizeCatalog(raw,live);if(!gifts.length)throw Error('TikTok não retornou presentes para esta sala.');return gifts}finally{if(owned){try{live.removeAllListeners?.();await live.disconnect?.()}catch{}}}}
+async function fetchGiftCatalog(username,existingLive=null){
+  const u=String(username||'').trim().replace(/^@/,'');
+  if(!u)throw Error('Informe o @ da Live para capturar presentes.');
+  let live=existingLive,owned=false;
+  if(!live||typeof live.fetchAvailableGifts!=='function'){
+    live=new TikTokLiveConnection(u,{enableExtendedGiftInfo:false,processInitialData:false,fetchRoomInfoOnConnect:true});
+    owned=true;
+  }
+  try{
+    if(typeof live.fetchAvailableGifts!=='function')throw Error('Esta versão do Connector não expõe fetchAvailableGifts().');
+    // fetchAvailableGifts() precisa do roomId. Quando a captura é aberta por um
+    // WebSocket separado do painel, ainda não existe uma sessão TikTok conectada;
+    // por isso primeiro resolvemos/conectamos a sala e só depois buscamos os gifts.
+    if(owned){
+      await live.connect();
+    }
+    let raw;
+    try{raw=await live.fetchAvailableGifts()}catch(e){
+      const msg=String(e?.message||e);
+      if(/roomid/i.test(msg)&&!owned){
+        const fresh=new TikTokLiveConnection(u,{enableExtendedGiftInfo:false,processInitialData:false,fetchRoomInfoOnConnect:true});
+        try{await fresh.connect();raw=await fresh.fetchAvailableGifts()}finally{try{fresh.removeAllListeners?.();await fresh.disconnect?.()}catch{}}
+      }else throw e;
+    }
+    const gifts=normalizeCatalog(raw,live);
+    if(!gifts.length)throw Error('TikTok não retornou presentes para esta sala.');
+    return gifts;
+  }finally{
+    if(owned){try{live.removeAllListeners?.();await live.disconnect?.()}catch{}}
+  }
+}
 function isSigningPaywall(e){const s=String(e?.message||e||'').toLowerCase();return s.includes('business plan')||s.includes('fetchwebcastsignature')||(s.includes('eulerstream')&&s.includes('sign'))}
 async function closeLive(s){if(!s.live)return;try{s.live.removeAllListeners?.()}catch{}try{await s.live.disconnect?.()}catch{}s.live=null;s.username='';s.connecting=false;s.mode=''}
 function emitLike(ws,s,data,mode){const user=getUser(data),count=Math.max(1,Number(data.likeCount||data.count||data.totalLikeCount||deepValue(data,['likeCount','like_count'])||1)||1);dbg(ws,'LIKE RECEBIDO',{user,count,mode});relay(ws,s,{type:'like',user,count,mode})}
