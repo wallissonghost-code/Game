@@ -13,11 +13,12 @@
     "check:runtime": "node scripts/audit-runtime.mjs",
     "check:events": "node scripts/check-natural-events.mjs",
     "check:land-market": "node scripts/check-land-market.mjs",
+    "check:property-lifecycle": "node scripts/check-property-lifecycle.mjs",
     "check:menu": "node scripts/smoke-menu.mjs",
     "check:gameplay": "node scripts/gameplay-bot.mjs",
     "check:ghost-aim": "node scripts/ghost-aim-bot.mjs",
     "check:progression": "node scripts/progression-bot.mjs",
-    "check": "npm run check:game && npm run check:architecture && npm run check:runtime && npm run check:events && npm run check:land-market",
+    "check": "npm run check:game && npm run check:architecture && npm run check:runtime && npm run check:events && npm run check:land-market && npm run check:property-lifecycle",
     "validate": "npm run check"
   },
   "dependencies": {
