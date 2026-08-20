@@ -1,0 +1,35 @@
+name: Ghost Performance
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'scripts/ghost-perf-suite.mjs'
+      - '.github/workflows/ghost-performance.yml'
+
+concurrency:
+  group: ghost-performance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    name: Ghost Performance Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Run comparative benchmark
+        run: node scripts/ghost-perf-suite.mjs
+      - name: Publish benchmark artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ghost-performance-report
+          path: artifacts/ghost-perf-report.json
+          retention-days: 14
