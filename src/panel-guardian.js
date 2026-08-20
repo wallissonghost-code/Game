@@ -1,118 +1,21 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
-
-function installStyles(){
-  if(document.querySelector('link[data-caos-admin-shell]'))return;
-  const l=document.createElement('link');
-  l.rel='stylesheet';l.href='src/styles/panel-shell.css?v=2';l.dataset.caosAdminShell='1';
-  document.head.appendChild(l);
-}
-
-function installGuardianAdmin(){
-  const select=$('skillTestSelect');
-  if(select&&!select.querySelector('option[value="guardian"]')){
-    const option=document.createElement('option');
-    option.value='guardian';
-    option.textContent='☄️ Guardião Celestial';
-    const phoenix=select.querySelector('option[value="phoenix"]');
-    select.insertBefore(option,phoenix||null);
-  }
-  const state=$('skillStateList');
-  if(state){
-    const pretty=()=>{
-      if(/\bguardian\b/i.test(state.textContent||''))state.textContent=state.textContent.replace(/\bguardian\b/gi,'Guardião Celestial');
-    };
-    pretty();
-    new MutationObserver(pretty).observe(state,{childList:true,subtree:true,characterData:true});
-  }
-}
-
-function installMobileTapSafety(){
-  document.addEventListener('dblclick',e=>{
-    if(e.target.closest('button,[role="button"],a.openGame'))e.preventDefault();
-  },{passive:false});
-  let lastTap=0,lastTarget=null;
-  document.addEventListener('touchend',e=>{
-    const target=e.target.closest('button,[role="button"]');
-    if(!target)return;
-    const now=Date.now();
-    if(lastTarget===target&&now-lastTap<320)e.preventDefault();
-    lastTap=now;lastTarget=target;
-  },{passive:false});
-}
-
-function proxyCommand(command,patch={}){
-  const source=document.querySelector(`[data-cmd="${command}"]`);
-  if(!source)return false;
-  const old={};
-  for(const [k,v] of Object.entries(patch)){old[k]=source.dataset[k];if(v===undefined||v===null)delete source.dataset[k];else source.dataset[k]=String(v)}
-  source.click();
-  for(const [k,v] of Object.entries(old)){if(v===undefined)delete source.dataset[k];else source.dataset[k]=v}
-  return true;
-}
+function installStyles(){if(document.querySelector('link[data-caos-admin-shell]'))return;const l=document.createElement('link');l.rel='stylesheet';l.href='src/styles/panel-shell.css?v=3';l.dataset.caosAdminShell='1';document.head.appendChild(l)}
+function installGuardianAdmin(){const select=$('skillTestSelect');if(select&&!select.querySelector('option[value="guardian"]')){const o=document.createElement('option');o.value='guardian';o.textContent='☄️ Guardião Celestial';select.insertBefore(o,select.querySelector('option[value="phoenix"]')||null)}const state=$('skillStateList');if(state){const pretty=()=>{if(/\bguardian\b/i.test(state.textContent||''))state.textContent=state.textContent.replace(/\bguardian\b/gi,'Guardião Celestial')};pretty();new MutationObserver(pretty).observe(state,{childList:true,subtree:true,characterData:true})}}
+function installMobileTapSafety(){document.addEventListener('dblclick',e=>{if(e.target.closest('button,[role="button"],a.openGame'))e.preventDefault()},{passive:false});let lastTap=0,lastTarget=null;document.addEventListener('touchend',e=>{const target=e.target.closest('button,[role="button"]');if(!target)return;const now=Date.now();if(lastTarget===target&&now-lastTap<320)e.preventDefault();lastTap=now;lastTarget=target},{passive:false})}
+function proxyCommand(command,patch={}){const source=document.querySelector(`[data-cmd="${command}"]`);if(!source)return false;const old={};for(const[k,v]of Object.entries(patch)){old[k]=source.dataset[k];if(v==null)delete source.dataset[k];else source.dataset[k]=String(v)}source.click();for(const[k,v]of Object.entries(old)){if(v===undefined)delete source.dataset[k];else source.dataset[k]=v}return true}
 function makeButton(label,sub,cls,onClick){const b=document.createElement('button');b.type='button';b.className=cls||'';b.innerHTML=`${label}${sub?`<small>${sub}</small>`:''}`;b.addEventListener('click',onClick);return b}
-
-function installPlayerControlStrip(){
-  if($('caosPlayerControlStrip'))return;
-  const actionGrid=document.querySelector('.actionGrid');if(!actionGrid)return;
-  const strip=document.createElement('div');strip.id='caosPlayerControlStrip';strip.className='caosControlStrip';
-  strip.append(
-    makeButton('❤ CURAR +5','P1/P2 selecionado','heal',()=>proxyCommand('heal',{amount:5})),
-    makeButton('❤ CURAR +25','P1/P2 selecionado','heal',()=>proxyCommand('heal',{amount:25})),
-    makeButton('❤ VIDA CHEIA','cura até o máximo','heal',()=>proxyCommand('heal',{amount:9999})),
-    makeButton('💥 DANO -10','P1/P2 selecionado','danger',()=>proxyCommand('damage',{amount:10}))
-  );
-  actionGrid.insertAdjacentElement('afterend',strip);
-}
-
-function installLiveDirector(){
-  if($('caosLiveDirector'))return;
-  const anchor=document.querySelector('.automationsCard');if(!anchor)return;
-  const card=document.createElement('section');card.id='caosLiveDirector';card.className='caosQuickCard';card.dataset.adminArea='live';
-  card.innerHTML='<div class="caosQuickHead"><div><span class="eyebrow">DIRETOR DA LIVE</span><h2>Ações instantâneas</h2></div><span class="miniStatus">1 TOQUE</span></div><p class="hint">Controles rápidos para reagir à transmissão sem procurar funções pelo painel.</p>';
-  const grid=document.createElement('div');grid.className='caosQuickGrid';
-  grid.append(
-    makeButton('❤ CURA +25','salva o alvo rapidamente','heal',()=>proxyCommand('heal',{amount:25})),
-    makeButton('💥 DANO -10','pressão instantânea','danger',()=>proxyCommand('damage',{amount:10})),
-    makeButton('👾 +10 MOBS','caos rápido','live',()=>{const amount=$('mobAmount'),old=amount?.value;if(amount)amount.value='10';$('spawn')?.click();if(amount)amount.value=old}),
-    makeButton('👾 +50 MOBS','pico de interação','live',()=>{const amount=$('mobAmount'),old=amount?.value;if(amount)amount.value='50';$('spawn')?.click();if(amount)amount.value=old}),
-    makeButton('👹 BOSS','tier atual do painel','event',()=>document.querySelector('[data-cmd="boss"]')?.click()),
-    makeButton('❄ CONGELAR 5s','evento relâmpago','event',()=>proxyCommand('freeze',{seconds:5})),
-    makeButton('🛡 INVENCÍVEL 5s','proteção relâmpago','event',()=>proxyCommand('invincible',{seconds:5})),
-    makeButton('☄ METEORO ON/OFF','usa config salva','event',()=>$('meteorEventToggle')?.click())
-  );
-  card.appendChild(grid);anchor.parentNode.insertBefore(card,anchor);
-}
-
-function classifyAreas(){
-  const dashboard=document.querySelector('.dashboardTop');
-  if(dashboard){dashboard.querySelector('.connectionCard')?.setAttribute('data-admin-area','partida');dashboard.querySelector('.cloudCard')?.setAttribute('data-admin-area','live')}
-  document.querySelector('.automationsCard')?.setAttribute('data-admin-area','live');
-  $('tiktokLiveMonitor')?.setAttribute('data-admin-area','live');
-  $('specialEventsCard')?.setAttribute('data-admin-area','eventos');
-  const controls=$('controls');
-  if(controls){const cards=[...controls.children].filter(x=>x.classList?.contains('card'));cards[0]?.setAttribute('data-admin-area','partida');cards[1]?.setAttribute('data-admin-area','partida')}
-  const cols=document.querySelector('.adminColumns');
-  if(cols){const cards=[...cols.children].filter(x=>x.classList?.contains('card'));cards[0]?.setAttribute('data-admin-area','combate');cards[1]?.setAttribute('data-admin-area','skills')}
-  document.querySelector('.historyCard')?.setAttribute('data-admin-area','sistema');
-  $('caosLiveDirector')?.setAttribute('data-admin-area','live');
-  const active=$('caosAdminNav')?.querySelector('button.active')?.dataset.area;
-  if(active)document.querySelectorAll('[data-admin-area]').forEach(el=>el.classList.toggle('adminHidden',el.dataset.adminArea!==active));
-}
-
-function installNavigation(){
-  if($('caosAdminNav'))return;classifyAreas();
-  const app=document.querySelector('.app'),top=document.querySelector('.top');if(!app||!top)return;
-  const nav=document.createElement('nav');nav.id='caosAdminNav';nav.className='caosAdminNav';
-  const areas=[['partida','🎮 PARTIDA'],['live','📡 LIVE'],['eventos','☄ EVENTOS'],['combate','👹 MOBS / BOSS'],['skills','✨ SKILLS'],['sistema','⚙ SISTEMA']];
-  const apply=area=>{document.querySelectorAll('[data-admin-area]').forEach(el=>el.classList.toggle('adminHidden',el.dataset.adminArea!==area));nav.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.area===area));try{localStorage.setItem('caos-admin-area',area)}catch{}window.scrollTo({top:0,behavior:'instant'})};
-  for(const [area,label] of areas){const b=document.createElement('button');b.type='button';b.dataset.area=area;b.textContent=label;b.onclick=()=>apply(area);nav.appendChild(b)}
-  top.insertAdjacentElement('afterend',nav);
-  let initial='partida';try{const saved=localStorage.getItem('caos-admin-area');if(areas.some(x=>x[0]===saved))initial=saved}catch{}
-  apply(initial);
-  new MutationObserver(()=>classifyAreas()).observe(app,{childList:true,subtree:true});
-}
-
+function installPlayerControlStrip(){if($('caosPlayerControlStrip'))return;const actionGrid=document.querySelector('.actionGrid');if(!actionGrid)return;const strip=document.createElement('div');strip.id='caosPlayerControlStrip';strip.className='caosControlStrip';strip.append(makeButton('❤ CURAR +5','ajuste fino','heal',()=>proxyCommand('heal',{amount:5})),makeButton('❤ CURAR +25','recuperação rápida','heal',()=>proxyCommand('heal',{amount:25})),makeButton('❤ VIDA CHEIA','cura até o máximo','heal',()=>proxyCommand('heal',{amount:9999})),makeButton('💥 DANO -10','pressão manual','danger',()=>proxyCommand('damage',{amount:10})));actionGrid.insertAdjacentElement('afterend',strip)}
+function setMobAmount(n){const a=$('mobAmount'),old=a?.value;if(a)a.value=String(n);$('spawn')?.click();if(a)a.value=old}
+function applyLivePreset(kind){const enabled=$('liveEnabled');if(enabled&&!enabled.checked)enabled.click();const cool=$('mobCooldownInput'),limit=$('mobLimitInput');const presets={safe:[1.5,15],balanced:[.7,20],chaos:[.25,35]};const p=presets[kind]||presets.balanced;if(cool)cool.value=String(p[0]);if(limit)limit.value=String(p[1]);$('mobAdvancedSave')?.click();document.querySelectorAll('[data-live-preset]').forEach(b=>b.classList.toggle('active',b.dataset.livePreset===kind));try{localStorage.setItem('caos-live-director-preset',kind)}catch{}}
+function fillRule({trigger='gift',name='',comment='',count=1,action='spawn',mob='wraith',value=1,cooldown=2}){const tt=$('triggerType');if(tt){tt.value=trigger;tt.dispatchEvent(new Event('change',{bubbles:true}))}if($('giftName'))$('giftName').value=name;if($('commentText'))$('commentText').value=comment;if($('giftCount'))$('giftCount').value=String(count);if($('giftAction')){$('giftAction').value=action;$('giftAction').dispatchEvent(new Event('change',{bubbles:true}))}if($('giftMob'))$('giftMob').value=mob;if($('giftValue'))$('giftValue').value=String(value);if($('giftCooldown'))$('giftCooldown').value=String(cooldown)}
+function installLiveDirector(){if($('caosLiveDirector'))return;const anchor=document.querySelector('.automationsCard');if(!anchor)return;const card=document.createElement('section');card.id='caosLiveDirector';card.className='caosQuickCard';card.dataset.adminArea='live';card.innerHTML=`<div class="caosQuickHead"><div><span class="eyebrow">LIVE DIRECTOR</span><h2>Central de interação</h2></div><span class="miniStatus">LIVE OPS</span></div><p class="hint">Controle o ritmo da transmissão e monte interações de presentes/comentários sem procurar funções pelo painel.</p><div class="caosLiveStats"><div><span>LIVE</span><b id="directorLive">OFF</b></div><div><span>CURTIDAS</span><b id="directorLikes">0</b></div><div><span>REGRAS</span><b id="directorRules">0</b></div><div><span>ÚLTIMO EVENTO</span><b id="directorEvent">—</b></div></div><h3>INTENSIDADE DA LIVE</h3><div class="caosPresetGrid"><button data-live-preset="safe">🟢 CONTROLADO<small>menos spam · sessão longa</small></button><button data-live-preset="balanced">🟣 EQUILIBRADO<small>interação constante</small></button><button data-live-preset="chaos">🔴 CAOS<small>alta intensidade</small></button></div><h3>AÇÕES DO DIRETOR</h3>`;
+ const grid=document.createElement('div');grid.className='caosQuickGrid';grid.append(makeButton('❤ CURA +25','ajuda o jogador','heal',()=>proxyCommand('heal',{amount:25})),makeButton('💥 DANO -10','pressiona o jogador','danger',()=>proxyCommand('damage',{amount:10})),makeButton('👾 +10 MOBS','onda rápida','live',()=>setMobAmount(10)),makeButton('👾 +50 MOBS','pico de caos','live',()=>setMobAmount(50)),makeButton('👹 BOSS','tier selecionado','event',()=>document.querySelector('[data-cmd="boss"]')?.click()),makeButton('❄ CONGELAR 5s','evento relâmpago','event',()=>proxyCommand('freeze',{seconds:5})),makeButton('🛡 INVENCÍVEL 5s','proteção relâmpago','event',()=>proxyCommand('invincible',{seconds:5})),makeButton('☄ METEORO','liga/desliga evento','event',()=>$('meteorEventToggle')?.click()));card.appendChild(grid);
+ const builder=document.createElement('div');builder.className='caosRulePresets';builder.innerHTML='<h3>ATALHOS PARA MONETIZAÇÃO</h3><p class="hint">Preenche o construtor abaixo. Você revisa e toca em SALVAR REGRA.</p>';const rg=document.createElement('div');rg.className='caosPresetGrid';const presets=[['🌹 PRESENTE BARATO','1 presente → 1 Espectro',()=>fillRule({name:'Rosa',action:'spawn',mob:'wraith',value:1,cooldown:1})],['💥 PRESENTE MÉDIO','presente → dano -10',()=>fillRule({name:'',action:'damage',value:10,cooldown:3})],['👹 PRESENTE FORTE','presente → Boss',()=>fillRule({name:'',action:'boss',value:1,cooldown:12})],['💬 COMANDO MOB','!mob → 1 inimigo',()=>fillRule({trigger:'comment',comment:'!mob',action:'spawn',mob:'wraith',value:1,cooldown:2})]];for(const[label,sub,fn]of presets)rg.append(makeButton(label,sub,'',fn));builder.appendChild(rg);card.appendChild(builder);anchor.parentNode.insertBefore(card,anchor);
+ document.querySelectorAll('[data-live-preset]').forEach(b=>b.onclick=()=>applyLivePreset(b.dataset.livePreset));let saved='balanced';try{saved=localStorage.getItem('caos-live-director-preset')||'balanced'}catch{}document.querySelectorAll('[data-live-preset]').forEach(b=>b.classList.toggle('active',b.dataset.livePreset===saved));
+ const sync=()=>{if($('directorLive'))$('directorLive').textContent=$('liveBadge')?.textContent?.includes('CONECTADA')?'ON':'OFF';if($('directorLikes'))$('directorLikes').textContent=$('likeTotal')?.textContent||'0';if($('directorRules'))$('directorRules').textContent=String(document.querySelectorAll('#rules .rule').length);if($('directorEvent'))$('directorEvent').textContent=($('liveStatus')?.textContent||'—').slice(0,42)};setInterval(sync,1000);sync()}
+function classifyAreas(){const dashboard=document.querySelector('.dashboardTop');if(dashboard){dashboard.querySelector('.connectionCard')?.setAttribute('data-admin-area','partida');dashboard.querySelector('.cloudCard')?.setAttribute('data-admin-area','live')}document.querySelector('.automationsCard')?.setAttribute('data-admin-area','live');$('tiktokLiveMonitor')?.setAttribute('data-admin-area','live');$('specialEventsCard')?.setAttribute('data-admin-area','eventos');const controls=$('controls');if(controls){const cards=[...controls.children].filter(x=>x.classList?.contains('card'));cards[0]?.setAttribute('data-admin-area','partida');cards[1]?.setAttribute('data-admin-area','partida')}const cols=document.querySelector('.adminColumns');if(cols){const cards=[...cols.children].filter(x=>x.classList?.contains('card'));cards[0]?.setAttribute('data-admin-area','combate');cards[1]?.setAttribute('data-admin-area','skills')}document.querySelector('.historyCard')?.setAttribute('data-admin-area','sistema');$('caosLiveDirector')?.setAttribute('data-admin-area','live');const active=$('caosAdminNav')?.querySelector('button.active')?.dataset.area;if(active)document.querySelectorAll('[data-admin-area]').forEach(el=>el.classList.toggle('adminHidden',el.dataset.adminArea!==active))}
+function installNavigation(){if($('caosAdminNav'))return;classifyAreas();const app=document.querySelector('.app'),top=document.querySelector('.top');if(!app||!top)return;const nav=document.createElement('nav');nav.id='caosAdminNav';nav.className='caosAdminNav';const areas=[['partida','🎮 PARTIDA'],['live','📡 LIVE'],['eventos','☄ EVENTOS'],['combate','👹 MOBS / BOSS'],['skills','✨ SKILLS'],['sistema','⚙ SISTEMA']];const apply=area=>{document.querySelectorAll('[data-admin-area]').forEach(el=>el.classList.toggle('adminHidden',el.dataset.adminArea!==area));nav.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.area===area));try{localStorage.setItem('caos-admin-area',area)}catch{}window.scrollTo({top:0,behavior:'instant'})};for(const[area,label]of areas){const b=document.createElement('button');b.type='button';b.dataset.area=area;b.textContent=label;b.onclick=()=>apply(area);nav.appendChild(b)}top.insertAdjacentElement('afterend',nav);let initial='partida';try{const saved=localStorage.getItem('caos-admin-area');if(areas.some(x=>x[0]===saved))initial=saved}catch{}apply(initial);new MutationObserver(()=>classifyAreas()).observe(app,{childList:true,subtree:true})}
 function boot(){installStyles();installGuardianAdmin();installMobileTapSafety();installPlayerControlStrip();installLiveDirector();installNavigation()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
