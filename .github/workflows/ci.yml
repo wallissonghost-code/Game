@@ -26,6 +26,8 @@ jobs:
           npm run check:architecture
           npm run check:runtime
           npm run check:events
+      - name: Validate Admin Panel contract
+        run: npm run check:admin
       - name: Smoke test menu and short gameplay
         run: npm run check:menu
       - name: Ghost aim regression · Rapid + close target + stale aim
