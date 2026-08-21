@@ -1,4 +1,4 @@
 {
-  "version": "0.17.48",
-  "build": "live-stability-quiet-watchdog"
+  "version": "0.17.47",
+  "build": "live-auto-rescue-quiet-live-fix"
 }
