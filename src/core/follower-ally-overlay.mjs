@@ -1,0 +1,27 @@
+const MAX_ALLIES=2;
+const ALLY_LIFETIME=5000;
+const QUEUE_TTL=9000;
+const FIRE_MS=720;
+const CLOUD_URL='wss://game-f202.onrender.com';
+const CLOUD_KEY='chaos-cloud-key-v1';
+const CLOUD_USER='chaos-cloud-user-v1';
+
+let ws=null,retry=null,stage=null,canvas=null,ctx=null,img=null,raf=0,last=0;
+let allies=[],queue=[],shots=[];
+
+function cleanUser(v=''){return String(v||'viewer').trim().replace(/^@/,'').replace(/[<>]/g,'').slice(0,24)||'viewer'}
+function fps(){const n=Number(window.caosCurrentFps||window.__caosFps||60);return Number.isFinite(n)&&n>0?n:60}
+function allowedAllies(){const f=fps();if(f<35)return 0;if(f<47)return 1;return MAX_ALLIES}
+function config(){let key='',user='';try{key=localStorage.getItem(CLOUD_KEY)||'';user=(localStorage.getItem(CLOUD_USER)||'').replace(/^@/,'')}catch{}return{key,user}}
+function enqueue(user){user=cleanUser(user);const now=performance.now();if(queue.some(x=>x.user===user)||allies.some(x=>x.user===user))return;queue.push({user,at:now});if(queue.length>8)queue.shift()}
+function spawnQueued(now){queue=queue.filter(x=>now-x.at<QUEUE_TTL);const cap=allowedAllies();while(allies.length<cap&&queue.length){const q=queue.shift(),slot=allies.length,side=slot%2===0?-1:1;allies.push({user:q.user,x:innerWidth/2+side*82,y:innerHeight/2+70,tx:0,ty:0,side,until:now+ALLY_LIFETIME,nextFire:now+500+Math.random()*350,walk:Math.random()*10})}}
+function connect(){clearTimeout(retry);retry=null;const {key,user}=config();if(!user)return schedule();try{ws?.close()}catch{};try{ws=new WebSocket(CLOUD_URL)}catch{return schedule()}ws.onopen=()=>ws.send(JSON.stringify({type:'auth',key}));ws.onmessage=e=>{let d;try{d=JSON.parse(e.data)}catch{return}if(d.type==='auth'){if(d.ok)ws.send(JSON.stringify({type:'observe',username:user}));return}if(d.type==='follow')enqueue(d.user)};ws.onerror=()=>{};ws.onclose=()=>{ws=null;schedule()}}
+function schedule(){if(retry)return;retry=setTimeout(connect,3500)}
+function ensureCanvas(){stage=document.getElementById('stage');if(!stage)return false;canvas=document.createElement('canvas');canvas.id='followerAllyCanvas';canvas.setAttribute('aria-hidden','true');canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3';stage.appendChild(canvas);ctx=canvas.getContext('2d',{alpha:true,desynchronized:true});img=new Image();img.decoding='async';img.src='./assets/player/frame_001.png';resize();addEventListener('resize',resize,{passive:true});return true}
+function resize(){if(!canvas||!stage)return;const r=stage.getBoundingClientRect(),d=Math.min(1.25,devicePixelRatio||1);canvas.width=Math.max(1,Math.floor(r.width*d));canvas.height=Math.max(1,Math.floor(r.height*d));canvas.style.width=r.width+'px';canvas.style.height=r.height+'px';ctx?.setTransform(d,0,0,d,0,0)}
+function fire(a,now,w,h){const ang=-Math.PI/2+(Math.random()-.5)*1.15,dist=120+Math.random()*100;shots.push({x:a.x,y:a.y-12,vx:Math.cos(ang)*dist,vy:Math.sin(ang)*dist,until:now+430});if(shots.length>12)shots.splice(0,shots.length-12);a.nextFire=now+FIRE_MS+Math.random()*260}
+function update(now,dt,w,h){const cap=allowedAllies();if(cap===0){allies.length=0;shots.length=0}else if(allies.length>cap)allies.length=cap;spawnQueued(now);for(let i=0;i<allies.length;i++){const a=allies[i],slotX=w/2+a.side*(54+i*8),slotY=h/2+50+(i%2)*14;a.tx=slotX;a.ty=slotY;const k=Math.min(1,dt*5.5);a.x+=(a.tx-a.x)*k;a.y+=(a.ty-a.y)*k;a.walk+=dt*7;if(now>=a.nextFire&&fps()>=38)fire(a,now,w,h)}allies=allies.filter(a=>a.until>now);for(const s of shots){s.x+=s.vx*dt;s.y+=s.vy*dt}shots=shots.filter(s=>s.until>now&&s.x>-20&&s.x<w+20&&s.y>-20&&s.y<h+20)}
+function draw(now,w,h){ctx.clearRect(0,0,w,h);for(const s of shots){const left=Math.max(0,(s.until-now)/430);ctx.globalAlpha=.35+.45*left;ctx.strokeStyle='#cbd5e1';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(s.x-s.vx*.035,s.y-s.vy*.035);ctx.stroke()}ctx.globalAlpha=1;for(const a of allies){const bob=Math.sin(a.walk)*1.1;ctx.save();ctx.translate(a.x,a.y+bob);ctx.fillStyle='rgba(0,0,0,.32)';ctx.beginPath();ctx.ellipse(0,22,15,4.5,0,0,Math.PI*2);ctx.fill();if(img?.complete&&img.naturalWidth){const ratio=img.naturalWidth/Math.max(1,img.naturalHeight),hh=54,ww=Math.min(50,hh*ratio);ctx.drawImage(img,-ww/2,25-hh,ww,hh)}else{ctx.fillStyle='#94a3b8';ctx.beginPath();ctx.arc(0,0,13,0,Math.PI*2);ctx.fill()}const name='@'+a.user;ctx.font='800 8px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';ctx.textAlign='center';const tw=Math.min(120,ctx.measureText(name).width+12);ctx.fillStyle='rgba(5,8,18,.78)';ctx.beginPath();ctx.roundRect(-tw/2,-43,tw,15,7);ctx.fill();ctx.fillStyle='#e2e8f0';ctx.fillText(name,0,-33);ctx.restore()}}
+function loop(now){raf=requestAnimationFrame(loop);if(document.hidden||!canvas||!ctx)return;const r=stage.getBoundingClientRect(),w=r.width,h=r.height;if(!w||!h)return;const dt=Math.min(.033,Math.max(.001,(now-(last||now))/1000));last=now;update(now,dt,w,h);draw(now,w,h)}
+function boot(){if(!ensureCanvas())return;connect();raf=requestAnimationFrame(loop);window.CaosFollowerAlly={enqueue,stats:()=>({active:allies.length,queued:queue.length,fps:fps(),cap:allowedAllies()})}}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
