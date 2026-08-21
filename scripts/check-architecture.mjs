@@ -27,6 +27,8 @@ const fail = message => {
 const ok = message => console.log('ARCH OK:', message);
 const read = path => fs.readFileSync(path, 'utf8');
 
+const version = JSON.parse(read('version.json')).version;
+const cacheTag = String(version).replace(/\./g, '');
 const solo = read('src/game.js');
 const html = read('index.html');
 const skillsBootstrap = read('src/core/skills-bootstrap.mjs');
@@ -106,7 +108,8 @@ if (!html.includes('src/core/skills-bootstrap.mjs')) fail('index.html does not l
 else ok('index.html loads skills bootstrap');
 if (!skillsBootstrap.includes("import * as CaosSkills from './skills.mjs?v=01746-guardian1'")) fail('skills bootstrap does not load active skills domain first');
 else ok('skills bootstrap loads active skills domain before gameplay');
-if (!skillsBootstrap.includes("new URL('../game.js?v=01746-close-parallax2',import.meta.url)")) fail('skills bootstrap does not resolve active classic gameplay runtime from module URL');
+const activeRuntimeToken = `new URL('../game.js?v=${cacheTag}-close-parallax2',import.meta.url)`;
+if (!skillsBootstrap.includes(activeRuntimeToken)) fail(`skills bootstrap does not resolve active classic gameplay runtime from module URL (${cacheTag})`);
 else ok('skills bootstrap resolves active classic gameplay runtime safely');
 if (!skillsBootstrap.includes("new URL('../multiplayer-entry.js?v=01745-core3',import.meta.url)")) fail('skills bootstrap does not resolve multiplayer entry from module URL');
 else ok('skills bootstrap resolves multiplayer entry safely');
