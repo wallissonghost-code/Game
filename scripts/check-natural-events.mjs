@@ -2,8 +2,9 @@ import fs from 'node:fs';
 import { patchNaturalEvents } from '../src/core/natural-events-runtime.mjs';
 
 const original=fs.readFileSync('src/game.js','utf8');
+const currentVersion=JSON.parse(fs.readFileSync('version.json','utf8')).version;
 
-// The active v0.17.46 runtime intentionally freezes the meteor loop while the
+// The active runtime intentionally freezes the meteor loop while the
 // global freeze skill is active. patchNaturalEvents owns the natural-event
 // transformation, while skills-bootstrap preserves this freeze guard around
 // that transformation. Reproduce the same compatibility path here instead of
@@ -17,7 +18,7 @@ const materialized=original.includes(frozenMeteor);
 let compatible=original;
 if(materialized){
   compatible=compatible.replace(frozenMeteor,baseMeteor);
-  compatible=compatible.replace("VERSION='0.17.46'","VERSION='0.17.45'");
+  compatible=compatible.replace(`VERSION='${currentVersion}'`,"VERSION='0.17.45'");
 }
 let patched=patchNaturalEvents(compatible);
 if(materialized){
@@ -27,7 +28,7 @@ if(materialized){
 new Function(patched);
 
 const required=[
-  "VERSION='0.17.46'",
+  `VERSION='${currentVersion}'`,
   'NATURAL_METEOR_CONFIG',
   'naturalDoubleXpNextAt',
   'naturalMeteorNextAt',

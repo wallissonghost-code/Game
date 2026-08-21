@@ -12,10 +12,11 @@ export function patchNaturalEvents(source) {
     changes++;
   };
 
-  // v0.17.46 is already the active classic runtime. Keep compatibility with
-  // older 0.17.45 sources, but don't fail when the version bump is pre-applied.
-  if (s.includes("VERSION='0.17.45'")) one("VERSION='0.17.45'", "VERSION='0.17.46'", 'version');
-  else if (!s.includes("VERSION='0.17.46'")) throw new Error('NaturalEvents/version: unsupported runtime version');
+  // v0.17.47 is the active classic runtime. Keep compatibility with older
+  // 0.17.45/0.17.46 sources, while accepting an already-current source unchanged.
+  if (s.includes("VERSION='0.17.45'")) one("VERSION='0.17.45'", "VERSION='0.17.47'", 'version');
+  else if (s.includes("VERSION='0.17.46'")) one("VERSION='0.17.46'", "VERSION='0.17.47'", 'version');
+  else if (!s.includes("VERSION='0.17.47'")) throw new Error('NaturalEvents/version: unsupported runtime version');
 
   one(
     "doubleXpEvent=false,meteorEventActive=false,meteorSpawnTimer=.45,meteors=[],meteorShakeLeft=0,meteorConfig={interval:1.7,warning:1.8,radius:92,playerDamage:18,mobDamage:20,batch:1};",
