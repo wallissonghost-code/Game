@@ -1,0 +1,42 @@
+name: One-shot sync v0.17.47
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  sync:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Synchronize release references
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          files = [
+              Path('index.html'),
+              Path('painel.html'),
+              Path('duo.html'),
+              Path('src/game.js'),
+          ]
+          for p in files:
+              s = p.read_text(encoding='utf-8')
+              s = s.replace('0.17.46', '0.17.47').replace('01746', '01747')
+              p.write_text(s, encoding='utf-8')
+          PY
+          node --check src/game.js
+          node --check src/panel.js
+          node scripts/check-ci-sanity.mjs
+          node scripts/check-game.mjs
+      - name: Commit synchronized release
+        run: |
+          if git diff --quiet; then
+            echo 'Release already synchronized.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html painel.html duo.html src/game.js
+          git commit -m 'fix: synchronize v0.17.47 release references'
+          git push
