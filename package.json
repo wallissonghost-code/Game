@@ -8,7 +8,7 @@
     "game-server": "npm run game-server-v2",
     "game-server-v2": "node cloud/game-server-v2.mjs",
     "game-server-v3": "node cloud/game-server-v3.mjs",
-    "check:game": "node scripts/check-game.mjs",
+    "check:game": "node scripts/check-game.mjs && node --check src/core/follower-ally-overlay.mjs",
     "check:architecture": "node scripts/check-architecture.mjs",
     "check:runtime": "node scripts/audit-runtime.mjs",
     "check:events": "node scripts/check-natural-events.mjs",
