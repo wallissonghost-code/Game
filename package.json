@@ -13,7 +13,7 @@
     "check:runtime": "node scripts/audit-runtime.mjs",
     "check:events": "node scripts/check-natural-events.mjs",
     "check:admin": "node scripts/check-admin-contract.mjs",
-    "check:live": "node --check cloud/connector-bootstrap.mjs && node --check cloud/connector-server.mjs && node --check src/panel-live-v2.js && node --check src/panel-live-v2-enhance.js && node --check src/live-gift-observer.js && node --check src/panel-guardian.js && node scripts/check-live-admin-ui.mjs",
+    "check:live": "node --check cloud/connector-bootstrap.mjs && node --check cloud/connector-server.mjs && node --check src/panel-live-v2.js && node --check src/panel-live-v2-enhance.js && node --check src/panel-live-v2-polish.js && node --check src/live-gift-observer.js && node --check src/panel-guardian.js && node scripts/check-live-admin-ui.mjs",
     "check:land-market": "node scripts/check-land-market.mjs",
     "check:property-lifecycle": "node scripts/check-property-lifecycle.mjs",
     "check:property-market": "node scripts/check-property-market.mjs",
