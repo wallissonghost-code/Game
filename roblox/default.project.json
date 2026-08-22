@@ -1,0 +1,26 @@
+{
+  "name": "CidadeViva",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "CidadeViva": {
+        "$path": "src/shared"
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "CidadeViva": {
+        "$path": "src/server"
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "CidadeViva": {
+          "$path": "src/client"
+        }
+      }
+    }
+  }
+}
