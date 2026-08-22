@@ -1,8 +1,30 @@
 import { createRequire } from 'node:module';
 import { TikTokLiveConnection } from 'tiktok-live-connector';
+import { normalizeModernConnectError } from './tiktok-resilience.mjs';
 
 const require = createRequire(import.meta.url);
 const { WebcastPushConnection } = require('tiktok-live-connector-legacy');
+
+// Guard the modern connector against an upstream 2.x failure seen in production:
+// "Cannot read properties of undefined (reading 'retry-after')".
+// Instead of allowing the server to enter a reconnect storm, normalize that
+// specific compatibility failure into the existing legacy-fallback path.
+const originalConnect = TikTokLiveConnection.prototype.connect;
+if (typeof originalConnect === 'function' && !TikTokLiveConnection.prototype.__caosSafeConnect) {
+  TikTokLiveConnection.prototype.connect = async function (...args) {
+    try {
+      return await originalConnect.apply(this, args);
+    } catch (error) {
+      throw normalizeModernConnectError(error);
+    }
+  };
+  Object.defineProperty(TikTokLiveConnection.prototype, '__caosSafeConnect', {
+    value: true,
+    configurable: false,
+    enumerable: false,
+    writable: false
+  });
+}
 
 // The modern connector can route gift-catalog/signing requests through EulerStream.
 // On Community/free plans that route may reject with "Business plan". Keep the
