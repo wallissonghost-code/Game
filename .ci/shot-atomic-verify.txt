@@ -1,0 +1,1 @@
+trigger Ghost atomic shot + straight projectile + swept collision verification
