@@ -1,33 +1,50 @@
 (()=>{'use strict';
-const $=id=>document.getElementById(id),CAT_KEY='caos-gift-catalog-v2',RULE_KEY='caos-live-rules-v2';
-let lastReconnect=0,lastCloudReconnect=0;
-const ACTION_META={spawn:['Criar mob','Invoca inimigos comuns'],boss:['Criar Boss','Invoca um chefe'],damage:['Dano','Retira vida do jogador'],heal:['Cura','Recupera vida do jogador'],freeze:['Congelar','Congela a arena'],invincible:['Invencível','Proteção temporária'],xp:['XP','Concede experiência'],level:['Level','Concede níveis'],clear:['Limpar arena','Remove os mobs da arena']};
-const MOB_META={wraith:['Espectro','MOB'],reaper:['Ceifador','MOB'],infected:['Infectado','MOB'],crawler:['Criatura das Sombras','MOB'],eye:['Observador','MOB'],brute:['Brutamonte','MOB'],colossus:['Colosso Carmesim','BOSS'],voidlord:['Senhor do Vazio','BOSS']};
-function loadCatalog(){try{return JSON.parse(localStorage.getItem(CAT_KEY)||'null')?.gifts||[]}catch{return[]}}
-function loadRules(){try{return JSON.parse(localStorage.getItem(RULE_KEY)||'[]')||[]}catch{return[]}}
-function findGiftFromRow(row,catalog){const txt=row.textContent||'',id=txt.match(/ID\s+([^\s·]+)/i)?.[1]||'';return catalog.find(g=>String(g.id)===String(id))||catalog.find(g=>txt.toLowerCase().includes(String(g.name||'').toLowerCase()))}
-function divergenceText(d){if(!d)return'';const p=[];if(d.id)p.push(`ID ${d.id.catalog} → ${d.id.live}`);if(d.name)p.push(`nome “${d.name.catalog}” → “${d.name.live}”`);if(d.value)p.push(`valor ${d.value.catalog}💎 → ${d.value.live}💎`);return p.join(' · ')}
-function giftIcon(g){return g?.icon||g?.image||g?.picture||g?.imageUrl||g?.iconUrl||''}
-function installUxStyles(){if($('liveV2UxPatch'))return;const s=document.createElement('style');s.id='liveV2UxPatch';s.textContent=`
-.caosNativeSelect{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;overflow:hidden!important}
-.caosPicker{position:relative;width:100%}.caosPickerTrigger{width:100%;min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 11px;border:1px solid #303a58!important;border-radius:9px!important;background:#060a13!important;color:#eef2ff!important;text-align:left!important}.caosPickerText{min-width:0;display:flex;flex-direction:column;gap:2px}.caosPickerText b{font-size:12px;line-height:1.2}.caosPickerText small{font-size:7.5px;color:#7f8aa5;line-height:1.25}.caosPickerChevron{font-size:11px;color:#7d89a8}.caosPickerMenu{display:none;position:absolute;z-index:120;left:0;right:0;top:calc(100% + 6px);padding:6px;border:1px solid #303a58;border-radius:12px;background:#0b101b;box-shadow:0 18px 45px #000b;max-height:330px;overflow:auto}.caosPicker.open .caosPickerMenu{display:grid;gap:4px}.caosPickerOption{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:10px!important;align-items:center!important;width:100%!important;min-height:48px!important;padding:9px 10px!important;border:1px solid transparent!important;border-radius:9px!important;background:transparent!important;color:#e8ecf8!important;text-align:left!important}.caosPickerOption:hover,.caosPickerOption.active{background:#171326!important;border-color:#493478!important}.caosPickerOptionText{display:flex;flex-direction:column;gap:3px}.caosPickerOptionText b{font-size:11px}.caosPickerOptionText small{font-size:7.5px;color:#7f8aa5}.caosPickerBadge{padding:4px 7px;border-radius:999px;border:1px solid #31405d;color:#98a5c2;font-size:7px;font-weight:900;letter-spacing:.5px}.caosPickerBadge.boss{border-color:#7b5824;color:#f5c56b;background:#2b1d08}
-#caosLiveV2 .v2Rule{grid-template-columns:auto minmax(0,1fr) auto!important;align-items:center!important;gap:10px!important}#caosLiveV2 .savedRuleGiftThumb{width:52px!important;height:52px!important;padding:4px!important;grid-row:1!important}#caosLiveV2 .v2RuleActions{display:grid!important;grid-template-columns:repeat(3,auto)!important;gap:6px!important;align-items:center!important}#caosLiveV2 .v2RuleActions button{width:auto!important;min-width:76px!important;min-height:36px!important;padding:7px 10px!important;white-space:nowrap!important}#caosLiveV2 .v2EditRule{border-color:#6941a9!important;background:#24163e!important;color:#e9ddff!important}#caosLiveV2 .v2RuleActions .v2DeleteRule{border-color:#613044!important;background:#291019!important;color:#fda4af!important}
-#caosLiveV2 .v2Builder label[data-v2-field="mob"]>span:after{content:' · filtrado pela ação';font-weight:600;color:#65708d;letter-spacing:0;text-transform:none}
-@media(max-width:620px){.caosPickerMenu{position:fixed;left:14px;right:14px;top:auto;bottom:18px;max-height:58vh;border-radius:16px;padding:8px;z-index:9999}.caosPickerOption{min-height:54px!important}.caosPickerOptionText b{font-size:12px}.caosPickerOptionText small{font-size:8px}#caosLiveV2 .v2Rule{grid-template-columns:52px minmax(0,1fr)!important;padding:10px!important}#caosLiveV2 .savedRuleGiftThumb{width:48px!important;height:48px!important}#caosLiveV2 .v2RuleActions{grid-column:1/-1!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;width:100%!important;margin-top:2px!important}#caosLiveV2 .v2RuleActions button{min-width:0!important;width:100%!important;min-height:38px!important;padding:7px 5px!important;font-size:7.5px!important}.caosPickerTrigger{min-height:46px}}
-`;document.head.appendChild(s)}
-function decorateCatalog(){const box=$('giftCatalogList');if(!box)return;const catalog=loadCatalog();box.querySelectorAll('.giftCatalogRowV2').forEach(row=>{const g=findGiftFromRow(row,catalog);if(!g)return;const icon=giftIcon(g);if(icon&&!row.querySelector('.giftThumb')){const img=document.createElement('img');img.className='giftThumb';img.src=icon;img.alt=g.name||'Presente';img.loading='lazy';img.referrerPolicy='no-referrer';img.onerror=()=>img.remove();row.prepend(img)}let badge=row.querySelector('.giftVerifyBadge');if(g.liveVerified){if(!badge){badge=document.createElement('div');badge.className='giftVerifyBadge';row.querySelector('.giftMain')?.appendChild(badge)}const details=divergenceText(g.liveDivergence),next=g.liveDivergence?`DIVERGÊNCIA · ${details}`:`VERIFICADO AO VIVO · ${g.liveVerifiedCount||1}×`;if(badge.textContent!==next)badge.textContent=next;badge.style.color=g.liveDivergence?'#fbbf24':'#86efac'}else if(badge)badge.remove()})}
-function ensurePreview(){const sel=$('v2Gift');if(!sel||$('v2GiftPreview'))return;const wrap=document.createElement('div');wrap.id='v2GiftPreview';wrap.className='v2GiftPreview';sel.parentElement?.appendChild(wrap);const draw=()=>{const g=loadCatalog().find(x=>String(x.id)===String(sel.value)),icon=giftIcon(g),details=divergenceText(g?.liveDivergence),verify=g?.liveVerified?(g.liveDivergence?` · DIVERGÊNCIA: ${details}`:' · verificado ao vivo'):'';wrap.innerHTML=g?`${icon?`<img src="${String(icon).replace(/"/g,'&quot;')}" alt="${String(g.name||'').replace(/"/g,'&quot;')}">`:''}<div><b>${g.name||'Presente'}</b><span>ID ${g.id??'?'} · ${g.diamondCount||0} 💎${verify}</span></div>`:'<span class="hint">Selecione um presente para visualizar.</span>'};sel.addEventListener('change',draw);window.addEventListener('caos-catalog-updated',draw);draw()}
-function pickerMeta(type,value){if(type==='action')return ACTION_META[value]||[value,'Ação do jogo'];const m=MOB_META[value]||[value,'MOB'];return[m[0],m[1]==='BOSS'?'Chefe da arena':'Inimigo da arena']}
-function allowedMobValues(){return $('v2Action')?.value==='boss'?['colossus','voidlord']:['wraith','reaper','infected','crawler','eye','brute']}
-function createPicker(select,type){if(!select||select.dataset.pickerReady)return null;select.dataset.pickerReady='1';select.classList.add('caosNativeSelect');const picker=document.createElement('div');picker.className='caosPicker';picker.dataset.pickerType=type;const trigger=document.createElement('button');trigger.type='button';trigger.className='caosPickerTrigger';trigger.innerHTML='<span class="caosPickerText"><b></b><small></small></span><span class="caosPickerChevron">⌄</span>';const menu=document.createElement('div');menu.className='caosPickerMenu';picker.append(trigger,menu);select.insertAdjacentElement('afterend',picker);const close=()=>picker.classList.remove('open');const rebuild=()=>{const allowed=type==='mob'?allowedMobValues():[...select.options].map(o=>o.value);if(type==='mob'&&!allowed.includes(select.value)){select.value=allowed[0];select.dispatchEvent(new Event('change',{bubbles:true}))}menu.innerHTML='';for(const o of [...select.options].filter(x=>allowed.includes(x.value))){const meta=type==='action'?(ACTION_META[o.value]||[o.textContent,'Ação do jogo']):(MOB_META[o.value]||[o.textContent,'MOB']);const b=document.createElement('button');b.type='button';b.className='caosPickerOption'+(o.value===select.value?' active':'');b.innerHTML=`<span class="caosPickerOptionText"><b>${meta[0]}</b><small>${type==='action'?meta[1]:(meta[1]==='BOSS'?'Chefe da arena':'Inimigo da arena')}</small></span>${type==='mob'?`<span class="caosPickerBadge ${meta[1]==='BOSS'?'boss':''}">${meta[1]}</span>`:''}`;b.onclick=e=>{e.preventDefault();e.stopPropagation();select.value=o.value;select.dispatchEvent(new Event('change',{bubbles:true}));close()};menu.appendChild(b)}const meta=pickerMeta(type,select.value),t=trigger.querySelector('.caosPickerText');t.querySelector('b').textContent=meta[0];t.querySelector('small').textContent=meta[1]};trigger.onclick=e=>{e.preventDefault();e.stopPropagation();document.querySelectorAll('.caosPicker.open').forEach(x=>x!==picker&&x.classList.remove('open'));rebuild();picker.classList.toggle('open')};select.addEventListener('change',rebuild);rebuild();return{picker,rebuild}}
-function enhanceBuilder(){const action=$('v2Action'),mob=$('v2Mob'),value=$('v2Value');if(!action||action.dataset.contextUx)return;action.dataset.contextUx='1';const mobField=mob?.closest('label')||mob?.parentElement,valueField=value?.closest('label')||value?.parentElement;const labels={spawn:'QUANTIDADE DE MOBS',boss:'QUANTIDADE DE BOSSES',heal:'PONTOS DE CURA',damage:'PONTOS DE DANO',freeze:'DURAÇÃO (SEGUNDOS)',invincible:'DURAÇÃO (SEGUNDOS)',xp:'XP CONCEDIDO',level:'LEVELS CONCEDIDOS',clear:'SEM VALOR ADICIONAL'};const actionPicker=createPicker(action,'action'),mobPicker=createPicker(mob,'mob');const sync=()=>{const a=action.value,usesMob=a==='spawn'||a==='boss',usesValue=a!=='clear';if(mobField)mobField.style.display=usesMob?'block':'none';if(valueField)valueField.style.display=usesValue?'block':'none';const lab=valueField?.querySelector(':scope > span');if(lab)lab.textContent=labels[a]||'VALOR / QUANTIDADE';if(mob&&usesMob){const allowed=allowedMobValues();if(!allowed.includes(mob.value))mob.value=allowed[0];mobPicker?.rebuild()}actionPicker?.rebuild()};action.addEventListener('change',sync);sync();if(!document.documentElement.dataset.caosPickerClose){document.documentElement.dataset.caosPickerClose='1';document.addEventListener('click',()=>document.querySelectorAll('.caosPicker.open').forEach(x=>x.classList.remove('open')))}}
-function editGiftRule(rule,g){const set=(k,v)=>{const e=$(k);if(e)e.value=v??''};set('v2Trigger',rule.trigger||'gift');$('v2Trigger')?.dispatchEvent(new Event('change',{bubbles:true}));set('v2Gift',rule.giftId||g?.id||'');set('v2Threshold',rule.threshold||1);set('v2Action',rule.action||'spawn');$('v2Action')?.dispatchEvent(new Event('change',{bubbles:true}));set('v2Mob',rule.mob||'wraith');$('v2Mob')?.dispatchEvent(new Event('change',{bubbles:true}));set('v2Value',rule.value||1);set('v2Cooldown',rule.cooldown||0);$('v2Gift')?.dispatchEvent(new Event('change',{bubbles:true}));$('v2BuilderTitle')?.scrollIntoView({behavior:'smooth',block:'start'})}
-function enhanceSavedRules(){const root=$('v2Rules');if(!root)return;const catalog=loadCatalog(),rules=loadRules(),cards=[...root.querySelectorAll('.v2Rule')];cards.forEach((card,index)=>{const rule=rules[index];if(!rule)return;let g=null;if(rule.trigger==='gift')g=catalog.find(x=>String(x.id)===String(rule.giftId));const icon=giftIcon(g);let img=card.querySelector('.savedRuleGiftThumb');if(g&&icon&&!img){img=document.createElement('img');img.className='giftThumb savedRuleGiftThumb';img.src=icon;img.alt=g.name||'Presente';img.onerror=()=>img.remove();card.prepend(img)}const acts=card.querySelector('.v2RuleActions');if(!acts)return;acts.querySelectorAll('button').forEach(b=>{if(/EXCLUIR/i.test(b.textContent))b.classList.add('v2DeleteRule')});let edit=acts.querySelector('.v2EditRule');if(rule.trigger==='gift'&&!edit){edit=document.createElement('button');edit.type='button';edit.textContent='EDITAR';edit.className='v2EditRule';edit.onclick=()=>editGiftRule(rule,g);acts.insertBefore(edit,acts.firstChild)}})}
-function liveWanted(){return $('liveV2Capture')?.dataset.on==='true'||$('liveV2Auto')?.dataset.on==='true'}
-function liveConnected(){const t=(($('liveBadge')?.textContent||'')+' '+($('cloudStatus')?.textContent||'')).toUpperCase();return /CONECTAD|LIVE\s+ON|ONLINE/.test(t)&&!/DESCONECT|OFFLINE|ERRO/.test(t)}
-function cloudConnected(){const t=(($('cloudDot')?.textContent||'')+' '+($('cloudStatus')?.textContent||'')).toUpperCase();return /ONLINE|CONECTAD/.test(t)&&!/OFFLINE|DESCONECT|ERRO/.test(t)}
-function setWatchState(text,good=false){let el=$('liveV2Watchdog');if(!el){const state=$('liveV2CaptureState');if(!state)return;el=document.createElement('span');el.id='liveV2Watchdog';el.className='miniStatus';state.insertAdjacentElement('afterend',el)}if(el.textContent!==text)el.textContent=text;el.style.color=good?'#86efac':'#fbbf24'}
-function watchdog(){if(!liveWanted()){setWatchState('AUTO RECONECT OFF',true);return}const now=Date.now();if(!cloudConnected()&&now-lastCloudReconnect>12000){lastCloudReconnect=now;setWatchState('RECONECTANDO CLOUD');$('cloudConnect')?.click();return}if(!liveConnected()&&now-lastReconnect>12000){lastReconnect=now;setWatchState('RECONECTANDO LIVE');$('tiktokConnect')?.click();return}setWatchState('AUTO RECONECT ON',true)}
-function install(){if(!$('caosLiveV2'))return false;installUxStyles();ensurePreview();enhanceBuilder();decorateCatalog();enhanceSavedRules();const target=$('caosLiveV2');if(target&&!target.dataset.uxObserver){target.dataset.uxObserver='1';let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;decorateCatalog();enhanceSavedRules()})}).observe(target,{childList:true,subtree:true})}window.addEventListener('caos-catalog-updated',()=>{decorateCatalog();enhanceSavedRules()});setInterval(watchdog,4000);watchdog();return true}
-let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>40)clearInterval(timer)},250);
+// MODO DE DIAGNOSTICO: conexao TikTok estritamente manual.
+// Esta camada foi reduzida temporariamente para eliminar qualquer watchdog,
+// rescue ou clique programatico enquanto isolamos o Connector.
+const $=id=>document.getElementById(id);
+
+function installManualOnlyGuard(){
+  if(window.__caosManualLiveOnly)return;
+  window.__caosManualLiveOnly=true;
+
+  const blockSynthetic=id=>{
+    const el=$(id);
+    if(!el)return;
+    el.addEventListener('click',e=>{
+      // Cliques reais do usuario sao trusted. Chamadas element.click() nao sao.
+      if(e.isTrusted)return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      console.warn('[CAOS DIAG] clique automatico bloqueado:',id);
+    },true);
+  };
+
+  blockSynthetic('cloudConnect');
+  blockSynthetic('tiktokConnect');
+
+  const draw=()=>{
+    let badge=$('liveV2Watchdog');
+    if(!badge){
+      const state=$('liveV2CaptureState');
+      if(state){
+        badge=document.createElement('span');
+        badge.id='liveV2Watchdog';
+        badge.className='miniStatus';
+        state.insertAdjacentElement('afterend',badge);
+      }
+    }
+    if(badge){
+      badge.textContent='AUTO RECONECT OFF · TESTE MANUAL';
+      badge.style.color='#86efac';
+    }
+  };
+
+  draw();
+  setTimeout(draw,500);
+  setTimeout(draw,1500);
+}
+
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installManualOnlyGuard,{once:true});
+else installManualOnlyGuard();
 })();
