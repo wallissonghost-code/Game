@@ -1,16 +1,17 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const CLOUD_HEALTH='https://game-f202.onrender.com/health';
-const PROBE_MS=10000,EVENT_WARN_MS=70000,EVENT_DEAD_MS=115000;
-let liveSince=0,timer=null,lastOn=false,lastPayload='',gameConn=null,lastEventAt=0,lastLike='',cloudHealthy=false,lastCloudProbe=0,probeBusy=false,sessionStartedAt=0;
+const PROBE_MS=10000,EVENT_WARN_MS=70000,EVENT_DEAD_MS=115000,WS_GRACE_MS=2500;
+let liveSince=0,timer=null,lastOn=false,lastPayload='',gameConn=null,lastEventAt=0,lastLike='',cloudHealthy=false,lastCloudProbe=0,probeBusy=false,sessionStartedAt=0,wsFailureTimer=null;
 
 // Caixa-preta da Live: observabilidade sem usar inatividade como gatilho de reconexão.
-const diag={incidents:[],lastEvent:'—',lastEventAt:0,lastMode:'—',lastReason:'—',reconnects:0,zombies:0,wsState:'OFFLINE',lastPacketAt:0,likeTimes:[],lastConnectedAt:0};
+// tiktokConnected e eventos recebidos são a fonte de verdade operacional; probe HTTP é apenas auxiliar.
+const diag={incidents:[],lastEvent:'—',lastEventAt:0,lastMode:'—',lastReason:'—',reconnects:0,zombies:0,wsState:'OFFLINE',lastPacketAt:0,likeTimes:[],lastConnectedAt:0,tiktokConnected:false};
 function cleanUser(v=''){v=String(v||'').trim();if(!v)return '—';return '@'+v.replace(/^@/,'')}
 function fmt(ms){const s=Math.max(0,Math.floor(ms/1000)),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),x=s%60;return h?`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`}
 function txt(id){return String($(id)?.textContent||'').trim()}
-function liveSnapshot(){const status=txt('cloudStatus'),badge=txt('liveBadge'),dot=txt('cloudDot'),input=$('cloudUser')?.value||'';const on=/TIKTOK LIVE CONECTADA/i.test(status)||(/LIVE CONECTADA/i.test(badge)&&/LIVE/i.test(dot));let user=input;const m=status.match(/@([^\s·]+)/);if(m)user=m[1];return{on,user:String(user||'').replace(/^@/,'').trim().slice(0,32),status,badge,dot}}
-function beginSession(){const now=Date.now();sessionStartedAt=now;liveSince=now;lastEventAt=0;lastLike=txt('likeTotal');diag.lastConnectedAt=now;diag.lastEvent='—';diag.lastEventAt=0;diag.lastReason='nova sessão TikTok';}
+function liveSnapshot(){const status=txt('cloudStatus'),badge=txt('liveBadge'),dot=txt('cloudDot'),input=$('cloudUser')?.value||'';const on=diag.tiktokConnected||/TIKTOK LIVE CONECTADA/i.test(status)||(/LIVE CONECTADA/i.test(badge)&&/LIVE/i.test(dot));let user=input;const m=status.match(/@([^\s·]+)/);if(m)user=m[1];return{on,user:String(user||'').replace(/^@/,'').trim().slice(0,32),status,badge,dot}}
+function beginSession(){const now=Date.now();sessionStartedAt=now;liveSince=now;lastEventAt=0;lastLike=txt('likeTotal');diag.lastConnectedAt=now;diag.lastEvent='—';diag.lastEventAt=0;diag.lastReason='nova sessão TikTok';diag.tiktokConnected=true;}
 function endSession(){sessionStartedAt=0;liveSince=0;lastEventAt=0;}
 
 function incident(level,title,detail=''){
@@ -20,19 +21,21 @@ function incident(level,title,detail=''){
  diag.incidents=diag.incidents.slice(0,80);renderDiag();
 }
 function burstContext(){const now=Date.now();diag.likeTimes=diag.likeTimes.filter(t=>now-t<10000);return diag.likeTimes.length>=8?` · contexto: ${diag.likeTimes.length} pacotes de like nos últimos 10s`:''}
-function markDiagEvent(kind,d={}){diag.lastEvent=kind;diag.lastEventAt=Date.now();diag.lastPacketAt=Date.now();if(d.mode)diag.lastMode=d.mode;if(kind==='like'){diag.likeTimes.push(Date.now());diag.likeTimes=diag.likeTimes.filter(t=>Date.now()-t<10000)}if(lastOn)lastEventAt=Date.now()}
+function markDiagEvent(kind,d={}){const now=Date.now();diag.lastEvent=kind;diag.lastEventAt=now;diag.lastPacketAt=now;diag.tiktokConnected=true;if(d.mode)diag.lastMode=d.mode;if(kind==='like'){diag.likeTimes.push(now);diag.likeTimes=diag.likeTimes.filter(t=>now-t<10000)}lastEventAt=now}
+function clearWsFailure(){if(wsFailureTimer){clearTimeout(wsFailureTimer);wsFailureTimer=null}}
+function schedulePrimaryWsFailure(title,detail=''){clearWsFailure();diag.wsState='RECUPERANDO';renderDiag();wsFailureTimer=setTimeout(()=>{wsFailureTimer=null;if(diag.wsState==='OK')return;diag.wsState='FECHADO';incident('warn',title,detail);renderDiag()},WS_GRACE_MS)}
 function handleCloudPacket(d={}){
  diag.lastPacketAt=Date.now();
  if(['like','chat','gift','follow','share'].includes(d.type)){markDiagEvent(d.type,d);return}
- if(d.type==='pong'){diag.wsState='OK';if(d.mode)diag.lastMode=d.mode;return renderDiag()}
+ if(d.type==='pong'){diag.wsState='OK';clearWsFailure();if(d.mode)diag.lastMode=d.mode;return renderDiag()}
  if(d.type==='error'){diag.lastReason=String(d.message||'erro do Connector');incident('err','ERRO DO CONNECTOR',diag.lastReason+burstContext());return}
  if(d.type==='status'){
    const st=String(d.status||'').toLowerCase();if(d.mode)diag.lastMode=d.mode;if(d.reason)diag.lastReason=String(d.reason);
-   if(st==='connected'){diag.lastConnectedAt=Date.now();diag.wsState='OK';incident('ok','TIKTOK CONECTADA',`modo ${d.mode||diag.lastMode||'—'}${d.username?' · @'+d.username:''}`)}
+   if(st==='connected'){diag.lastConnectedAt=Date.now();diag.tiktokConnected=true;diag.wsState='OK';clearWsFailure();incident('ok','TIKTOK CONECTADA',`modo ${d.mode||diag.lastMode||'—'}${d.username?' · @'+d.username:''}`)}
    else if(st==='reconnecting'){diag.reconnects++;incident('warn',`RECONEXÃO #${diag.reconnects}`,`${d.reason||'motivo não informado'}${d.attempt?' · tentativa '+d.attempt:''}${burstContext()}`)}
    else if(st==='zombie'){diag.zombies++;incident('err',`SESSÃO ZUMBI #${diag.zombies}`,`${d.reason||'watchdog'}${burstContext()}`)}
-   else if(st==='disconnected')incident('err','TIKTOK DESCONECTADA',`${d.reason||'evento disconnected recebido'}${burstContext()}`);
-   else if(st==='offline')incident('warn','LIVE INFORMADA OFFLINE',d.reason||'TikTok informou Live offline');
+   else if(st==='disconnected'){diag.tiktokConnected=false;incident('err','TIKTOK DESCONECTADA',`${d.reason||'evento disconnected recebido'}${burstContext()}`)}
+   else if(st==='offline'){diag.tiktokConnected=false;incident('warn','LIVE INFORMADA OFFLINE',d.reason||'TikTok informou Live offline')}
    else if(st==='fallback')incident('warn','FALLBACK LEGACY','Connector moderno falhou; tentando modo legado');
    renderDiag();return;
  }
@@ -57,11 +60,12 @@ function installCloudTap(){
  const Native=window.WebSocket;if(!Native)return;
  class DiagWebSocket extends Native{
    constructor(url,protocols){super(url,protocols);const target=String(url||'');if(!/game-f202\.onrender\.com/i.test(target))return;
-     diag.wsState='CONECTANDO';renderDiag();
-     this.addEventListener('open',()=>{diag.wsState='OK';incident('ok','CLOUD WEBSOCKET ONLINE','Canal painel ↔ Connector aberto');renderDiag()});
-     this.addEventListener('close',e=>{diag.wsState='FECHADO';incident('err','CLOUD WEBSOCKET FECHOU',`código ${e.code||'—'}${e.reason?' · '+e.reason:''}${burstContext()}`);renderDiag()});
-     this.addEventListener('error',()=>{diag.wsState='ERRO';incident('err','ERRO NO CLOUD WEBSOCKET','Falha detectada no canal painel ↔ Connector');renderDiag()});
-     this.addEventListener('message',e=>{try{handleCloudPacket(JSON.parse(e.data))}catch{}});
+     const isPrimary=()=>!this.__caosRole||this.__caosRole==='primary';
+     if(isPrimary()){diag.wsState='CONECTANDO';renderDiag()}
+     this.addEventListener('open',()=>{setTimeout(()=>{if(!isPrimary())return;const wasRecovering=diag.wsState==='RECUPERANDO'||diag.wsState==='FECHADO'||diag.wsState==='ERRO';diag.wsState='OK';clearWsFailure();if(wasRecovering)incident('ok','CLOUD WEBSOCKET RECUPERADO','Canal principal painel ↔ Connector restabelecido');renderDiag()},0)});
+     this.addEventListener('close',e=>{if(!isPrimary())return;const code=e.code||'—',detail=`código ${code}${e.reason?' · '+e.reason:''}${burstContext()}`;if(e.code===1005||e.code===1006||!e.code)schedulePrimaryWsFailure('CLOUD WEBSOCKET OSCILOU',detail);else schedulePrimaryWsFailure('CLOUD WEBSOCKET FECHOU',detail)});
+     this.addEventListener('error',()=>{if(!isPrimary())return;schedulePrimaryWsFailure('ERRO NO CLOUD WEBSOCKET','Falha persistiu por mais de '+Math.round(WS_GRACE_MS/1000)+'s no canal principal painel ↔ Connector')});
+     this.addEventListener('message',e=>{if(!isPrimary())return;try{handleCloudPacket(JSON.parse(e.data))}catch{}});
    }
  }
  Object.defineProperties(DiagWebSocket,{CONNECTING:{value:Native.CONNECTING},OPEN:{value:Native.OPEN},CLOSING:{value:Native.CLOSING},CLOSED:{value:Native.CLOSED}});
@@ -77,16 +81,16 @@ function escapeHtml(v=''){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','
 function setHealth(id,value,kind,hint=''){const b=$(id),h=$(id+'Hint');if(b){b.textContent=value;b.className=kind||''}if(h)h.textContent=hint}
 async function probeCloud(){if(probeBusy)return;probeBusy=true;try{const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),4500);const r=await fetch(CLOUD_HEALTH+'?ts='+Date.now(),{cache:'no-store',signal:ctl.signal});clearTimeout(to);if(!r.ok)throw Error('HTTP '+r.status);const j=await r.json();cloudHealthy=!!j.ok;lastCloudProbe=Date.now()}catch{cloudHealthy=false}finally{probeBusy=false}}
 function sendGameLiveState(force=false){if(!gameConn?.open)return false;const snap=liveSnapshot(),payload=JSON.stringify({liveStatus:snap.on?'on':'off',liveUser:snap.user});if(!force&&payload===lastPayload)return true;try{gameConn.send({type:'command',command:'ping',liveStatus:snap.on?'on':'off',liveUser:snap.user});lastPayload=payload;return true}catch{return false}}
-function markEvent(){if(!lastOn)return;const like=txt('likeTotal'),evt=txt('liveStatus'),status=txt('cloudStatus');if(like!==lastLike||/Último comentário|Último evento|💬|🎁|curtida|coment|follow|seguiu|share|compart/i.test(evt+' '+status))lastEventAt=Date.now();lastLike=like}
+function markEvent(){const like=txt('likeTotal'),evt=txt('liveStatus'),status=txt('cloudStatus');if(like!==lastLike||/Último comentário|Último evento|💬|🎁|curtida|coment|follow|seguiu|share|compart/i.test(evt+' '+status)){lastEventAt=Date.now();if(like!==lastLike||/Último comentário|Último evento|💬|🎁/i.test(evt+' '+status))diag.tiktokConnected=true}lastLike=like}
 function cleanupNoise(){const log=$('log');if(!log)return;const seen=new Set();[...log.children].forEach(p=>{const raw=String(p.textContent||''),body=raw.replace(/^\d{2}:\d{2}:\d{2}\s+—\s+/,'');if(!/Jogo v[\d.]+ ≠ Painel v[\d.]+|Heartbeat expirou; reconectando/i.test(body))return;const key=body.replace(/\d+/g,'#');if(seen.has(key))p.remove();else seen.add(key)})}
-function sync(){ensure();cleanupNoise();const snap=liveSnapshot(),input=$('cloudUser')?.value||'',expected=!!String(input).replace(/^@/,'').trim();if(snap.on&&!lastOn){lastOn=true;beginSession();incident('ok','NOVA SESSÃO LIVE','Relógio de atividade zerado nesta conexão')}if(!snap.on&&lastOn){lastOn=false;endSession()}markEvent();const age=lastOn&&lastEventAt?Date.now()-lastEventAt:null;
+function sync(){ensure();cleanupNoise();markEvent();const snap=liveSnapshot(),input=$('cloudUser')?.value||'',expected=!!String(input).replace(/^@/,'').trim();if(snap.on&&!lastOn){lastOn=true;beginSession();incident('ok','NOVA SESSÃO LIVE','Relógio de atividade zerado nesta conexão')}if(!snap.on&&lastOn){lastOn=false;endSession()}const age=snap.on&&lastEventAt?Date.now()-lastEventAt:null;
  if($('liveMonitorUser'))$('liveMonitorUser').textContent=snap.on?cleanUser(snap.user):cleanUser(input);
  if($('liveMonitorLikes'))$('liveMonitorLikes').textContent=txt('likeTotal')||'0';if($('liveMonitorTime'))$('liveMonitorTime').textContent=snap.on&&liveSince?fmt(Date.now()-liveSince):'00:00';
  if(cloudHealthy)setHealth('liveMonitorCloud','OK','ok','Heartbeat há '+Math.max(0,Math.round((Date.now()-lastCloudProbe)/1000))+'s');else if(snap.on)setHealth('liveMonitorCloud','AUXILIAR OFFLINE','warn','Live TikTok segue ativa; probe Render/Cloud sem resposta');else setHealth('liveMonitorCloud','SEM RESPOSTA','err','Render/Cloud não respondeu');
- if(snap.on)setHealth('liveMonitorTikTok','CONECTADA','ok','Sessão confirmada pelo painel');else if(expected&&cloudHealthy)setHealth('liveMonitorTikTok','NÃO CONFIRMADA','warn','Cloud ok; TikTok sem confirmação');else setHealth('liveMonitorTikTok','OFF','err','Live não conectada');
+ if(snap.on)setHealth('liveMonitorTikTok','CONECTADA','ok','Sessão confirmada por status/eventos do TikTok');else if(expected&&cloudHealthy)setHealth('liveMonitorTikTok','NÃO CONFIRMADA','warn','Cloud ok; TikTok sem confirmação');else setHealth('liveMonitorTikTok','OFF','err','Live não conectada');
  if(snap.on&&age===null)setHealth('liveMonitorEvents','CANAL ATIVO','ok','Aguardando primeira interação TikTok');else if(snap.on&&age<EVENT_WARN_MS)setHealth('liveMonitorEvents','INTERAÇÃO','ok',`${diag.lastEvent&&diag.lastEvent!=='—'?diag.lastEvent+' · ':''}há ${Math.round(age/1000)}s`);else if(snap.on&&age<EVENT_DEAD_MS)setHealth('liveMonitorEvents','SEM INTERAÇÃO','warn','Última interação há '+Math.round(age/1000)+'s');else if(snap.on)setHealth('liveMonitorEvents','LIVE QUIETA','warn','Última interação há '+Math.round(age/1000)+'s · conexão mantida');else setHealth('liveMonitorEvents','AGUARDANDO','',expected?'Aguardando Live':'Informe o @');
  const badge=$('liveMonitorBadge');if(badge){let label='AGUARDANDO',cls='off';if(snap.on){label='LIVE OK';cls='on'}else if(cloudHealthy&&expected){label='ATENÇÃO';cls='warn'}else if(expected){label='FALHA';cls='err'}badge.className='liveMonitorBadge '+cls;badge.innerHTML=`<i></i> ${label}`}
- if($('liveMonitorHint'))$('liveMonitorHint').textContent=snap.on?(cloudHealthy?'TikTok e Cloud operacionais':'TikTok operacional · Cloud auxiliar sem resposta'):'Verifique os indicadores abaixo';sendGameLiveState();renderDiag()}
-function watch(){installCloudTap();hookPanelConnection();ensure();document.getElementById('diagCard')?.remove();lastLike=txt('likeTotal');['cloudStatus','liveBadge','cloudDot','likeTotal','liveStatus','log'].forEach(id=>{const el=$(id);if(el)new MutationObserver(sync).observe(el,{childList:true,subtree:true,characterData:true,attributes:true})});$('cloudUser')?.addEventListener('input',sync);probeCloud();setInterval(probeCloud,PROBE_MS);timer=setInterval(()=>{sync();sendGameLiveState(true)},2000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){probeCloud();sync()}});window.addEventListener('online',()=>{probeCloud();setTimeout(sync,500)});sync()}
+ if($('liveMonitorHint'))$('liveMonitorHint').textContent=snap.on?(cloudHealthy?'TikTok e Cloud operacionais':'TikTok operacional · probe auxiliar sem resposta'):'Verifique os indicadores abaixo';sendGameLiveState();renderDiag()}
+function watch(){installCloudTap();hookPanelConnection();ensure();document.getElementById('diagCard')?.remove();lastLike=txt('likeTotal');['cloudStatus','liveBadge','cloudDot','likeTotal','liveStatus','log'].forEach(id=>{const el=$(id);if(el)new MutationObserver(sync).observe(el,{childList:true,subtree:true,characterData:true,attributes:true})});$('cloudUser')?.addEventListener('input',sync);$('tiktokDisconnect')?.addEventListener('click',()=>{diag.tiktokConnected=false;setTimeout(sync,100)});probeCloud();setInterval(probeCloud,PROBE_MS);timer=setInterval(()=>{sync();sendGameLiveState(true)},2000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){probeCloud();sync()}});window.addEventListener('online',()=>{probeCloud();setTimeout(sync,500)});sync()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watch);else watch();
 })();
