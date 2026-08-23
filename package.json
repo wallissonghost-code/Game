@@ -30,7 +30,7 @@
     "validate": "npm run check"
   },
   "dependencies": {
-    "tiktok-live-connector": "^2.4.3",
+    "tiktok-live-connector": "^2.4.4",
     "tiktok-live-connector-legacy": "npm:tiktok-live-connector@1.2.3",
     "ws": "^8.18.0"
   },
