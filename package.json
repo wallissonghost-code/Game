@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "tiktok": "node scripts/tiktok-bridge.mjs",
-    "cloud": "node --import ./cloud/tiktok-minimal-diagnostics.mjs cloud/connector-minimal.mjs",
+    "cloud": "node cloud/connector-minimal.mjs",
     "game-server": "npm run game-server-v2",
     "game-server-v2": "node cloud/game-server-v2.mjs",
     "game-server-v3": "node cloud/game-server-v3.mjs",
