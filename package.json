@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "tiktok": "node scripts/tiktok-bridge.mjs",
-    "cloud": "node cloud/connector-minimal.mjs",
+    "cloud": "node --import ./cloud/tiktok-minimal-diagnostics.mjs cloud/connector-minimal.mjs",
     "game-server": "npm run game-server-v2",
     "game-server-v2": "node cloud/game-server-v2.mjs",
     "game-server-v3": "node cloud/game-server-v3.mjs",
@@ -14,7 +14,7 @@
     "check:events": "node scripts/check-natural-events.mjs",
     "check:admin": "node scripts/check-admin-contract.mjs",
     "check:tiktok-resilience": "node scripts/check-tiktok-resilience.mjs",
-    "check:live": "node --check cloud/connector-minimal.mjs && node --check cloud/connector-bootstrap.mjs && node --check cloud/connector-server.mjs && node --check cloud/tiktok-resilience.mjs && node --check src/panel-live-v2.js && node --check src/panel-live-v2-enhance.js && node --check src/panel-live-v2-polish.js && node --check src/live-gift-observer.js && node --check src/panel-guardian.js && node scripts/check-tiktok-resilience.mjs && node scripts/check-live-admin-ui.mjs",
+    "check:live": "node --check cloud/tiktok-minimal-diagnostics.mjs && node --check cloud/connector-minimal.mjs && node --check cloud/connector-bootstrap.mjs && node --check cloud/connector-server.mjs && node --check cloud/tiktok-resilience.mjs && node --check src/panel-live-v2.js && node --check src/panel-live-v2-enhance.js && node --check src/panel-live-v2-polish.js && node --check src/live-gift-observer.js && node --check src/panel-guardian.js && node scripts/check-tiktok-resilience.mjs && node scripts/check-live-admin-ui.mjs",
     "check:land-market": "node scripts/check-land-market.mjs",
     "check:property-lifecycle": "node scripts/check-property-lifecycle.mjs",
     "check:property-market": "node scripts/check-property-market.mjs",
