@@ -33,7 +33,11 @@ try{
   if(rows<1)throw Error('busca não renderizou resultado');
   if(elapsed>1800)throw Error(`busca lenta/travada: ${elapsed}ms`);
   await page.locator('#giftCatalogSearch').fill('');
-  await page.waitForTimeout(350);
+
+  // Give the observer one decoration cycle to add verification badges/filter.
+  // The old check started counting while that legitimate render was still happening,
+  // so 30 verified rows could look like a MutationObserver loop.
+  await page.waitForTimeout(700);
   const stable=await page.evaluate(()=>new Promise(resolve=>{let n=0;const box=document.querySelector('#giftCatalogList');const mo=new MutationObserver(m=>n+=m.length);if(box)mo.observe(box,{childList:true,subtree:true,characterData:true});setTimeout(()=>{mo.disconnect();resolve(n)},300)}));
   if(stable>25)throw Error(`possível loop de MutationObserver: ${stable} mutações/300ms`);
   if(errors.length)throw Error('pageerror: '+errors.join(' | '));
