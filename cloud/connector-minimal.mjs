@@ -114,6 +114,22 @@ async function connectOnce(ws,s,rawUsername){
   return startConnection(ws,s,username,{recovery:false});
 }
 
+async function simulateTikTokDrop(ws,s){
+  if(!s.connected||!s.live||s.connecting)return safeSend(ws,{type:'diagnostic',ok:false,event:'SIMULAÇÃO RECUSADA',message:'Conecte uma TikTok Live antes de simular a queda.',mode:MODE});
+  if(s.manualStop||!s.hadConnected||!s.wantedUsername)return safeSend(ws,{type:'diagnostic',ok:false,event:'SIMULAÇÃO RECUSADA',message:'Sessão não está armada para recuperação automática.',mode:MODE});
+  const live=s.live;
+  safeSend(ws,{type:'debug',event:'QUEDA TIKTOK SIMULADA',username:s.username,mode:MODE,at:Date.now()});
+  safeSend(ws,{type:'diagnostic',ok:true,event:'QUEDA TIKTOK SIMULADA',message:'Sessão TikTok derrubada de propósito. Auto Recovery deve assumir sem novo clique.',mode:MODE});
+  try{live.emit?.('disconnected')}catch{}
+  if(s.live===live){
+    s.live=null;s.connecting=false;s.connected=false;
+    safeSend(ws,{type:'status',status:'disconnected',reason:'diagnóstico: queda TikTok simulada',username:s.username,mode:MODE,unexpected:true,simulated:true});
+    scheduleRecovery(ws,s,'Diagnóstico: queda TikTok simulada');
+  }
+  try{live.removeAllListeners?.()}catch{}
+  try{await live.disconnect?.()}catch{}
+}
+
 wss.on('connection',ws=>{
   const s={authenticated:!ACCESS_KEY,live:null,username:'',wantedUsername:'',connecting:false,connected:false,generation:0,manualStop:true,hadConnected:false,recoveryTimer:null,recoveryAttempt:0,recovering:false};
   safeSend(ws,{type:'bridge',status:'ready',authRequired:Boolean(ACCESS_KEY),mode:MODE,recovery:'bounded-2'});
@@ -123,6 +139,10 @@ wss.on('connection',ws=>{
     if(!s.authenticated)return safeSend(ws,{type:'error',message:'Chave do Caos Connector inválida.'});
     if(m.type==='connect')return connectOnce(ws,s,m.username);
     if(m.type==='disconnect')return stopSession(ws,s,true);
+    if(m.type==='diagnostic_simulate_tiktok_drop'){
+      if(m.diagnostic!==true)return safeSend(ws,{type:'diagnostic',ok:false,event:'DIAGNÓSTICO NEGADO',message:'Comando permitido somente pelo modo diagnóstico.',mode:MODE});
+      return simulateTikTokDrop(ws,s);
+    }
     if(m.type==='ping')return safeSend(ws,{type:'pong',at:Date.now(),mode:MODE,username:s.username||s.wantedUsername,reconnecting:Boolean(s.recovering||s.recoveryTimer),attempt:s.recoveryAttempt,maxAttempts:RECOVERY_DELAYS_MS.length,tiktokConnected:Boolean(s.connected),sessionEpoch:s.generation});
     if(m.type==='observe')return safeSend(ws,{type:'observe',ok:false,message:'Observador desativado durante estabilização.'});
     if(m.type==='giftcatalog')return safeSend(ws,{type:'gift_catalog_error',message:'Catálogo desativado durante estabilização.'});
