@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#050712">
+<title>Caos Live · HUD Live Lab</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050712;color:#fff;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}#gameFrame{position:fixed;inset:0;width:100%;height:100%;border:0;background:#050712}.liveHud{position:fixed;z-index:20;top:max(150px,calc(env(safe-area-inset-top) + 145px));right:max(8px,env(safe-area-inset-right));width:min(300px,38vw);pointer-events:none}.liveHudCard{position:relative;overflow:hidden;border:1px solid rgba(124,92,255,.58);border-radius:16px;background:linear-gradient(155deg,rgba(12,15,32,.94),rgba(5,8,20,.88));box-shadow:0 12px 36px rgba(0,0,0,.38),0 0 28px rgba(120,70,255,.14);backdrop-filter:blur(10px)}.liveHudHead{display:flex;align-items:center;justify-content:space-between;padding:8px 10px 7px;border-bottom:1px solid rgba(104,116,166,.24)}.liveHudTitle{font-size:9px;font-weight:950;letter-spacing:.12em}.liveHudTitle b{color:#a78bfa}.liveBadge{font-size:7px;font-weight:950;color:#7ef0aa;border:1px solid rgba(55,199,109,.36);background:rgba(8,68,35,.28);padding:4px 6px;border-radius:999px}.liveItems{display:grid;gap:5px;padding:7px}.liveItem{display:grid;grid-template-columns:38px minmax(0,1fr);align-items:center;gap:8px;min-height:50px;padding:5px 7px;border:1px solid rgba(93,105,160,.34);border-radius:12px;background:linear-gradient(120deg,rgba(19,24,48,.78),rgba(9,12,27,.73));box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}.liveGiftIcon{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;overflow:hidden;background:radial-gradient(circle at 30% 25%,rgba(147,91,255,.28),rgba(6,9,22,.92));border:1px solid rgba(130,103,255,.35);font-size:22px}.liveGiftIcon img{width:100%;height:100%;object-fit:contain}.liveGiftName{font-size:8px;font-weight:900;color:#d9def2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.liveEffect{margin-top:2px;font-size:11px;line-height:1.05;font-weight:950;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.liveEffect em{font-style:normal;color:#a78bfa}.liveFooter{padding:0 10px 8px;text-align:center;color:#67728f;font-size:6px;font-weight:800;letter-spacing:.08em}.labBtn{position:fixed;z-index:31;right:max(10px,env(safe-area-inset-right));bottom:max(12px,calc(env(safe-area-inset-bottom) + 10px));border:1px solid #7c3aed;border-radius:999px;background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:10px 13px;font-size:9px;font-weight:950;box-shadow:0 8px 25px rgba(91,33,182,.42)}.editorBackdrop{display:none;position:fixed;z-index:39;inset:0;background:rgba(1,3,12,.58);backdrop-filter:blur(4px)}.editorBackdrop.show{display:block}.editor{position:absolute;right:0;top:0;bottom:0;width:min(420px,94vw);overflow:auto;padding:calc(env(safe-area-inset-top) + 14px) 14px calc(env(safe-area-inset-bottom) + 18px);background:linear-gradient(180deg,#0c1020,#070a16);border-left:1px solid rgba(124,92,255,.45);box-shadow:-20px 0 60px rgba(0,0,0,.46)}.editor h1{margin:0;font-size:21px}.editor p{margin:6px 0 16px;color:#8994b3;font-size:11px;line-height:1.4}.editorTop{display:flex;align-items:center;justify-content:space-between;gap:10px}.closeBtn{border:1px solid #343b60;border-radius:10px;background:#101527;color:#d6dbeb;padding:9px 11px;font-weight:900}.slot{padding:12px;margin:0 0 10px;border:1px solid #2d3658;border-radius:15px;background:#0a0e1c}.slotTitle{font-size:9px;letter-spacing:.12em;font-weight:950;color:#a78bfa;margin-bottom:8px}.row{display:grid;grid-template-columns:1fr 1fr;gap:7px}.slot label{display:block;margin:7px 0 4px;color:#7f8aa8;font-size:8px;font-weight:900;letter-spacing:.06em}.slot select,.slot input{width:100%;height:39px;border:1px solid #343d64;border-radius:10px;background:#070b18;color:#fff;padding:0 10px;font-size:11px;font-weight:800;outline:none}.slot input:focus,.slot select:focus{border-color:#8b5cf6}.actions{position:sticky;bottom:-18px;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 0 4px;background:linear-gradient(180deg,rgba(7,10,22,0),#070a16 32%)}.save,.reset{height:43px;border-radius:12px;font-weight:950;border:1px solid}.save{border-color:#7c3aed;background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff}.reset{border-color:#4b2740;background:#21101b;color:#ff9fbe}.hint{font-size:8px;color:#69738e;text-align:center;margin-top:8px}.empty{padding:14px;color:#8a94b0;font-size:9px;text-align:center}.modeTag{position:fixed;z-index:19;left:max(8px,env(safe-area-inset-left));bottom:max(8px,env(safe-area-inset-bottom));padding:6px 8px;border:1px solid rgba(124,92,255,.35);border-radius:9px;background:rgba(7,10,22,.76);color:#a78bfa;font-size:7px;font-weight:950;letter-spacing:.08em;pointer-events:none}
+@media(max-width:700px){.liveHud{top:max(145px,calc(env(safe-area-inset-top) + 140px));right:6px;width:min(244px,54vw)}.liveHudHead{padding:6px 7px}.liveHudTitle{font-size:7px}.liveBadge{font-size:5.8px;padding:3px 5px}.liveItems{gap:4px;padding:5px}.liveItem{grid-template-columns:30px minmax(0,1fr);min-height:40px;gap:6px;padding:4px 5px;border-radius:10px}.liveGiftIcon{width:30px;height:30px;border-radius:8px;font-size:18px}.liveGiftName{font-size:6.5px}.liveEffect{font-size:8.7px}.liveFooter{font-size:5px;padding-bottom:6px}.labBtn{padding:9px 11px;font-size:8px}}
+@media(max-width:410px){.liveHud{width:55vw}.liveEffect{font-size:8px}}
+</style>
+</head>
+<body>
+<iframe id="gameFrame" src="hud-preview.html" title="Caos Live HUD Preview"></iframe>
+<section class="liveHud" id="liveHud" aria-label="Comandos da Live">
+  <div class="liveHudCard">
+    <div class="liveHudHead"><div class="liveHudTitle">COMANDOS DA <b>LIVE</b></div><div class="liveBadge">● AO VIVO</div></div>
+    <div class="liveItems" id="liveItems"></div>
+    <div class="liveFooter">INTERAJA • MUDE O RUMO DA PARTIDA</div>
+  </div>
+</section>
+<div class="modeTag">HUD LIVE LAB • ISOLADO</div>
+<button class="labBtn" id="labBtn">⚙ HUD LIVE</button>
+<div class="editorBackdrop" id="editorBackdrop">
+  <aside class="editor" role="dialog" aria-modal="true" aria-label="Editor HUD Live">
+    <div class="editorTop"><div><h1>HUD Live</h1><p>Monte o cardápio visual da transmissão. Este laboratório não altera a Live Engine.</p></div><button class="closeBtn" id="closeBtn">FECHAR</button></div>
+    <div id="slots"></div>
+    <div class="actions"><button class="reset" id="resetBtn">RESTAURAR</button><button class="save" id="saveBtn">SALVAR PREVIEW</button></div>
+    <div class="hint">Salvo apenas neste navegador por enquanto. Depois ligamos ao Painel Admin.</div>
+  </aside>
+</div>
+<script>
+(()=>{
+const STORE='caos-hud-live-lab-v1';
+const CATALOG='caos-gift-catalog-v2';
+const fallback=[
+ {name:'GG',id:'6064',image:'',effect:'1 BOSS'},
+ {name:'Rose',id:'5655',image:'',effect:'SPAWN 1 MOB'},
+ {name:'White Rose',id:'8239',image:'',effect:'CURA O JOGADOR'},
+ {name:'Dinosaur',id:'',image:'',effect:'+1 LEVEL'}
+];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function catalog(){try{const raw=JSON.parse(localStorage.getItem(CATALOG)||'[]');const arr=Array.isArray(raw)?raw:(Array.isArray(raw?.items)?raw.items:[]);const verified=arr.filter(x=>x&&x.liveVerified);return (verified.length?verified:arr).map(x=>({name:x.name||x.giftName||x.title||'Presente',id:String(x.id||x.giftId||''),image:x.image||x.imageUrl||x.picture||x.icon||x.iconUrl||'',value:x.value||x.diamondCount||x.diamonds||1}));}catch{return []}}
+function defaults(){const cat=catalog();const wanted=['GG','Rose','White Rose'];const out=wanted.map((n,i)=>{const g=cat.find(x=>String(x.name).toLowerCase()===n.toLowerCase());return g?{...g,effect:fallback[i].effect}:fallback[i]});const dino=cat.find(x=>/dino/i.test(x.name));out.push(dino?{...dino,effect:'+1 LEVEL'}:fallback[3]);return out.slice(0,4)}
+function load(){try{const x=JSON.parse(localStorage.getItem(STORE)||'null');if(Array.isArray(x)&&x.length)return x.slice(0,6)}catch{}return defaults()}
+let state=load();
+const items=document.getElementById('liveItems'),slots=document.getElementById('slots');
+function icon(g){if(g.image)return `<img src="${esc(g.image)}" alt="">`;const n=(g.name||'').toLowerCase();if(n.includes('rose'))return '🌹';if(n.includes('dino'))return '🦖';if(n==='gg')return '🎮';return '🎁'}
+function renderHud(){items.innerHTML=state.length?state.map(g=>`<div class="liveItem"><div class="liveGiftIcon">${icon(g)}</div><div><div class="liveGiftName">${esc(g.name||'Presente')}</div><div class="liveEffect"><em>${esc(g.effect||'EFEITO')}</em></div></div></div>`).join(''):'<div class="empty">Nenhum comando visível</div>'}
+function options(selected){const cat=catalog();const all=[...cat];for(const f of fallback)if(!all.some(x=>String(x.name).toLowerCase()===f.name.toLowerCase()))all.push(f);return all.slice(0,200).map(g=>`<option value="${esc(g.id||g.name)}" ${String(g.id||g.name)===String(selected.id||selected.name)?'selected':''}>${esc(g.name)}${g.liveVerified?' ✓':''}</option>`).join('')}
+function renderEditor(){slots.innerHTML=state.map((g,i)=>`<div class="slot" data-i="${i}"><div class="slotTitle">SLOT ${i+1}</div><label>PRESENTE</label><select class="giftSel">${options(g)}</select><div class="row"><div><label>NOME NO HUD</label><input class="nameInp" maxlength="28" value="${esc(g.name||'')}"></div><div><label>EFEITO / TEXTO</label><input class="effectInp" maxlength="36" value="${esc(g.effect||'')}"></div></div></div>`).join('');slots.querySelectorAll('.slot').forEach(el=>{const i=+el.dataset.i;const sel=el.querySelector('.giftSel'),name=el.querySelector('.nameInp'),effect=el.querySelector('.effectInp');sel.onchange=()=>{const cat=[...catalog(),...fallback];const found=cat.find(x=>String(x.id||x.name)===sel.value);if(found){state[i]={...state[i],...found,effect:state[i].effect};name.value=found.name||'';state[i].name=name.value;renderHud()}};name.oninput=()=>{state[i].name=name.value;renderHud()};effect.oninput=()=>{state[i].effect=effect.value;renderHud()}})}
+renderHud();
+document.getElementById('labBtn').onclick=()=>{renderEditor();document.getElementById('editorBackdrop').classList.add('show')};
+document.getElementById('closeBtn').onclick=()=>document.getElementById('editorBackdrop').classList.remove('show');
+document.getElementById('editorBackdrop').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('show')});
+document.getElementById('saveBtn').onclick=()=>{localStorage.setItem(STORE,JSON.stringify(state));renderHud();document.getElementById('editorBackdrop').classList.remove('show')};
+document.getElementById('resetBtn').onclick=()=>{state=defaults();localStorage.removeItem(STORE);renderEditor();renderHud()};
+})();
+</script>
+</body>
+</html>
