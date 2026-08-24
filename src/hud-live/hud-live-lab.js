@@ -24,6 +24,22 @@
     });
   }
 
+  function syncPreviewLayout(){
+    try{
+      const doc=frame.contentDocument;
+      if(!doc)return;
+      let style=doc.getElementById('hudLiveLabLayoutStyle');
+      if(!style){style=doc.createElement('style');style.id='hudLiveLabLayoutStyle';doc.head.appendChild(style)}
+      style.textContent=visible?`
+        .hudTopRow{height:108px!important;align-items:start!important}
+        .hudStatsRow{height:108px!important}
+        .hudStatsRow>div{height:108px!important;min-height:108px!important}
+        @media(max-width:700px){.hudTopRow{height:100px!important}.hudStatsRow,.hudStatsRow>div{height:100px!important;min-height:100px!important}}
+        @media(max-width:430px){.hudTopRow{height:96px!important}.hudStatsRow,.hudStatsRow>div{height:96px!important;min-height:96px!important}}
+      `:'';
+    }catch{}
+  }
+
   function syncVisibility(){
     dock.classList.toggle('is-hidden',!visible);
     if(visibilityBtn){
@@ -31,6 +47,8 @@
       visibilityBtn.classList.toggle('off',!visible);
     }
     localStorage.setItem(VIS,visible?'1':'0');
+    syncPreviewLayout();
+    setTimeout(placeDock,30);
   }
 
   function renderHud(){
@@ -50,7 +68,6 @@
       const sr=stats.getBoundingClientRect();
       const br=brand?.getBoundingClientRect();
       const pr=pause?.getBoundingClientRect();
-      // Mantém exatamente o espaço reservado aos indicadores centrais do HUD.
       const left=br&&pr?Math.max(sr.left,br.right+6):sr.left;
       const right=br&&pr?Math.min(sr.right,pr.left-6):sr.right;
       dock.style.left=`${Math.round(left)}px`;
@@ -100,7 +117,7 @@
   document.getElementById('hudLiveSave').addEventListener('click',()=>{state=Store.save(state);renderHud();backdrop.classList.remove('show')});
   document.getElementById('hudLiveReset').addEventListener('click',()=>{state=Store.reset();visible=true;renderEditor();renderHud()});
 
-  frame.addEventListener('load',()=>{setTimeout(()=>{state=Store.load();renderHud();placeDock()},180);setTimeout(placeDock,700)});
+  frame.addEventListener('load',()=>{setTimeout(()=>{state=Store.load();syncPreviewLayout();renderHud();placeDock()},180);setTimeout(placeDock,700)});
   addEventListener('storage',e=>{if(['caos-gift-catalog-v2','caos-gift-catalog','gift_catalog_verified'].includes(e.key)){state=Store.load();renderHud()}});
   addEventListener('resize',placeDock,{passive:true});
   addEventListener('orientationchange',()=>setTimeout(placeDock,250),{passive:true});
