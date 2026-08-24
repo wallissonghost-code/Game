@@ -14,15 +14,16 @@
   const normalize=x=>({
     name:String(first(x,['name','giftName','title','displayName'])||'Presente'),
     id:String(first(x,['id','giftId','gift_id'])||''),
-    image:String(first(x,['image','imageUrl','picture','icon','iconUrl','giftPicture','pictureUrl','previewUrl','url'])||''),
-    value:Number(first(x,['value','diamondCount','diamonds','diamond_count'])||1),
+    // O catálogo oficial do painel usa principalmente `icon`. Ele vem primeiro de propósito.
+    image:String(first(x,['icon','image','iconUrl','imageUrl','picture','giftPicture','pictureUrl','previewUrl','url'])||''),
+    value:Number(first(x,['diamondCount','value','diamonds','diamond_count'])||1),
     liveVerified:Boolean(first(x,['liveVerified','verified','isVerified'])),
     effect:String(first(x,['effect','hudEffect'])||'')
   });
 
   function readArray(raw){
     if(Array.isArray(raw))return raw;
-    for(const key of ['items','gifts','catalog','data','verified'])if(Array.isArray(raw?.[key]))return raw[key];
+    for(const key of ['gifts','items','catalog','data','verified'])if(Array.isArray(raw?.[key]))return raw[key];
     return [];
   }
 
@@ -46,11 +47,30 @@
   function findGift(query){
     const q=String(query||'').trim().toLowerCase();
     if(!q)return null;
-    const all=[...catalog(),...fallback.map(normalize)];
-    return all.find(g=>g.id&&g.id.toLowerCase()===q)
-      ||all.find(g=>g.name.toLowerCase()===q)
-      ||all.find(g=>g.name.toLowerCase().includes(q))
+    const real=catalog();
+    const exact=real.find(g=>g.id&&g.id.toLowerCase()===q)
+      ||real.find(g=>g.name.toLowerCase()===q)
+      ||real.find(g=>g.name.toLowerCase().includes(q));
+    if(exact)return exact;
+    const demo=fallback.map(normalize);
+    return demo.find(g=>g.id&&g.id.toLowerCase()===q)
+      ||demo.find(g=>g.name.toLowerCase()===q)
+      ||demo.find(g=>g.name.toLowerCase().includes(q))
       ||null;
+  }
+
+  function hydrateSaved(item){
+    const g=normalize(item);
+    const real=(g.id&&catalog().find(x=>String(x.id)===String(g.id)))
+      ||catalog().find(x=>String(x.name).toLowerCase()===String(g.name).toLowerCase());
+    if(!real)return g;
+    return {
+      ...g,
+      id:real.id||g.id,
+      image:real.image||'',
+      value:real.value||g.value,
+      liveVerified:real.liveVerified||g.liveVerified
+    };
   }
 
   function defaults(){
@@ -63,18 +83,24 @@
   function load(){
     try{
       const x=JSON.parse(localStorage.getItem(CONFIG_KEY)||'null');
-      if(Array.isArray(x)&&x.length)return x.slice(0,6).map(normalize).map((g,i)=>({...g,effect:String(x[i]?.effect||g.effect||'EFEITO')}));
+      if(Array.isArray(x)&&x.length)return x.slice(0,6).map((raw,i)=>{
+        const g=hydrateSaved(raw);
+        return {...g,effect:String(raw?.effect||g.effect||'EFEITO')};
+      });
     }catch{}
     return defaults();
   }
 
   function save(items){
-    const clean=(Array.isArray(items)?items:[]).slice(0,6).map(normalize).map((g,i)=>({...g,effect:String(items[i]?.effect||g.effect||'EFEITO')}));
+    const clean=(Array.isArray(items)?items:[]).slice(0,6).map((raw,i)=>{
+      const g=hydrateSaved(raw);
+      return {...g,effect:String(raw?.effect||g.effect||'EFEITO')};
+    });
     localStorage.setItem(CONFIG_KEY,JSON.stringify(clean));
     return clean;
   }
 
   function reset(){localStorage.removeItem(CONFIG_KEY);return defaults()}
 
-  window.CaosHudLiveStore={CONFIG_KEY,catalog,findGift,defaults,load,save,reset,normalize};
+  window.CaosHudLiveStore={CONFIG_KEY,catalog,findGift,defaults,load,save,reset,normalize,hydrateSaved};
 })();
