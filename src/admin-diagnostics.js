@@ -1,5 +1,6 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id);let db=null,uid='';
+const GIFT_CAT_KEY='caos-gift-catalog-v2';
 function fmt(ms){const s=Math.max(0,Math.floor((+ms||0)/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
 function lastFrame(d){return Array.isArray(d?.frames)&&d.frames.length?d.frames[d.frames.length-1]:{}}
 async function init(){
@@ -16,5 +17,53 @@ async function loadLatest(){
 async function save(){
   if(!db||!uid)return;const latest=await db.collection('diagnostic_latest').doc(uid).get();if(!latest.exists)return alert('Nenhuma partida para salvar.');const d=latest.data(),note=String($('diagNote')?.value||'').trim().slice(0,300),id=String(d.sessionId||('diag-'+Date.now()));await db.collection('diagnostic_saved').doc(id).set({...d,protected:true,note,savedAt:Date.now()},{merge:false});$('diagStatus').textContent='✓ Partida salva e protegida · '+id;await loadSaved()}
 async function loadSaved(){if(!db||!uid)return;const out=$('diagSaved');try{const q=await db.collection('diagnostic_saved').where('uid','==',uid).limit(10).get();const rows=q.docs.map(x=>x.data()).sort((a,b)=>(b.savedAt||0)-(a.savedAt||0));out.innerHTML=rows.length?rows.map(d=>{const f=lastFrame(d);return '<div class="diagSavedRow"><b>LV '+(+f.lv||0)+' · '+fmt(d.durationMs)+'</b><span>'+String(d.note||'Sem nota')+'</span><small>'+String(d.sessionId||'')+'</small></div>'}).join(''):'<small>Nenhuma partida protegida.</small>'}catch(e){out.textContent='Não foi possível listar: '+String(e?.message||e)}}
-window.addEventListener('load',()=>{setTimeout(init,300)});$('diagRefresh')?.addEventListener('click',()=>{loadLatest();loadSaved()});$('diagSave')?.addEventListener('click',save);
+
+function localVerifiedGifts(){
+  try{const snap=JSON.parse(localStorage.getItem(GIFT_CAT_KEY)||'null'),list=Array.isArray(snap?.gifts)?snap.gifts:[];return list.filter(g=>g?.liveVerified&&!g?.liveDivergence)}catch{return[]}
+}
+function cleanGift(g,idFallback=''){
+  const id=String(g?.id??idFallback??'').trim();if(!id)return null;
+  return{id,name:String(g?.name||g?.liveVerifiedName||('gift-'+id)),diamondCount:Number(g?.diamondCount||g?.liveVerifiedValue)||0,icon:String(g?.icon||''),verifiedAt:Number(g?.lastLiveVerifiedAt||g?.firstLiveVerifiedAt)||Date.now(),liveVerifiedCount:Math.max(1,Number(g?.liveVerifiedCount)||1),source:String(g?.source||'caos-live-verified')};
+}
+async function cloudVerifiedGifts(){
+  try{
+    if(!window.firebase)return[];
+    const cloud=db||window.firebase.firestore();
+    const snap=await cloud.collection('gift_catalog_verified').limit(1000).get();
+    return snap.docs.map(doc=>({...(doc.data()||{}),id:String(doc.data()?.id||doc.id)})).filter(g=>g.liveVerified&&!g.liveDivergence);
+  }catch(e){console.warn('[CAOS EXPORT] Firestore indisponível; exportando cache local.',e);return[]}
+}
+async function collectVerifiedGifts(){
+  const local=localVerifiedGifts(),remote=await cloudVerifiedGifts(),map=new Map();
+  for(const raw of [...remote,...local]){const g=cleanGift(raw);if(!g)continue;const prev=map.get(g.id);map.set(g.id,prev?{...prev,...g,diamondCount:g.diamondCount||prev.diamondCount||0,icon:g.icon||prev.icon||'',verifiedAt:Math.max(prev.verifiedAt||0,g.verifiedAt||0),liveVerifiedCount:Math.max(prev.liveVerifiedCount||1,g.liveVerifiedCount||1)}:g)}
+  return [...map.values()].sort((a,b)=>(a.diamondCount-b.diamondCount)||a.name.localeCompare(b.name));
+}
+function findLiveDiagnosticCard(){return [...document.querySelectorAll('.card')].find(el=>/Cloud\s*\+\s*TikTok/i.test(el.textContent||'')&&/SIMULAR QUEDA TIKTOK/i.test(el.textContent||''))||null}
+function injectGiftExporter(){
+  if($('verifiedGiftExporter'))return;
+  const card=findLiveDiagnosticCard();if(!card)return;
+  const box=document.createElement('div');box.id='verifiedGiftExporter';box.style.cssText='margin-top:18px;padding:18px;border:1px solid #35506d;border-radius:18px;background:#09111f;display:grid;gap:12px';
+  box.innerHTML='<div><span style="display:block;color:#9aa8c5;font-size:11px;font-weight:900;letter-spacing:.16em">CATÁLOGO MESTRE · BACKUP</span><b style="display:block;margin-top:7px;font-size:18px">Exportar presentes verificados</b><small style="display:block;margin-top:6px;color:#8592ad;line-height:1.5">Somente leitura. Junta cache local + Firestore, remove duplicados e exporta apenas presentes confirmados sem divergência.</small></div><button id="exportVerifiedGifts" type="button" style="width:100%;min-height:54px;border:1px solid #4f3ea6;border-radius:14px;background:#21164a;color:#fff;font-weight:900;letter-spacing:.06em">EXPORTAR CATÁLOGO VERIFICADO</button><div id="exportVerifiedGiftsStatus" style="color:#8492ad;font-size:12px">Nenhum dado é alterado pelo exportador.</div>';
+  const log=findLiveDiagnosticCard()?.querySelector('[id*="diagnostic" i], [class*="incident" i]');
+  if(log?.parentNode)log.parentNode.insertBefore(box,log);else card.appendChild(box);
+  $('exportVerifiedGifts')?.addEventListener('click',exportVerifiedGifts);
+}
+async function exportVerifiedGifts(){
+  const btn=$('exportVerifiedGifts'),status=$('exportVerifiedGiftsStatus');if(!btn)return;
+  const old=btn.textContent;btn.disabled=true;btn.textContent='PREPARANDO...';if(status)status.textContent='Lendo catálogo verificado sem alterar o painel...';
+  try{
+    const gifts=await collectVerifiedGifts();if(!gifts.length)throw Error('Nenhum presente verificado foi encontrado no cache local ou Firestore.');
+    const payload={schema:'liveplus.verified-gifts.v1',version:'1.0.0',verifiedAt:Date.now(),exportedAt:new Date().toISOString(),source:'caos-live-verified-export',count:gifts.length,gifts};
+    const json=JSON.stringify(payload,null,2),file=new File([json],`caos-presentes-verificados-${gifts.length}.json`,{type:'application/json'});
+    if(navigator.share&&navigator.canShare?.({files:[file]})){
+      await navigator.share({title:'Caos · Presentes verificados',text:`${gifts.length} presentes verificados`,files:[file]});
+      if(status)status.textContent=`✅ ${gifts.length} presentes preparados. Use “Salvar em Arquivos” no compartilhamento do iPhone.`;
+    }else{
+      const url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);
+      if(status)status.textContent=`✅ ${gifts.length} presentes exportados em JSON.`;
+    }
+  }catch(e){if(String(e?.name)==='AbortError'){if(status)status.textContent='Exportação cancelada.'}else{console.error('[CAOS EXPORT]',e);if(status)status.textContent='⚠️ '+String(e?.message||e)}}finally{btn.disabled=false;btn.textContent=old}
+}
+
+window.addEventListener('load',()=>{setTimeout(init,300);setTimeout(injectGiftExporter,900);setTimeout(injectGiftExporter,2500)});$('diagRefresh')?.addEventListener('click',()=>{loadLatest();loadSaved()});$('diagSave')?.addEventListener('click',save);
 })();
