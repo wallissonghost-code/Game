@@ -1,0 +1,158 @@
+/* Caos Live · LIVE+ battle HUD
+   Estrutura de rodape baseada no componente do Futlive:
+   o painel ocupa 100% da largura e o fundo encosta no limite inferior.
+   A safe-area protege apenas o conteudo interno. */
+#stage #livePlusBattleHud{
+  position:fixed;
+  z-index:6;
+  left:0;
+  right:0;
+  bottom:0;
+  width:100%;
+  max-width:none;
+  transform:none;
+  pointer-events:none;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+#livePlusBattleHud .lpBattleTitle{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:24px;
+  margin:0;
+  padding:4px 10px 6px;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.19em;
+  color:#eef3f9;
+  text-shadow:0 2px 8px #000,0 0 14px #0009;
+}
+#livePlusBattleHud .lpSides{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0;
+  width:100%;
+}
+#livePlusBattleHud .lpSide{
+  position:relative;
+  overflow:hidden;
+  min-width:0;
+  padding:10px 10px max(12px,env(safe-area-inset-bottom));
+  border:0;
+  border-top:1px solid #ffffff24;
+  border-radius:0;
+  background:linear-gradient(180deg,rgba(15,22,32,.94),rgba(4,8,14,.985));
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  box-shadow:0 -14px 34px #0006,inset 0 1px 0 #ffffff0c;
+}
+#livePlusBattleHud .lpSide:first-child{border-right:1px solid #ffffff15}
+#livePlusBattleHud .lpSide::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  opacity:.20;
+  pointer-events:none;
+}
+#livePlusBattleHud .lpSide.chaos::before{background:radial-gradient(circle at 0 0,#ff394f,transparent 62%)}
+#livePlusBattleHud .lpSide.player::before{background:radial-gradient(circle at 100% 0,#347dff,transparent 62%)}
+#livePlusBattleHud .lpSideHead{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:20px;
+  margin:0 0 8px;
+  font-size:10px;
+  font-weight:1000;
+  letter-spacing:.16em;
+}
+#livePlusBattleHud .lpSide.chaos .lpSideHead{color:#ffb3bd}
+#livePlusBattleHud .lpSide.player .lpSideHead{color:#bfd7ff}
+#livePlusBattleHud .lpGiftGrid{
+  position:relative;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:7px;
+}
+#livePlusBattleHud .lpGift{
+  min-width:0;
+  height:62px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:7px 8px;
+  border:1px solid #ffffff16;
+  border-radius:12px;
+  background:linear-gradient(180deg,rgba(7,13,22,.97),rgba(3,7,12,.97));
+  box-shadow:inset 0 1px 0 #ffffff0b;
+  overflow:hidden;
+}
+#livePlusBattleHud .lpGift img,
+#livePlusBattleHud .lpGiftMissing{
+  width:40px;
+  height:40px;
+  flex:0 0 40px;
+  object-fit:contain;
+  filter:drop-shadow(0 5px 8px #000b);
+}
+#livePlusBattleHud .lpGiftMissing{
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  background:#ffffff08;
+  color:#697688;
+  font-size:18px;
+}
+#livePlusBattleHud .lpGiftCopy{min-width:0;flex:1}
+#livePlusBattleHud .lpGiftCopy b,
+#livePlusBattleHud .lpGiftCopy small{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#livePlusBattleHud .lpGiftCopy b{
+  font-size:9px;
+  line-height:1.12;
+  color:#f7f9fc;
+  white-space:normal;
+  max-height:21px;
+}
+#livePlusBattleHud .lpGiftCopy small{
+  margin-top:4px;
+  font-size:7px;
+  line-height:1.05;
+  color:#91a0b3;
+  white-space:nowrap;
+}
+#livePlusBattleHud .lpEmpty{opacity:.48}
+
+@media(max-width:700px){
+  #livePlusBattleHud .lpBattleTitle{min-height:22px;font-size:8px;padding-bottom:5px}
+  #livePlusBattleHud .lpSide{padding:8px 7px max(10px,env(safe-area-inset-bottom))}
+  #livePlusBattleHud .lpSideHead{font-size:9px;margin-bottom:7px}
+  #livePlusBattleHud .lpGiftGrid{gap:5px}
+  #livePlusBattleHud .lpGift{height:56px;gap:5px;padding:5px 6px;border-radius:11px}
+  #livePlusBattleHud .lpGift img,
+  #livePlusBattleHud .lpGiftMissing{width:34px;height:34px;flex-basis:34px}
+  #livePlusBattleHud .lpGiftMissing{font-size:16px}
+  #livePlusBattleHud .lpGiftCopy b{font-size:8px;max-height:19px}
+  #livePlusBattleHud .lpGiftCopy small{font-size:6px;margin-top:3px}
+}
+@media(max-width:430px){
+  #livePlusBattleHud .lpSide{padding-left:6px;padding-right:6px}
+  #livePlusBattleHud .lpGiftGrid{gap:4px}
+  #livePlusBattleHud .lpGift{height:54px;padding:5px 4px;gap:4px}
+  #livePlusBattleHud .lpGift img,
+  #livePlusBattleHud .lpGiftMissing{width:31px;height:31px;flex-basis:31px}
+  #livePlusBattleHud .lpGiftCopy b{font-size:7.3px}
+  #livePlusBattleHud .lpGiftCopy small{font-size:5.4px}
+}
+@media(orientation:landscape){
+  #livePlusBattleHud .lpBattleTitle{min-height:18px;font-size:7px;padding:2px 8px 4px}
+  #livePlusBattleHud .lpSide{padding:5px 8px max(6px,env(safe-area-inset-bottom))}
+  #livePlusBattleHud .lpSideHead{min-height:16px;margin-bottom:4px;font-size:8px}
+  #livePlusBattleHud .lpGift{height:44px;padding:4px 6px}
+  #livePlusBattleHud .lpGift img,
+  #livePlusBattleHud .lpGiftMissing{width:28px;height:28px;flex-basis:28px}
+}
