@@ -1,11 +1,11 @@
 /* Caos Live · LIVE+ battle HUD
    14 posicoes: 6 presentes + 1 comentario por lado.
-   Portrait compacto: 2 colunas por lado (1 2 / 3 4 / 5 6).
-   Safe-area fica somente no necessario; sem rodape vazio. */
-#stage #livePlusBattleHud{position:fixed;z-index:6;left:0;right:0;bottom:0;width:100%;max-width:none;transform:none;pointer-events:none;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+   Portrait: 2 colunas por lado (1 2 / 3 4 / 5 6).
+   O HUD termina exatamente no fim do comentario, sem safe-area interna vazia. */
+#stage #livePlusBattleHud{position:fixed;z-index:6;left:0;right:0;bottom:0;width:100%;height:auto!important;min-height:0!important;max-height:none!important;max-width:none;transform:none;pointer-events:none;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow:visible}
 #livePlusBattleHud .lpBattleTitle{display:flex;align-items:center;justify-content:center;min-height:18px;margin:0;padding:2px 8px 3px;font-size:7px;font-weight:950;letter-spacing:.17em;color:#eef3f9;text-shadow:0 2px 8px #000,0 0 14px #0009}
-#livePlusBattleHud .lpSides{display:grid;grid-template-columns:1fr 1fr;gap:0;width:100%}
-#livePlusBattleHud .lpSide{position:relative;overflow:hidden;min-width:0;padding:4px 5px max(3px,env(safe-area-inset-bottom));border:0;border-top:1px solid #ffffff1b;border-radius:0;background:linear-gradient(180deg,rgba(15,22,32,.95),rgba(4,8,14,.99));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 -10px 25px #0005}
+#livePlusBattleHud .lpSides{display:grid;grid-template-columns:1fr 1fr;align-items:start;gap:0;width:100%;height:auto!important;min-height:0!important}
+#livePlusBattleHud .lpSide{position:relative;align-self:start;height:auto!important;min-height:0!important;overflow:hidden;min-width:0;padding:4px 5px 4px;border:0;border-top:1px solid #ffffff1b;border-radius:0;background:linear-gradient(180deg,rgba(15,22,32,.95),rgba(4,8,14,.99));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 -10px 25px #0005}
 #livePlusBattleHud .lpSide:first-child{border-right:1px solid #ffffff12}
 #livePlusBattleHud .lpSide::before{content:"";position:absolute;inset:0;opacity:.16;pointer-events:none}
 #livePlusBattleHud .lpSide.chaos::before{background:radial-gradient(circle at 0 0,#ff394f,transparent 62%)}
@@ -24,7 +24,7 @@
 #livePlusBattleHud .lpGiftCopy small{color:#91a0b3;font-size:5.2px;font-weight:800;line-height:1;white-space:nowrap}
 #livePlusBattleHud .lpGift.lpEmpty .lpGiftCopy small{display:none}
 #livePlusBattleHud .lpEmpty{opacity:.38}
-#livePlusBattleHud .lpComment{position:relative;margin-top:3px;min-width:0;height:24px;display:flex;align-items:center;gap:5px;padding:2px 5px;border:1px solid #ffffff0d;border-radius:7px;background:#060c14d9;overflow:hidden}
+#livePlusBattleHud .lpComment{position:relative;margin:3px 0 0;min-width:0;height:24px;display:flex;align-items:center;gap:5px;padding:2px 5px;border:1px solid #ffffff0d;border-radius:7px;background:#060c14d9;overflow:hidden}
 #livePlusBattleHud .lpComment>span{font-size:5.5px;font-weight:950;letter-spacing:.07em;color:#8491a2;white-space:nowrap}
 #livePlusBattleHud .lpComment>b{min-width:0;flex:1;font-size:6.8px;font-weight:950;line-height:1;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #livePlusBattleHud .lpComment>small{min-width:0;max-width:42%;font-size:5px;font-weight:800;line-height:1;color:#8997a9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -34,7 +34,7 @@
 
 @media(max-width:430px) and (orientation:portrait){
  #livePlusBattleHud .lpBattleTitle{min-height:16px;font-size:6.6px;padding:1px 7px 2px}
- #livePlusBattleHud .lpSide{padding:3px 4px max(2px,env(safe-area-inset-bottom))}
+ #livePlusBattleHud .lpSide{padding:3px 4px 3px}
  #livePlusBattleHud .lpSideHead{min-height:14px;margin-bottom:2px}
  #livePlusBattleHud .lpSideHead::after{font-size:7.7px}
  #livePlusBattleHud .lpGiftGrid{gap:3px}
@@ -55,7 +55,7 @@
 }
 @media(orientation:landscape){
  #livePlusBattleHud .lpBattleTitle{min-height:14px;font-size:6px;padding:1px 6px 2px}
- #livePlusBattleHud .lpSide{padding:3px 5px max(2px,env(safe-area-inset-bottom))}
+ #livePlusBattleHud .lpSide{padding:3px 5px 3px}
  #livePlusBattleHud .lpSideHead{min-height:12px;margin-bottom:2px}
  #livePlusBattleHud .lpSideHead::after{font-size:6.5px}
  #livePlusBattleHud .lpGiftGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:2px}
