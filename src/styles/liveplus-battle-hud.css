@@ -1,67 +1,70 @@
 /* Caos Live · LIVE+ battle HUD
-   14 posicoes visiveis: 6 presentes + 1 comentario por lado.
-   Portrait: 2 colunas por lado (1 2 / 3 4 / 5 6), com leitura priorizada. */
+   14 posicoes: 6 presentes + 1 comentario por lado.
+   Portrait compacto: 2 colunas por lado (1 2 / 3 4 / 5 6).
+   Safe-area fica somente no necessario; sem rodape vazio. */
 #stage #livePlusBattleHud{position:fixed;z-index:6;left:0;right:0;bottom:0;width:100%;max-width:none;transform:none;pointer-events:none;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-#livePlusBattleHud .lpBattleTitle{display:flex;align-items:center;justify-content:center;min-height:22px;margin:0;padding:3px 10px 5px;font-size:8px;font-weight:950;letter-spacing:.18em;color:#eef3f9;text-shadow:0 2px 8px #000,0 0 14px #0009}
+#livePlusBattleHud .lpBattleTitle{display:flex;align-items:center;justify-content:center;min-height:18px;margin:0;padding:2px 8px 3px;font-size:7px;font-weight:950;letter-spacing:.17em;color:#eef3f9;text-shadow:0 2px 8px #000,0 0 14px #0009}
 #livePlusBattleHud .lpSides{display:grid;grid-template-columns:1fr 1fr;gap:0;width:100%}
-#livePlusBattleHud .lpSide{position:relative;overflow:hidden;min-width:0;padding:7px 7px max(9px,env(safe-area-inset-bottom));border:0;border-top:1px solid #ffffff24;border-radius:0;background:linear-gradient(180deg,rgba(15,22,32,.95),rgba(4,8,14,.99));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 -14px 34px #0006,inset 0 1px 0 #ffffff0c}
-#livePlusBattleHud .lpSide:first-child{border-right:1px solid #ffffff15}
-#livePlusBattleHud .lpSide::before{content:"";position:absolute;inset:0;opacity:.19;pointer-events:none}
+#livePlusBattleHud .lpSide{position:relative;overflow:hidden;min-width:0;padding:4px 5px max(3px,env(safe-area-inset-bottom));border:0;border-top:1px solid #ffffff1b;border-radius:0;background:linear-gradient(180deg,rgba(15,22,32,.95),rgba(4,8,14,.99));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 -10px 25px #0005}
+#livePlusBattleHud .lpSide:first-child{border-right:1px solid #ffffff12}
+#livePlusBattleHud .lpSide::before{content:"";position:absolute;inset:0;opacity:.16;pointer-events:none}
 #livePlusBattleHud .lpSide.chaos::before{background:radial-gradient(circle at 0 0,#ff394f,transparent 62%)}
 #livePlusBattleHud .lpSide.player::before{background:radial-gradient(circle at 100% 0,#347dff,transparent 62%)}
-#livePlusBattleHud .lpSideHead{position:relative;display:flex;align-items:center;justify-content:center;min-height:20px;margin:0 0 6px;font-size:0;font-weight:1000;letter-spacing:.15em}
-#livePlusBattleHud .lpSideHead::after{font-size:9px;font-weight:1000;letter-spacing:.16em}
+#livePlusBattleHud .lpSideHead{position:relative;display:flex;align-items:center;justify-content:center;min-height:16px;margin:0 0 3px;font-size:0;font-weight:1000;letter-spacing:.15em}
+#livePlusBattleHud .lpSideHead::after{font-size:8px;font-weight:1000;letter-spacing:.16em}
 #livePlusBattleHud .lpSide.chaos .lpSideHead::after{content:"CAOS";color:#ffb3bd}
 #livePlusBattleHud .lpSide.player .lpSideHead::after{content:"JOGADOR";color:#bfd7ff}
-#livePlusBattleHud .lpGiftGrid{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
-#livePlusBattleHud .lpGift{min-width:0;height:48px;display:flex;align-items:center;gap:6px;padding:5px 6px;border:1px solid #ffffff14;border-radius:10px;background:linear-gradient(180deg,rgba(7,13,22,.97),rgba(3,7,12,.97));box-shadow:inset 0 1px 0 #ffffff0b;overflow:hidden}
-#livePlusBattleHud .lpGift img,#livePlusBattleHud .lpGiftMissing{width:32px;height:32px;flex:0 0 32px;object-fit:contain;filter:drop-shadow(0 4px 7px #000a)}
-#livePlusBattleHud .lpGiftMissing{display:grid;place-items:center;border-radius:8px;background:#ffffff08;color:#697688;font-size:15px}
-#livePlusBattleHud .lpGiftCopy{min-width:0;flex:1;display:flex;flex-direction:column;justify-content:center;gap:2px}
+#livePlusBattleHud .lpGiftGrid{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px}
+#livePlusBattleHud .lpGift{min-width:0;height:38px;display:flex;align-items:center;gap:4px;padding:3px 4px;border:1px solid #ffffff0d;border-radius:8px;background:linear-gradient(180deg,rgba(7,13,22,.94),rgba(3,7,12,.94));overflow:hidden}
+#livePlusBattleHud .lpGift img,#livePlusBattleHud .lpGiftMissing{width:27px;height:27px;flex:0 0 27px;object-fit:contain;filter:drop-shadow(0 3px 5px #0008)}
+#livePlusBattleHud .lpGiftMissing{display:grid;place-items:center;border-radius:7px;background:#ffffff06;color:#697688;font-size:14px}
+#livePlusBattleHud .lpGiftCopy{min-width:0;flex:1;display:flex;flex-direction:column;justify-content:center;gap:1px}
 #livePlusBattleHud .lpGiftCopy b,#livePlusBattleHud .lpGiftCopy small{display:block;overflow:hidden;text-overflow:ellipsis}
-#livePlusBattleHud .lpGiftCopy b{color:#f7f9fc;font-size:8px;font-weight:950;line-height:1.08;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-#livePlusBattleHud .lpGiftCopy small{color:#91a0b3;font-size:6px;font-weight:800;line-height:1.05;white-space:nowrap}
-#livePlusBattleHud .lpEmpty{opacity:.43}
-#livePlusBattleHud .lpComment{position:relative;margin-top:6px;min-width:0;height:34px;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:1fr 1fr;column-gap:6px;align-items:center;padding:4px 7px;border:1px solid #ffffff14;border-radius:9px;background:linear-gradient(180deg,#09111bd9,#060b12ed);overflow:hidden}
-#livePlusBattleHud .lpComment>span{grid-row:1/3;font-size:6px;font-weight:950;letter-spacing:.08em;color:#8491a2;white-space:nowrap}
-#livePlusBattleHud .lpComment>b{min-width:0;font-size:8px;font-weight:950;line-height:1;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#livePlusBattleHud .lpComment>small{min-width:0;font-size:5.5px;font-weight:800;line-height:1;color:#8997a9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#livePlusBattleHud .lpSide.chaos .lpComment{border-color:#ff53652a}.lpSide.chaos .lpComment>b{color:#ffb3bd}
-#livePlusBattleHud .lpSide.player .lpComment{border-color:#4b8dff2a}.lpSide.player .lpComment>b{color:#bfd7ff}
+#livePlusBattleHud .lpGiftCopy b{color:#f7f9fc;font-size:7.2px;font-weight:950;line-height:1.05;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+#livePlusBattleHud .lpGiftCopy small{color:#91a0b3;font-size:5.2px;font-weight:800;line-height:1;white-space:nowrap}
+#livePlusBattleHud .lpGift.lpEmpty .lpGiftCopy small{display:none}
+#livePlusBattleHud .lpEmpty{opacity:.38}
+#livePlusBattleHud .lpComment{position:relative;margin-top:3px;min-width:0;height:24px;display:flex;align-items:center;gap:5px;padding:2px 5px;border:1px solid #ffffff0d;border-radius:7px;background:#060c14d9;overflow:hidden}
+#livePlusBattleHud .lpComment>span{font-size:5.5px;font-weight:950;letter-spacing:.07em;color:#8491a2;white-space:nowrap}
+#livePlusBattleHud .lpComment>b{min-width:0;flex:1;font-size:6.8px;font-weight:950;line-height:1;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#livePlusBattleHud .lpComment>small{min-width:0;max-width:42%;font-size:5px;font-weight:800;line-height:1;color:#8997a9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#livePlusBattleHud .lpComment.lpEmpty b,#livePlusBattleHud .lpComment.lpEmpty small{display:none}
+#livePlusBattleHud .lpSide.chaos .lpComment{border-color:#ff53651d}.lpSide.chaos .lpComment>b{color:#ffb3bd}
+#livePlusBattleHud .lpSide.player .lpComment{border-color:#4b8dff1d}.lpSide.player .lpComment>b{color:#bfd7ff}
 
 @media(max-width:430px) and (orientation:portrait){
-  #livePlusBattleHud .lpBattleTitle{min-height:20px;font-size:7.4px;padding:2px 8px 4px}
-  #livePlusBattleHud .lpSide{padding:5px 5px max(8px,env(safe-area-inset-bottom))}
-  #livePlusBattleHud .lpSideHead{min-height:18px;margin-bottom:4px}
-  #livePlusBattleHud .lpSideHead::after{font-size:8.5px}
-  #livePlusBattleHud .lpGiftGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
-  #livePlusBattleHud .lpGift{height:45px;padding:4px 5px;gap:5px;border-radius:9px}
-  #livePlusBattleHud .lpGift img,#livePlusBattleHud .lpGiftMissing{width:30px;height:30px;flex-basis:30px}
-  #livePlusBattleHud .lpGiftCopy b{font-size:7.6px}
-  #livePlusBattleHud .lpGiftCopy small{font-size:5.7px}
-  #livePlusBattleHud .lpComment{height:31px;margin-top:5px;padding:3px 5px;column-gap:4px}
-  #livePlusBattleHud .lpComment>span{font-size:5.4px}
-  #livePlusBattleHud .lpComment>b{font-size:7px}
-  #livePlusBattleHud .lpComment>small{font-size:4.8px}
+ #livePlusBattleHud .lpBattleTitle{min-height:16px;font-size:6.6px;padding:1px 7px 2px}
+ #livePlusBattleHud .lpSide{padding:3px 4px max(2px,env(safe-area-inset-bottom))}
+ #livePlusBattleHud .lpSideHead{min-height:14px;margin-bottom:2px}
+ #livePlusBattleHud .lpSideHead::after{font-size:7.7px}
+ #livePlusBattleHud .lpGiftGrid{gap:3px}
+ #livePlusBattleHud .lpGift{height:36px;padding:3px 4px;gap:4px;border-radius:7px}
+ #livePlusBattleHud .lpGift img,#livePlusBattleHud .lpGiftMissing{width:25px;height:25px;flex-basis:25px}
+ #livePlusBattleHud .lpGiftCopy b{font-size:6.9px}
+ #livePlusBattleHud .lpGiftCopy small{font-size:5px}
+ #livePlusBattleHud .lpComment{height:22px;margin-top:3px;padding:2px 4px}
+ #livePlusBattleHud .lpComment>span{font-size:5.2px}
+ #livePlusBattleHud .lpComment>b{font-size:6.4px}
+ #livePlusBattleHud .lpComment>small{font-size:4.7px}
 }
 @media(max-width:360px) and (orientation:portrait){
-  #livePlusBattleHud .lpGift{height:43px;padding:3px 4px}
-  #livePlusBattleHud .lpGift img,#livePlusBattleHud .lpGiftMissing{width:27px;height:27px;flex-basis:27px}
-  #livePlusBattleHud .lpGiftCopy b{font-size:7px}
-  #livePlusBattleHud .lpGiftCopy small{font-size:5.2px}
+ #livePlusBattleHud .lpGift{height:34px;padding:2px 3px}
+ #livePlusBattleHud .lpGift img,#livePlusBattleHud .lpGiftMissing{width:23px;height:23px;flex-basis:23px}
+ #livePlusBattleHud .lpGiftCopy b{font-size:6.4px}
+ #livePlusBattleHud .lpGiftCopy small{font-size:4.7px}
 }
 @media(orientation:landscape){
-  #livePlusBattleHud .lpBattleTitle{min-height:16px;font-size:6.5px;padding:1px 8px 3px}
-  #livePlusBattleHud .lpSide{padding:4px 6px max(5px,env(safe-area-inset-bottom))}
-  #livePlusBattleHud .lpSideHead{min-height:14px;margin-bottom:3px}
-  #livePlusBattleHud .lpSideHead::after{font-size:7px}
-  #livePlusBattleHud .lpGiftGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:3px}
-  #livePlusBattleHud .lpGift{height:34px;padding:3px;gap:3px}
-  #livePlusBattleHud .lpGift img,#livePlusBattleHud .lpGiftMissing{width:22px;height:22px;flex-basis:22px}
-  #livePlusBattleHud .lpGiftCopy b{font-size:5.8px;-webkit-line-clamp:1}
-  #livePlusBattleHud .lpGiftCopy small{font-size:4.5px}
-  #livePlusBattleHud .lpComment{height:27px;margin-top:3px;padding:3px 5px}
-  #livePlusBattleHud .lpComment>span{font-size:5px}
-  #livePlusBattleHud .lpComment>b{font-size:6.2px}
-  #livePlusBattleHud .lpComment>small{font-size:4.5px}
+ #livePlusBattleHud .lpBattleTitle{min-height:14px;font-size:6px;padding:1px 6px 2px}
+ #livePlusBattleHud .lpSide{padding:3px 5px max(2px,env(safe-area-inset-bottom))}
+ #livePlusBattleHud .lpSideHead{min-height:12px;margin-bottom:2px}
+ #livePlusBattleHud .lpSideHead::after{font-size:6.5px}
+ #livePlusBattleHud .lpGiftGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:2px}
+ #livePlusBattleHud .lpGift{height:30px;padding:2px 3px;gap:3px}
+ #livePlusBattleHud .lpGift img,#livePlusBattleHud .lpGiftMissing{width:20px;height:20px;flex-basis:20px}
+ #livePlusBattleHud .lpGiftCopy b{font-size:5.5px;-webkit-line-clamp:1}
+ #livePlusBattleHud .lpGiftCopy small{font-size:4.3px}
+ #livePlusBattleHud .lpComment{height:20px;margin-top:2px;padding:2px 4px}
+ #livePlusBattleHud .lpComment>span{font-size:4.8px}
+ #livePlusBattleHud .lpComment>b{font-size:5.8px}
+ #livePlusBattleHud .lpComment>small{font-size:4.2px}
 }
