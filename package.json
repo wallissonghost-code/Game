@@ -25,8 +25,9 @@
     "check:menu": "node scripts/smoke-menu.mjs",
     "check:gameplay": "node scripts/gameplay-bot.mjs",
     "check:ghost-aim": "node scripts/ghost-aim-bot.mjs",
+    "check:ghostally": "node scripts/check-liveplus-ghostally.mjs",
     "check:progression": "node scripts/progression-bot.mjs",
-    "check": "npm run check:game && npm run check:architecture && npm run check:runtime && npm run check:events && npm run check:admin && npm run check:live && npm run check:land-market && npm run check:property-lifecycle && npm run check:property-market && npm run check:property-rental && npm run check:business && npm run check:business-employment && npm run check:business-production",
+    "check": "npm run check:game && npm run check:architecture && npm run check:runtime && npm run check:events && npm run check:admin && npm run check:live && npm run check:ghostally && npm run check:land-market && npm run check:property-lifecycle && npm run check:property-market && npm run check:property-rental && npm run check:business && npm run check:business-employment && npm run check:business-production",
     "validate": "npm run check"
   },
   "dependencies": {
