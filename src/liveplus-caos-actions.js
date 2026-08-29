@@ -8,7 +8,7 @@ const number=(id,label,min,max,def,step)=>({id,label,type:'number',min,max,defau
 const toggle=(id,label,def=false)=>({id,label,type:'toggle',default:def});
 const targets=[{value:'p1',label:'Player 1 · Host'},{value:'p2',label:'Player 2 · Duo'},{value:'all',label:'Todos'}];
 const mobs=[{value:'',label:'Mobs mistos'},{value:'wraith',label:'Espectro'},{value:'reaper',label:'Ceifador'},{value:'infected',label:'Infectado'},{value:'crawler',label:'Criatura das Sombras'},{value:'eye',label:'Observador'},{value:'brute',label:'Brutamonte'}];
-const spawnTiers=[{value:'',label:'Normal / aleatório'},{value:'1',label:'Elite'},{value:'2',label:'Corrompido'}];
+const spawnTiers=[{value:'normal',label:'Comum'},{value:'1',label:'Elite'},{value:'2',label:'Corrompido'}];
 const bossTiers=[{value:'',label:'Natural · 93% / 6% / 1%'},{value:'normal',label:'Normal'},{value:'1',label:'Elite'},{value:'2',label:'Corrompido'}];
 const skills=[
  {value:'speed',label:'Passos de Guerra'},{value:'medic',label:'Kit Médico'},{value:'rapid',label:'Rajada Rápida'},
@@ -19,7 +19,7 @@ const skills=[
  {value:'explosive',label:'Munição Explosiva'},{value:'phoenix',label:'Fênix · Única'}
 ];
 function put(action){const old=find(action.id);if(old)Object.assign(old,action);else actions.push(action)}
-put({id:'spawn',label:'Adicionar mobs',icon:'👾',description:'Cria inimigos escolhendo tipo, quantidade e variante.',hudSide:'chaos',params:[select('mob','INIMIGO','',mobs),number('amount','QUANTIDADE',1,100,25),select('tier','VARIANTE','',spawnTiers)]});
+put({id:'spawn',label:'Adicionar mobs',icon:'👾',description:'Cria inimigos escolhendo tipo, quantidade e variante.',hudSide:'chaos',params:[select('mob','INIMIGO','',mobs),number('amount','QUANTIDADE',1,100,25),select('tier','VARIANTE','normal',spawnTiers)]});
 put({id:'boss',label:'Invocar Boss',icon:'👑',description:'Invoca Colosso Carmesim ou Senhor do Vazio.',hudSide:'chaos',params:[select('mob','BOSS','colossus',[{value:'colossus',label:'Colosso Carmesim'},{value:'voidlord',label:'Senhor do Vazio'}]),number('amount','QUANTIDADE',1,20,1),select('tier','VARIANTE','',bossTiers)]});
 put({id:'speed',label:'Velocidade dos mobs',icon:'💨',description:'Altera a velocidade global dos inimigos.',hudSide:'chaos',params:[select('value','VELOCIDADE','1',[{value:'0.5',label:'0.5×'},{value:'1',label:'1×'},{value:'1.5',label:'1.5×'},{value:'2.5',label:'2.5×'}])]});
 put({id:'damage',label:'Causar dano',icon:'💥',description:'Retira vida do jogador selecionado.',hudSide:'chaos',params:[number('amount','DANO',1,100,2),select('target','ALVO','p1',targets)]});
