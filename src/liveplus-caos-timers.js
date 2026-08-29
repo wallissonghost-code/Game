@@ -1,14 +1,41 @@
 (()=>{'use strict';
 const timers=new Map();
-const clearTimer=command=>{const t=timers.get(command);if(t)clearTimeout(t);timers.delete(command)};
-const secondsValue=value=>{const n=Number(String(value??'').replace(',','.'));return Number.isFinite(n)?Math.max(0,Math.min(n,3600)):0};
-function disable(command){clearTimer(command);try{window.CaosLiveCommand?.({type:'command',command,value:false,source:'liveplus-timer',user:''})}catch(e){console.warn('LIVE+ TIMER OFF',command,e)}}
-function schedule(command,seconds){clearTimer(command);const s=secondsValue(seconds);if(s<=0)return;timers.set(command,setTimeout(()=>disable(command),s*1000))}
-function handle(d){if(!d||d.type!=='command')return;const command=String(d.command||'');if(command!=='eventmeteor'&&command!=='eventdoublexp')return;if(d.value===false||d.value==='false'||d.value===0){clearTimer(command);return}if(d.value===true||d.value==='true'||d.value===1)schedule(command,d.seconds)}
-let wrapped=null;
-function wrapRuntime(){const current=window.CaosLiveCommand;if(typeof current!=='function'||current===wrapped||current.__livePlusTimedWrapped)return false;const original=current;wrapped=function(d){const result=original.apply(this,arguments);handle(d);return result};wrapped.__livePlusTimedWrapped=true;wrapped.__livePlusOriginal=original;window.CaosLiveCommand=wrapped;return true}
-window.addEventListener('caos:runtime-ready',()=>{wrapRuntime()});
-window.addEventListener('caos:admin-command',e=>handle(e.detail||{}));
-const wait=setInterval(()=>{if(wrapRuntime())clearInterval(wait)},100);
-setTimeout(()=>clearInterval(wait),15000);
+const native=()=>window.CaosLiveCommand;
+function clearTimer(command){const t=timers.get(command);if(t)clearTimeout(t);timers.delete(command)}
+function schedule(command,seconds,callback){clearTimer(command);const value=Number(seconds);if(!Number.isFinite(value)||value<=0)return;const wait=Math.min(value,3600)*1000;timers.set(command,setTimeout(()=>{timers.delete(command);try{callback()}catch(e){console.warn('LIVE+ TIMER',command,e)}},wait))}
+function install(){
+ const fn=native();if(typeof fn!=='function'||fn.__livePlusTimed)return false;
+ function timed(input){
+  const d=input&&typeof input==='object'?input:{},c=String(d.command||'');
+  if(c==='autofire_block'){
+   const seconds=Number(d.seconds);const mapped={...d,command:'autofire',value:false,source:d.source||'liveplus-universal'};
+   const out=fn(mapped);
+   schedule('autofire',seconds,()=>fn({type:'command',command:'autofire',value:true,seconds:0,source:'liveplus-timer',user:''}));
+   return out;
+  }
+  if(c==='autofire_off'){
+   clearTimer('autofire');
+   return fn({...d,command:'autofire',value:false,seconds:0,source:d.source||'liveplus-universal'});
+  }
+  if(c==='autofire_on'){
+   clearTimer('autofire');
+   return fn({...d,command:'autofire',value:true,seconds:0,source:d.source||'liveplus-universal'});
+  }
+  if(c==='skillmax')return fn({...d,command:'skilltestall',level:5,source:d.source||'liveplus-universal'});
+  const out=fn(d);
+  try{
+   if(c==='eventmeteor'||c==='eventdoublexp'){
+    if(d.value)schedule(c,d.seconds,()=>fn({type:'command',...d,command:c,value:false,seconds:0,source:'liveplus-timer',user:''}));
+    else clearTimer(c);
+   }
+   if(c==='autofire'){
+    clearTimer('autofire');
+    if(d.value===false&&Number(d.seconds)>0)schedule('autofire',d.seconds,()=>fn({type:'command',command:'autofire',value:true,seconds:0,source:'liveplus-timer',user:''}));
+   }
+  }catch(e){console.warn('LIVE+ TIMER SETUP',e)}
+  return out;
+ }
+ timed.__livePlusTimed=true;timed.__livePlusNative=fn;window.CaosLiveCommand=timed;return true;
+}
+if(!install()){window.addEventListener('caos:runtime-ready',install);const retry=setInterval(()=>{if(install())clearInterval(retry)},100);setTimeout(()=>clearInterval(retry),10000)}
 })();
