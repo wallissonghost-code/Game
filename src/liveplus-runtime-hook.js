@@ -37,6 +37,9 @@ window.Blob=new Proxy(NativeBlob,{construct(Target,args,newTarget){
       if(typeof part!=='string'||!part.includes('function command(d){')||!part.includes('const SPATIAL=96;'))return part;
       let out=part;
       if(!out.includes('window.CaosLiveCommand=command;'))out=out.replace('const SPATIAL=96;','window.CaosLiveCommand=command;const SPATIAL=96;');
+      if(!out.includes('LIVEPLUS_SKILLRESET_UNFREEZE')){
+        out=out.replace("if(c==='skillreset'){adminSkillReset();toast('🧪 HABILIDADES RESETADAS')}","if(c==='skillreset'){/*LIVEPLUS_SKILLRESET_UNFREEZE*/adminSkillReset();choosing=false;const sp=$('skillPick');if(sp)sp.classList.remove('show');pierceShotCounter=iceShotCounter=explosiveShotCounter=0;clearAutoTarget();last=performance.now();toast('🧪 HABILIDADES RESETADAS')}");
+      }
       if(!out.includes('LIVEPLUS_GHOST_ALLY')){
         const ghostInject=`/*LIVEPLUS_GHOST_ALLY*/
 let livePlusGhostAllies=[],livePlusGhostSeq=0;
