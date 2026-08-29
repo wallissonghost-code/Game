@@ -1,0 +1,5 @@
+(()=>{'use strict';
+const timers=new Map(),clear=k=>{const t=timers.get(k);if(t)clearTimeout(t);timers.delete(k)};
+function schedule(command,seconds,extra={}){clear(command);seconds=Number(seconds)||0;if(seconds<=0)return;timers.set(command,setTimeout(()=>{timers.delete(command);try{window.CaosLiveCommand?.({type:'command',command,value:false,source:'liveplus-timer',...extra,user:''})}catch(e){console.warn('LIVE+ TIMER',command,e)}},Math.min(seconds,3600)*1000))}
+window.addEventListener('caos:admin-command',e=>{const d=e.detail||{},c=d.command;if(String(d.user||'').replace(/^@/,'').toLowerCase()==='painel')d.user='';if(c==='eventmeteor'){if(d.value)schedule('eventmeteor',d.seconds,d);else clear('eventmeteor')}if(c==='eventdoublexp'){if(d.value)schedule('eventdoublexp',d.seconds,d);else clear('eventdoublexp')}});
+})();
