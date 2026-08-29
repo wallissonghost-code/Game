@@ -78,22 +78,23 @@ async function runScenario(browser,name,viewport){
   await cmd({command:'skilltest',skill:'rapid',level:5});await sleep(50);const rapidAppliedState=await snap(),rapidFireRate=Number(rapidAppliedState.test?.fireRate);assert(Number.isFinite(rapidFireRate),`Rapid fireRate telemetry missing: ${rapidFireRate}`);assert(rapidFireRate<baseFireRate*.60&&Math.abs(rapidFireRate-.112)<.01,`Rapid LV5 modifier incorrect: base=${baseFireRate}, rapid=${rapidFireRate}`);
   for(let i=0;i<40;i++)await spawnTarget(150+(i%5)*8);await cmd({command:'autofire',value:true});const rapid0=await snap();await sleep(1400);const rapid1=await snap();const rapidRate=rapid1.test.shotsFired-rapid0.test.shotsFired;if(rapidRate<3)warnings.push(`Rapid cadence sample unavailable (${rapidRate} shots), modifier validated directly at ${rapidFireRate}s`);
 
-  // Special-shot schedules are validated by waiting for enough actual shots, not by a fixed wall-clock window.
-  // This removes false reds on slower CI runners while still requiring the real projectile counters to advance.
-  const checkSpecial=async(skill,counterField,minShots,label)=>{
+  // Validate the real special-projectile event instead of requiring arbitrary extra shots.
+  // LV5 schedules: Pierce every 8 shots, Ice every 10, Explosive every 10.
+  const checkSpecial=async(skill,counterField,scheduleShots,label)=>{
     await cmd({command:'autofire',value:false});await cmd({command:'clear'});await cmd({command:'skillreset'});await sleep(40);
     await cmd({command:'skilltest',skill,level:5});
     for(let i=0;i<60;i++)await spawnTarget(150+(i%8)*10);
     const before=await snap();const startShots=before.test.shotsFired,startCounter=before.test[counterField];
     await cmd({command:'autofire',value:true});
-    try{await page.waitForFunction(({startShots,minShots})=>window.CaosTest.snapshot().test.shotsFired>=startShots+minShots,{startShots,minShots},{timeout:7000})}catch{}
-    const after=await snap();
-    assert(after.test.shotsFired>=startShots+minShots,`${label} sample did not fire enough shots: fired=${after.test.shotsFired-startShots}`);
-    assert(after.test[counterField]>startCounter,`${label} schedule produced no special projectile after ${after.test.shotsFired-startShots} shots`);
+    try{await page.waitForFunction(({startCounter,counterField})=>window.CaosTest.snapshot().test[counterField]>startCounter,{startCounter,counterField},{timeout:7000})}catch{}
+    const after=await snap(),fired=after.test.shotsFired-startShots,produced=after.test[counterField]-startCounter;
+    assert(fired>0,`${label} sample produced no normal shots`);
+    assert(produced>0,`${label} schedule produced no special projectile after ${fired} shots`);
+    assert(fired<=scheduleShots+2,`${label} special projectile arrived too late: fired=${fired}, expected by ${scheduleShots+2}`);
   };
-  await checkSpecial('pierce','pierceShots',10,'Pierce');
-  await checkSpecial('ice','iceShots',12,'Ice');
-  await checkSpecial('explosive','explosiveShots',12,'Explosive');
+  await checkSpecial('pierce','pierceShots',8,'Pierce');
+  await checkSpecial('ice','iceShots',10,'Ice');
+  await checkSpecial('explosive','explosiveShots',10,'Explosive');
   noErrors('special-shot runtime error');
 
   await cmd({command:'pause'});await sleep(250);assert((await snap()).paused===true,'pause failed');await cmd({command:'resume'});await sleep(250);assert((await snap()).paused===false,'resume failed');
