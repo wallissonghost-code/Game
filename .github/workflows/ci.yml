@@ -34,13 +34,11 @@ jobs:
         run: npm run check:menu
       - name: Ghost aim regression · Rapid + close target + stale aim
         run: npm run check:ghost-aim
-      - name: Full gameplay bot · mobile + desktop (diagnostic)
+      - name: Live+ ghost ally regression · spawn + move + target + shoot
+        run: npm run check:ghostally
+      - name: Full gameplay bot · mobile + desktop (blocking)
         id: gameplay
-        continue-on-error: true
         run: npm run check:gameplay
       - name: Accelerated progression · LV1 to LV50
         if: always()
         run: npm run check:progression
-      - name: Report gameplay bot diagnostic
-        if: always() && steps.gameplay.outcome == 'failure'
-        run: echo "Gameplay bot reported a diagnostic failure; core CI checks remain authoritative."
