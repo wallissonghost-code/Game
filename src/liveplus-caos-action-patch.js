@@ -4,8 +4,8 @@ const actions=m.actions,find=id=>actions.find(a=>a.id===id);
 const number=(id,label,min,max,def,step)=>({id,label,type:'number',min,max,default:def,...(step?{step}:{})});
 const rename={spawn:'Mobs',boss:'Boss',damage:'Dano',freeze:'Gelo',speed:'Velocidade dos mobs',eventmeteor:'Meteoro',eventmeteorconfig:'Config. Meteoro',heal:'Cura',invincible:'Invencível',saveplayer:'Reviver',clear:'Limpar arena',xp:'XP',level:'Level',eventdoublexp:'XP 2×',skilltest:'Skill',skilltestall:'Skills LV',skillreset:'Reset Skills'};
 for(const a of actions)if(rename[a.id])a.label=rename[a.id];
-const chaosOrder=['spawn','boss','damage','freeze','speed','eventmeteor','eventmeteorconfig','skillreset','autofire_block','autofire_off'];
-const playerOrder=['heal','invincible','xp','level','saveplayer','eventdoublexp','skilltest','skilltestall','skillmax','autofire_on'];
+const chaosOrder=['spawn','boss','damage','speed','eventmeteor','eventmeteorconfig','skillreset','autofire_block','autofire_off'];
+const playerOrder=['freeze','heal','invincible','xp','level','saveplayer','eventdoublexp','skilltest','skilltestall','skillmax','autofire_on'];
 const adminOrder=['clear','pause','resume','restart','auto','horde','autofire','gameplaymode','fps'];
 const chaosIds=new Set(chaosOrder),playerIds=new Set(playerOrder),adminIds=new Set(adminOrder);
 for(const a of actions){
@@ -25,5 +25,5 @@ actions.sort((a,b)=>(rank.get(a.id)??9999)-(rank.get(b.id)??9999));
 m.donationGroups=[{id:'chaos',label:'CAOS',actionIds:chaosOrder.filter(id=>find(id))},{id:'player',label:'PLAYER',actionIds:playerOrder.filter(id=>find(id))}];
 m.donationActionIds=[...m.donationGroups[0].actionIds,...m.donationGroups[1].actionIds];
 m.adminActionIds=adminOrder.filter(id=>find(id));
-m.actionOrganization='caos-player-admin-v1';
+m.actionOrganization='caos-player-admin-v2';
 })();
