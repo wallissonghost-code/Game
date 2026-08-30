@@ -3,16 +3,24 @@ const Base=window.LivePlusGameSession;if(!Base||Base.prototype.__serverRelayWrap
 const proto=Base.prototype;
 const original={connect:proto.connect,send:proto.send,sendState:proto.sendState,sendEvent:proto.sendEvent,disconnect:proto.disconnect,setManifest:proto.setManifest};
 const RELAY_TIMEOUT=2800;
-function endpointFor(){
-  try{const q=new URLSearchParams(location.search).get('liveplusRelay');if(q)return q;return localStorage.getItem('liveplus-relay-endpoint')||''}catch{return''}
-}
+const RELAY_KEY='liveplus-game-relay-endpoint';
+const LEGACY_RELAY_KEY='liveplus-relay-endpoint';
 function normalizeEndpoint(raw){try{const u=new URL(String(raw||''));if(!['ws:','wss:'].includes(u.protocol))return'';if(location.protocol==='https:'&&u.protocol==='ws:')u.protocol='wss:';return u.toString()}catch{return''}}
+function endpointFor(){
+  try{
+    const q=new URLSearchParams(location.search).get('gameRelay')||new URLSearchParams(location.search).get('liveplusRelay');
+    const chosen=normalizeEndpoint(q||localStorage.getItem(RELAY_KEY)||window.LIVEPLUS_GAME_RELAY_ENDPOINT||'');
+    if(chosen){localStorage.setItem(RELAY_KEY,chosen);return chosen}
+    return normalizeEndpoint(localStorage.getItem(LEGACY_RELAY_KEY)||'');
+  }catch{return normalizeEndpoint(window.LIVEPLUS_GAME_RELAY_ENDPOINT||'')}
+}
+function configure(endpoint){const value=normalizeEndpoint(endpoint);if(!value)return false;try{localStorage.setItem(RELAY_KEY,value)}catch{}return true}
 function sendRelay(self,payload){if(self.relayWs?.readyState!==WebSocket.OPEN||!self.relayConnected)return false;try{self.relayWs.send(JSON.stringify({type:'relay_game_message',code:self.code,payload}));return true}catch{return false}}
 function closeRelay(self){clearTimeout(self.relayTimer);self.relayTimer=null;self.relayConnected=false;try{self.relayWs?.close()}catch{}self.relayWs=null}
 function sendManifestRelay(self){if(!self.manifest)return false;return sendRelay(self,{type:'game_manifest',protocol:'liveplus-game-manifest-v1',manifest:self.manifest})}
 proto.connect=async function(rawCode){
   const code=this.cleanCode(rawCode);if(code.length!==8)throw Error('Código da partida inválido.');
-  const endpoint=normalizeEndpoint(endpointFor());
+  const endpoint=endpointFor();
   if(!endpoint)return original.connect.call(this,rawCode);
   this.manual=false;this.code=code;this.token=this.loadToken?.()||'';this.retry=0;this.cleanupConnection?.();closeRelay(this);
   this.emit('stage',{stage:'relay-starting',code:this.code,endpoint});
@@ -42,5 +50,5 @@ proto.sendState=function(state={}){return this.relayConnected?sendRelay(this,{ty
 proto.sendEvent=function(event={}){return this.relayConnected?sendRelay(this,{type:'event',...event,at:Date.now()}):original.sendEvent.call(this,event)};
 proto.disconnect=function(){this.manual=true;if(this.relayConnected){try{this.relayWs.send(JSON.stringify({type:'relay_leave',code:this.code}))}catch{}}closeRelay(this);return original.disconnect.call(this)};
 proto.__serverRelayWrapped=true;
-window.LivePlusServerRelayClient={version:'1.0.0',endpoint:endpointFor};
+window.LivePlusServerRelayClient={version:'1.1.0',endpoint:endpointFor,configure};
 })();
