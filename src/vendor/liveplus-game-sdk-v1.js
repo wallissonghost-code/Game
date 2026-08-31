@@ -1,5 +1,5 @@
 (()=>{'use strict';
-if(window.LivePlusGameSDK?.version==='1.0.0')return;
+if(window.LivePlusGameSDK?.Session)return;
 const RELAY_KEY='liveplus-game-relay-endpoint',LEGACY_RELAY_KEY='liveplus-relay-endpoint',TICKET_PREFIX='LIVEPLUS1|',RELAY_TIMEOUT=8500;
 function normalizeEndpoint(raw){try{const u=new URL(String(raw||''));if(!['ws:','wss:'].includes(u.protocol))return'';if(location.protocol==='https:'&&u.protocol==='ws:')u.protocol='wss:';u.searchParams.delete('code');u.hash='';if(!u.pathname||u.pathname==='/')u.pathname='/relay';return u.toString()}catch{return''}}
 function parseTicket(raw=''){const text=String(raw||'').trim();if(!text.startsWith(TICKET_PREFIX))return null;const parts=text.split('|');if(parts.length<3)return null;const code=String(parts[1]||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8);let endpoint='';try{endpoint=normalizeEndpoint(decodeURIComponent(parts.slice(2).join('|')))}catch{}return code.length===8&&endpoint?{code,endpoint}:null}
