@@ -4,7 +4,7 @@ import * as CaosCombat from './combat.mjs?v=01745';
 import * as CaosMatchState from './match-state.mjs?v=01749-p2';
 import * as CaosWavesRuntime from './waves-runtime.mjs?v=01749-p2';
 import * as CaosEnemiesRuntime from './enemies-runtime.mjs?v=01749-p2';
-import * as CaosProjectilesRuntime from './projectiles-runtime.mjs?v=01749-p2';
+import * as CaosProjectilesRuntime from './projectiles-runtime.mjs?v=01750-p3';
 import * as CaosMultiplayerRuntime from './multiplayer-runtime.mjs?v=01749-p2';
 import * as CaosRenderRuntime from './render-runtime.mjs?v=01749-p2';
 import { patchNaturalEvents } from './natural-events-runtime.mjs?v=01746-events1';
@@ -44,7 +44,7 @@ function fixClassicAimSync(source){
 
   const shootRe=/function shoot\(\)\{[\s\S]*?\}function setPaused\(/;
   if(!patched.match(shootRe))throw new Error('ClassicAim/shoot: function boundary not found');
-  const shootFn=`function shoot(){if(player.down||(choosing&&duoPlayer.connected))return false;let target=null,visualAim=player.aim;if(autoMode){target=focusedTarget();if(!target)return false;visualAim=Math.atan2(target.y-player.y,target.x-player.x)}else if(gameplayMode==='classic'){target=nearestVisible();if(!target)return false;visualAim=Math.atan2(target.y-player.y,target.x-player.x)}else if(gameplayMode==='sweep'){target=sweepTarget();if(!target)return false;visualAim=Math.atan2(target.y-player.y,target.x-player.x)}else if(gameplayMode==='hardcore'){visualAim=movementAimAngle}else{target=nearestVisible();if(!target)return false;visualAim=Math.atan2(target.y-player.y,target.x-player.x)}if(!Number.isFinite(visualAim))return false;const dir=playerFacing(visualAim),rawM=muzzleLocal(dir),rawMuzzleLen=Math.hypot(rawM.x,rawM.y)||1,targetDist=target?Math.hypot(target.x-player.x,target.y-player.y):Infinity,targetR=target?Math.max(4,Number(target.r)||12):0,safeLen=target?Math.max(player.r*.5,targetDist-targetR-6):rawMuzzleLen,muzzleScale=target?Math.max(.18,Math.min(1,safeLen/rawMuzzleLen)):1,m={x:rawM.x*muzzleScale,y:rawM.y*muzzleScale},spawnX=player.x+m.x,spawnY=player.y+m.y,shotAim=target?Math.atan2(target.y-spawnY,target.x-spawnX):visualAim;if(!Number.isFinite(shotAim))return false;player.aim=visualAim;player.shotFlash=.1;const bs=berserkerState(),traits=window.CaosCombat.projectileTraits(skillLv,{pierce:pierceShotCounter,ice:iceShotCounter,explosive:explosiveShotCounter});pierceShotCounter=traits.counters.pierce;iceShotCounter=traits.counters.ice;explosiveShotCounter=traits.counters.explosive;const {pierceLeft,ice,explosive}=traits;ciShotsFired++;const shotId=ciShotsFired;if(pierceLeft)ciPierceShots++;if(ice)ciIceShots++;if(explosive)ciExplosiveShots++;const vx=Math.cos(shotAim)*610,vy=Math.sin(shotAim)*610;ciLastShot={shotId,spawnX,spawnY,playerX:player.x,playerY:player.y,visualAim,visualDir:dir,aim:shotAim,muzzleScale,vx,vy,targetX:target?.x??null,targetY:target?.y??null,targetType:target?.type??null,at:performance.now()};bullets.push({shotId,x:spawnX,y:spawnY,prevX:spawnX,prevY:spawnY,vx,vy,launchVx:vx,launchVy:vy,r:4,dead:false,ammo:1,born:performance.now(),pierceLeft,hits:[],iceHits:0,damage:player.damage*bs.damageMul,ice,explosive,owner:'p1'});if(player.flashDamage&&++flashCounter%5===0)flash();return true}`;
+  const shootFn=`function shoot(){if(player.down||(choosing&&duoPlayer.connected))return false;let target=null,visualAim=player.aim;if(autoMode){target=focusedTarget();if(!target)return false;visualAim=Math.atan2(target.y-player.y,target.x-player.x)}else if(gameplayMode==='classic'){target=nearestVisible();if(!target)return false;visualAim=Math.atan2(target.y-player.y,target.x-player.x)}else if(gameplayMode==='sweep'){target=sweepTarget();if(!target)return false;visualAim=Math.atan2(target.y-player.y,target.x-player.x)}else if(gameplayMode==='hardcore'){visualAim=movementAimAngle}else{target=nearestVisible();if(!target)return false;visualAim=Math.atan2(target.y-player.y,target.x-player.x)}if(!Number.isFinite(visualAim))return false;const shotGeometry=projectilesRuntime.buildShotGeometry({player,target,visualAim,directionForAim:playerFacing,muzzleForDirection:muzzleLocal});if(!shotGeometry)return false;const {dir,spawnX,spawnY,aim:shotAim,muzzleScale}=shotGeometry;player.aim=visualAim;player.shotFlash=.1;const bs=berserkerState(),traits=window.CaosCombat.projectileTraits(skillLv,{pierce:pierceShotCounter,ice:iceShotCounter,explosive:explosiveShotCounter});pierceShotCounter=traits.counters.pierce;iceShotCounter=traits.counters.ice;explosiveShotCounter=traits.counters.explosive;const {pierceLeft,ice,explosive}=traits;ciShotsFired++;const shotId=ciShotsFired;if(pierceLeft)ciPierceShots++;if(ice)ciIceShots++;if(explosive)ciExplosiveShots++;const shotBorn=performance.now(),projectile=projectilesRuntime.createProjectile({shotId,x:spawnX,y:spawnY,aim:shotAim,speed:610,born:shotBorn,pierceLeft,damage:player.damage*bs.damageMul,ice,explosive,owner:'p1'}),{vx,vy}=projectile;ciLastShot={shotId,spawnX,spawnY,playerX:player.x,playerY:player.y,visualAim,visualDir:dir,aim:shotAim,muzzleScale,vx,vy,targetX:target?.x??null,targetY:target?.y??null,targetType:target?.type??null,at:shotBorn};bullets.push(projectile);if(player.flashDamage&&++flashCounter%5===0)flash();return true}`;
   patched=patched.replace(shootRe,shootFn+'function setPaused(');
 
   replaceOne(
@@ -53,17 +53,11 @@ function fixClassicAimSync(source){
     'shot-watchdog'
   );
 
-  replaceOne(
-    "for(const b of bullets){if(b.flash){b.t-=dt;continue}b.x+=b.vx*dt;b.y+=b.vy*dt;if(Math.abs(b.x-player.x)>W||Math.abs(b.y-player.y)>H){if(!b.dead&&new URLSearchParams(location.search).get('ci')==='1')ciShotsExpired++;b.dead=true}}const frozen=",
-    "for(const b of bullets){if(b.flash){b.t-=dt;continue}b.prevX=b.x;b.prevY=b.y;b.x+=b.vx*dt;b.y+=b.vy*dt;if(Math.abs(b.x-player.x)>W||Math.abs(b.y-player.y)>H){if(!b.dead)ciShotsExpired++;b.dead=true}}const frozen=",
-    'projectile-straight'
-  );
+  // projectile-straight now lives in src/core/projectiles-runtime.mjs
 
-  replaceOne(
-    "function bulletHitsFromGrid(b,g){const cx=Math.floor(b.x/SPATIAL),cy=Math.floor(b.y/SPATIAL);for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const a=g.get((cx+ox)+','+(cy+oy));if(!a)continue;for(const e of a){if(e.dead||(b.hits&&b.hits.includes(e)))continue;const dx=b.x-e.x,dy=b.y-e.y,rr=b.r+e.r;if(dx*dx+dy*dy<rr*rr)return e}}return null}",
-    "function bulletHitsFromGrid(b,g){const ax=Number.isFinite(b.prevX)?b.prevX:b.x,ay=Number.isFinite(b.prevY)?b.prevY:b.y,bx=b.x,by=b.y,minX=Math.min(ax,bx),maxX=Math.max(ax,bx),minY=Math.min(ay,by),maxY=Math.max(ay,by),c0x=Math.floor(minX/SPATIAL)-1,c1x=Math.floor(maxX/SPATIAL)+1,c0y=Math.floor(minY/SPATIAL)-1,c1y=Math.floor(maxY/SPATIAL)+1,seen=new Set();for(let cy=c0y;cy<=c1y;cy++)for(let cx=c0x;cx<=c1x;cx++){const a=g.get(cx+','+cy);if(!a)continue;for(const e of a){if(seen.has(e)||e.dead||(b.hits&&b.hits.includes(e)))continue;seen.add(e);const sx=bx-ax,sy=by-ay,len2=sx*sx+sy*sy,t=len2>0?Math.max(0,Math.min(1,((e.x-ax)*sx+(e.y-ay)*sy)/len2)):0,px=ax+sx*t,py=ay+sy*t,dx=px-e.x,dy=py-e.y,rr=b.r+e.r;if(dx*dx+dy*dy<rr*rr)return e}}return null}",
-    'swept-collision'
-  );
+
+  // swept-collision now lives in src/core/projectiles-runtime.mjs
+
 
   replaceOne("if(new URLSearchParams(location.search).get('ci')==='1')ciShotsHit++;","ciShotsHit++;",'hit-counter');
   replaceOne("const alive=enemies.filter(e=>!e.dead),target=autoTarget&&!autoTarget.dead?autoTarget:null,near=","const alive=enemies.filter(e=>!e.dead),target=autoMode?focusedTarget():(gameplayMode==='classic'?nearestVisible():(autoTarget&&!autoTarget.dead?autoTarget:null)),near=",'diagnostic-target');
