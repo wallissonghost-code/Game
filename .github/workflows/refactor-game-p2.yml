@@ -32,6 +32,7 @@ jobs:
           node --check src/core/projectiles-runtime.mjs
           node --check src/core/multiplayer-runtime.mjs
           node --check src/core/render-runtime.mjs
+          node --check scripts/check-architecture.mjs
       - name: Architecture checks
         run: |
           node scripts/check-architecture.mjs
@@ -44,6 +45,6 @@ jobs:
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/game.js src/core/skills-bootstrap.mjs
+          git add src/game.js src/core/skills-bootstrap.mjs scripts/check-architecture.mjs
           git commit -m 'refactor(game): extract runtime domain state boundaries'
           git push
