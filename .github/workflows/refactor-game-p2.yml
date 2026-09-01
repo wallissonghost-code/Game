@@ -1,0 +1,49 @@
+name: Refactor game P2 domains
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/refactor-game-p2.mjs'
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Apply domain extraction
+        run: node scripts/refactor-game-p2.mjs
+      - name: Syntax checks
+        run: |
+          node --check src/game.js
+          node --check src/core/skills-bootstrap.mjs
+          node --check src/core/match-state.mjs
+          node --check src/core/waves-runtime.mjs
+          node --check src/core/enemies-runtime.mjs
+          node --check src/core/projectiles-runtime.mjs
+          node --check src/core/multiplayer-runtime.mjs
+          node --check src/core/render-runtime.mjs
+      - name: Architecture checks
+        run: |
+          node scripts/check-architecture.mjs
+          node scripts/audit-runtime.mjs
+      - name: Commit generated extraction
+        run: |
+          if git diff --quiet; then
+            echo 'No P2 changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/game.js src/core/skills-bootstrap.mjs
+          git commit -m 'refactor(game): extract runtime domain state boundaries'
+          git push
