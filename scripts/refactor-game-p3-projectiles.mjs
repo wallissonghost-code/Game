@@ -7,7 +7,7 @@ const indexPath='index.html';
 function replaceExactly(source,from,to,label){
   const count=source.split(from).length-1;
   if(count===0&&source.includes(to))return source;
-  if(count!==1)throw new Error(`P6/${label}: expected 1 match, found ${count}`);
+  if(count!==1)throw new Error(`P7/${label}: expected 1 match, found ${count}`);
   return source.replace(from,to);
 }
 
@@ -31,25 +31,31 @@ game=replaceExactly(game,oldWave,newWave,'wave-composition');
 const oldBoss="function boss(type,forcedTier=null){makeEnemy(type||(((Math.floor(level/10))%2)?'colossus':'voidlord'),true,forcedTier)}";
 const newBoss="function boss(type,forcedTier=null){makeEnemy(type||wavesRuntime.bossTypeForLevel(level),true,forcedTier)}";
 game=replaceExactly(game,oldBoss,newBoss,'boss-composition');
+
+const oldMelee="{const targetP=duoEnemyTarget(e),isP1=targetP===player,hitDist=Math.hypot(e.x-targetP.x,e.y-targetP.y),attackRange=(targetP.r||18)+e.r+(e.max>=100?58:38);if(hitDist<attackRange){const now=performance.now(),targetInv=isP1?player.inv:0,targetShield=isP1?invincibleUntil:0;const choiceProtected=isP1?skillShieldP1():skillShieldP2();if(enemiesRuntime.tryBeginAttack(e,targetP,{now,targetInv,targetShield,choiceProtected}).started){if(isP1){if(!tryDodge(now)){lastDamageAt=now;player.life=Math.max(0,player.life-Math.max(1,e.damage*(1-player.armorReduction)));triggerGhost(now)}}else if(now>=(duoPlayer.invUntil||0)){duoPlayer.life=Math.max(0,duoPlayer.life-Math.max(1,e.damage*(1-(duoPlayer.armorReduction||0))));duoPlayer.lastDamageAt=now}const kx=e.x-targetP.x,ky=e.y-targetP.y,kd=Math.hypot(kx,ky)||1;e.x+=kx/kd*8;e.y+=ky/kd*8;if(targetP.life<=0){if(isP1){if(!player.down&&!tryPhoenix())knockDownPlayer('p1',e)}else if(!duoPlayer.down){if(!tryDuoPhoenix())knockDownPlayer('p2',e)}}}}}";
+const newMelee="{const targetP=duoEnemyTarget(e),isP1=targetP===player,now=performance.now(),targetInv=isP1?player.inv:0,targetShield=isP1?invincibleUntil:0,choiceProtected=isP1?skillShieldP1():skillShieldP2();enemiesRuntime.resolveMeleeAttack(e,targetP,{now,isPrimary:isP1,targetInv,targetShield,choiceProtected,armorReduction:isP1?player.armorReduction:(duoPlayer.armorReduction||0),secondaryInvUntil:duoPlayer.invUntil||0,tryDodge:isP1?()=>tryDodge(now):()=>false,onPrimaryDamage:()=>{lastDamageAt=now;triggerGhost(now)},onSecondaryDamage:()=>{duoPlayer.lastDamageAt=now},tryPhoenix:isP1?()=>tryPhoenix():()=>tryDuoPhoenix(),onKnockDown:()=>knockDownPlayer(isP1?'p1':'p2',e)})}";
+game=replaceExactly(game,oldMelee,newMelee,'melee-resolution');
 fs.writeFileSync(gamePath,game);
 
 let bootstrap=fs.readFileSync(bootstrapPath,'utf8');
-bootstrap=bootstrap.replace(/\.\/waves-runtime\.mjs\?v=[^';\"]+/,"./waves-runtime.mjs?v=01753-p6");
-bootstrap=bootstrap.replace(/\.\/enemies-runtime\.mjs\?v=[^';\"]+/,"./enemies-runtime.mjs?v=01753-p6");
+bootstrap=bootstrap.replace(/\.\/waves-runtime\.mjs\?v=[^';\"]+/,"./waves-runtime.mjs?v=01754-p7");
+bootstrap=bootstrap.replace(/\.\/enemies-runtime\.mjs\?v=[^';\"]+/,"./enemies-runtime.mjs?v=01754-p7");
 fs.writeFileSync(bootstrapPath,bootstrap);
 
 let index=fs.readFileSync(indexPath,'utf8');
-index=index.replace(/src\/core\/skills-bootstrap\.mjs\?v=[^\"]+/,'src/core/skills-bootstrap.mjs?v=01753-p6');
+index=index.replace(/src\/core\/skills-bootstrap\.mjs\?v=[^\"]+/,'src/core/skills-bootstrap.mjs?v=01754-p7');
 fs.writeFileSync(indexPath,index);
 
 const finalGame=fs.readFileSync(gamePath,'utf8');
 const finalBootstrap=fs.readFileSync(bootstrapPath,'utf8');
-if(!finalGame.includes('enemiesRuntime.buildEnemySpawn'))throw new Error('P6 enemy builder delegate missing');
-if(!finalGame.includes('variantFor:window.CaosMobs.variantFor'))throw new Error('P6 mob variant bridge missing');
-if(!finalGame.includes('wavesRuntime.waveSpawnCount'))throw new Error('P6 wave spawn delegate missing');
-if(!finalGame.includes('wavesRuntime.pickEnemyType'))throw new Error('P6 enemy pool delegate missing');
-if(!finalGame.includes('wavesRuntime.bossTypeForLevel'))throw new Error('P6 boss composition delegate missing');
-if(finalGame.includes("const pool=['wraith','reaper','infected','crawler','eye','brute']"))throw new Error('P6 legacy enemy pool still present');
-if(finalGame.includes('const softCap=Math.min(210,90+level*4),room='))throw new Error('P6 legacy wave composition still present');
-if(!finalBootstrap.includes("./waves-runtime.mjs?v=01753-p6")||!finalBootstrap.includes("./enemies-runtime.mjs?v=01753-p6"))throw new Error('P6 runtime cache tags missing');
-console.log('P6 OK: enemy construction and wave composition delegated to domain runtimes');
+if(!finalGame.includes('enemiesRuntime.buildEnemySpawn'))throw new Error('P7 enemy builder delegate missing');
+if(!finalGame.includes('variantFor:window.CaosMobs.variantFor'))throw new Error('P7 mob variant bridge missing');
+if(!finalGame.includes('wavesRuntime.waveSpawnCount'))throw new Error('P7 wave spawn delegate missing');
+if(!finalGame.includes('wavesRuntime.pickEnemyType'))throw new Error('P7 enemy pool delegate missing');
+if(!finalGame.includes('wavesRuntime.bossTypeForLevel'))throw new Error('P7 boss composition delegate missing');
+if(!finalGame.includes('enemiesRuntime.resolveMeleeAttack'))throw new Error('P7 melee resolver delegate missing');
+if(finalGame.includes('enemiesRuntime.tryBeginAttack(e,targetP'))throw new Error('P7 legacy inline melee attack still present');
+if(finalGame.includes("const pool=['wraith','reaper','infected','crawler','eye','brute']"))throw new Error('P7 legacy enemy pool still present');
+if(finalGame.includes('const softCap=Math.min(210,90+level*4),room='))throw new Error('P7 legacy wave composition still present');
+if(!finalBootstrap.includes("./waves-runtime.mjs?v=01754-p7")||!finalBootstrap.includes("./enemies-runtime.mjs?v=01754-p7"))throw new Error('P7 runtime cache tags missing');
+console.log('P7 OK: enemy melee resolution delegated to enemies runtime');
