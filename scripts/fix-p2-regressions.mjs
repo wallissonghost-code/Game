@@ -1,3 +1,4 @@
+// verification trigger: full CI after P2 regression repair
 import fs from 'node:fs';
 
 function replaceOne(src, from, to, label){
