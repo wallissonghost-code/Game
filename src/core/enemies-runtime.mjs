@@ -48,6 +48,6 @@ export function movementSpeed(enemy,{enemySpeed=1,level=1,now}={}){
 export function assertEnemyState(){
   const s=createEnemyState(),e={facing:'right',speed:100};
   if(!Array.isArray(s.enemies)||s.enemySpeed!==1||MAX_ENEMIES!==320)throw new Error('CAOS enemy state invalid');
-  if(stableFacing8(e,1,0,100)!=='right'||movementSpeed(e,{enemySpeed:1,level:1,now:100})!==101.49999999999999)throw new Error('CAOS enemy behavior invalid');
+  if(stableFacing8(e,1,0,100)!=='right'||Math.abs(movementSpeed(e,{enemySpeed:1,level:1,now:100})-101.5)>1e-9)throw new Error('CAOS enemy behavior invalid');
   return true;
 }
