@@ -32,14 +32,13 @@ const oldCollision="function bulletHitsFromGrid(b,g){const cx=Math.floor(b.x/SPA
 const newCollision="function bulletHitsFromGrid(b,g){return projectilesRuntime.sweptGridHit(b,g,SPATIAL)}";
 game=replaceExactly(game,oldCollision,newCollision,'swept-collision');
 
-// P4 enemy facing delegates
+// P4 enemy facing/movement delegates
 const oldFacing8="function stableEnemyFacing8(e,vx,vy){const mag=Math.hypot(vx,vy);if(mag<.001)return e.facing||'down';const a=Math.atan2(vy,vx),oct=Math.round(a/(Math.PI/4)),dirs=['right','dr','down','dl','left','ul','up','ur'];const candidate=dirs[(oct+8)%8],now=performance.now();if(!e.facing){e.facing=candidate;e.faceCandidate='';e.faceCandidateAt=0;return e.facing}if(candidate===e.facing){e.faceCandidate='';e.faceCandidateAt=0;return e.facing}if(e.faceCandidate!==candidate){e.faceCandidate=candidate;e.faceCandidateAt=now;return e.facing}if(now-(e.faceCandidateAt||0)<120)return e.facing;e.facing=candidate;e.faceCandidate='';e.faceCandidateAt=0;return e.facing}";
 const newFacing8="function stableEnemyFacing8(e,vx,vy){return enemiesRuntime.stableFacing8(e,vx,vy)}";
 game=replaceExactly(game,oldFacing8,newFacing8,'enemy-facing8');
 const oldFacing4="function stableEnemyFacing(e,vx,vy){const ax=Math.abs(vx),ay=Math.abs(vy);if(ax<.001&&ay<.001)return e.facing||'down';const candidate=ax>ay?(vx>0?'right':'left'):(vy>0?'down':'up'),now=performance.now();if(!e.facing){e.facing=candidate;e.faceCandidate='';e.faceCandidateAt=0;return e.facing}if(candidate===e.facing){e.faceCandidate='';e.faceCandidateAt=0;return e.facing}const major=Math.max(ax,ay),minor=Math.min(ax,ay),dominance=major/Math.max(.001,minor);if(dominance<1.32)return e.facing;if(e.faceCandidate!==candidate){e.faceCandidate=candidate;e.faceCandidateAt=now;return e.facing}if(now-(e.faceCandidateAt||0)<170)return e.facing;e.facing=candidate;e.faceCandidate='';e.faceCandidateAt=0;return e.facing}";
 const newFacing4="function stableEnemyFacing(e,vx,vy){return enemiesRuntime.stableFacing4(e,vx,vy)}";
 game=replaceExactly(game,oldFacing4,newFacing4,'enemy-facing4');
-
 const oldMoveSpeed="const controlNow=performance.now(),locked=controlNow<(e.iceFreezeUntil||0)||controlNow<(e.stunUntil||0),slowMul=controlNow<(e.slowUntil||0)?1-(e.slowPct||0):1,furyMul=controlNow<(e.furyUntil||0)?(e.furySpeedMul||1):1,moveSpeed=locked?0:Math.min(310,e.speed*enemySpeed*(1+level*.015)*slowMul*furyMul);";
 const newMoveSpeed="const controlNow=performance.now(),moveSpeed=enemiesRuntime.movementSpeed(e,{enemySpeed,level,now:controlNow});";
 game=replaceExactly(game,oldMoveSpeed,newMoveSpeed,'enemy-movement-speed');
@@ -47,11 +46,21 @@ game=replaceExactly(game,oldMoveSpeed,newMoveSpeed,'enemy-movement-speed');
 const oldWave="if(hordeEnabled&&ogreReady){const now=performance.now(),softCap=Math.min(210,90+level*4);if(now>=nextWaveAt&&enemies.length<softCap){spawnWave();const pressure=enemies.length/Math.max(1,softCap),base=Math.max(1500,3600-level*55);nextWaveAt=now+base*(.9+pressure*.65)}}else{nextWaveAt=performance.now()+900}";
 const newWave="if(hordeEnabled&&ogreReady){const now=performance.now(),softCap=wavesRuntime.softCapForLevel(level);if(wavesRuntime.shouldSpawnWave({enabled:hordeEnabled,assetsReady:ogreReady,now,nextWaveAt,enemyCount:enemies.length,level})){spawnWave();nextWaveAt=now+wavesRuntime.nextWaveDelay(level,enemies.length,softCap)}}else{nextWaveAt=performance.now()+900}";
 game=replaceExactly(game,oldWave,newWave,'wave-cadence');
+
+// P5 chase movement delegate. Keep targeting/damage ownership in game.js.
+const oldChase="if(!frozen){const chaseP=duoEnemyTarget(e),dxp=chaseP.x-e.x,dyp=chaseP.y-e.y,dist2=dxp*dxp+dyp*dyp,near2=420*420,stride=dist2<near2?1:(perfMode>=2?4:perfMode===1?3:2);if(!e.mvx||((frameSeq+(e.aiPhase||0))%stride===0)){const distp=Math.sqrt(dist2)||1,baseA=Math.atan2(dyp,dxp);let steer=baseA;if(e.type==='crawler')steer+=Math.sin(e.t*7+e.seed)*.6;const stopRadius=player.r+e.r+(e.max>=100?58:38);if(distp<=stopRadius){e.mvx=0;e.mvy=0;e.speedMul=0;const fx=dxp,fy=dyp;(types[e.type]?.boss?stableEnemyFacing:stableEnemyFacing8)(e,fx,fy)}else{e.mvx=Math.cos(steer);e.mvy=Math.sin(steer);e.speedMul=distp<stopRadius+42?.68:1;(types[e.type]?.boss?stableEnemyFacing:stableEnemyFacing8)(e,e.mvx,e.mvy)}}const controlNow=performance.now(),moveSpeed=enemiesRuntime.movementSpeed(e,{enemySpeed,level,now:controlNow});e.x+=e.mvx*moveSpeed*dt*(e.speedMul||1);e.y+=e.mvy*moveSpeed*dt*(e.speedMul||1);}";
+const newChase="if(!frozen){const chaseP=duoEnemyTarget(e);enemiesRuntime.updateChaseMotion(e,chaseP,{dt,enemySpeed,level,perfMode,frameSeq,isBoss:!!types[e.type]?.boss,playerRadius:player.r,now:performance.now()})}";
+game=replaceExactly(game,oldChase,newChase,'enemy-chase-motion');
+
+const oldAttackGate="if(now>=(e.attackAt||0)&&now>=(e.iceFreezeUntil||0)&&now>=(e.stunUntil||0)&&targetInv<=0&&now>targetShield&&!choiceProtected){e.attackAt=now+(e.max>=100?1100:900);e.attackFlash=.18;";
+const newAttackGate="if(enemiesRuntime.tryBeginAttack(e,targetP,{now,targetInv,targetShield,choiceProtected}).started){";
+game=replaceExactly(game,oldAttackGate,newAttackGate,'enemy-attack-window');
 fs.writeFileSync(gamePath,game);
 
 let bootstrap=fs.readFileSync(bootstrapPath,'utf8');
 bootstrap=bootstrap.replace("./projectiles-runtime.mjs?v=01749-p2","./projectiles-runtime.mjs?v=01750-p3");
-bootstrap=bootstrap.replace("./enemies-runtime.mjs?v=01749-p2","./enemies-runtime.mjs?v=01751-p4");
+bootstrap=bootstrap.replace("./enemies-runtime.mjs?v=01749-p2","./enemies-runtime.mjs?v=01752-p5");
+bootstrap=bootstrap.replace("./enemies-runtime.mjs?v=01751-p4","./enemies-runtime.mjs?v=01752-p5");
 bootstrap=bootstrap.replace("./waves-runtime.mjs?v=01749-p2","./waves-runtime.mjs?v=01751-p4");
 bootstrap=removeReplaceOneBlock(bootstrap,'projectile-straight');
 bootstrap=removeReplaceOneBlock(bootstrap,'swept-collision');
@@ -65,13 +74,13 @@ bootstrap=replaceExactly(bootstrap,oldProjectile,newProjectile,'projectile-facto
 fs.writeFileSync(bootstrapPath,bootstrap);
 
 let index=fs.readFileSync(indexPath,'utf8');
-index=index.replace(/src\/core\/skills-bootstrap\.mjs\?v=[^\"]+/,'src/core/skills-bootstrap.mjs?v=01751-p4');
+index=index.replace(/src\/core\/skills-bootstrap\.mjs\?v=[^\"]+/,'src/core/skills-bootstrap.mjs?v=01752-p5');
 fs.writeFileSync(indexPath,index);
 
 const finalGame=fs.readFileSync(gamePath,'utf8');
 const finalBootstrap=fs.readFileSync(bootstrapPath,'utf8');
-for(const token of ['projectilesRuntime.advanceProjectile','projectilesRuntime.sweptGridHit','enemiesRuntime.stableFacing8','enemiesRuntime.stableFacing4','enemiesRuntime.movementSpeed','wavesRuntime.softCapForLevel','wavesRuntime.nextWaveDelay']){
+for(const token of ['projectilesRuntime.advanceProjectile','projectilesRuntime.sweptGridHit','enemiesRuntime.stableFacing8','enemiesRuntime.stableFacing4','wavesRuntime.softCapForLevel','wavesRuntime.nextWaveDelay','enemiesRuntime.updateChaseMotion','enemiesRuntime.tryBeginAttack']){
   if(!finalGame.includes(token))throw new Error(`domain delegate missing: ${token}`);
 }
-if(!finalBootstrap.includes("./enemies-runtime.mjs?v=01751-p4")||!finalBootstrap.includes("./waves-runtime.mjs?v=01751-p4"))throw new Error('P4 module cache tags missing');
-console.log('P4 OK: wave cadence, enemy facing and enemy movement delegated to core domains');
+if(!finalBootstrap.includes("./enemies-runtime.mjs?v=01752-p5")||!finalBootstrap.includes("./waves-runtime.mjs?v=01751-p4"))throw new Error('P5 module cache tags missing');
+console.log('P5 OK: enemy chase motion and attack gate delegated to enemies domain');
