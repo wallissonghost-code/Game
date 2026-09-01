@@ -25,6 +25,8 @@ assert(!/function drawNecromancer\([\s\S]{0,500}ctx\.filter/.test(necroSource),'
 assert(/__caosNecromancerBossSkinRendered/.test(physicsSource),'boss-skin render probe missing');
 assert(/necroBossFallback/.test(physicsSource),'summoned boss does not have a visible fallback path');
 assert(/if\(isBoss&&!e\.necroAlly\)/.test(physicsSource),'summoned boss name/tier suppression missing');
+assert(/function necroResolveEnemyBodyCollisions\(/.test(physicsSource),'enemy-to-summon solid collision is missing');
+assert(/__caosNecromancerEnemyBodyPushes/.test(physicsSource),'enemy-to-summon collision probe is missing');
 assert(/function necroClearArmy\(/.test(lifecycleSource),'run lifecycle teardown is missing');
 assert(/enemies\.includes\(t\)/.test(lifecycleSource),'stale duel target membership guard is missing');
 assert(/visibilitychange/.test(lifecycleSource)&&/pageshow/.test(lifecycleSource),'background/resume recovery is missing');
@@ -84,6 +86,15 @@ try{
  await page.evaluate(()=>{window.CaosLiveCommand({command:'clear',source:'qa'});window.dispatchEvent(new Event('pageshow'));});
  await page.waitForFunction(()=>window.__caosNecromancer?.snapshot().summons.every(s=>!s.duel),null,{timeout:2500});
 
+ // Regressão real vista no celular: inimigo não pode atravessar o corpo de um summon.
+ await page.evaluate(()=>window.CaosLiveCommand({command:'necro_config',enabled:true,maxSummons:1,clear:true,source:'qa'}));
+ await page.evaluate(()=>window.CaosLiveCommand({command:'necro_raise',amount:1,mob:'brute',tier:'normal',source:'qa'}));
+ await page.waitForFunction(()=>window.__caosNecromancer?.snapshot().summons.length===1,null,{timeout:3000});
+ await page.evaluate(()=>{window.__caosNecromancerEnemyBodyPushes=0;window.CaosTest.spawnTarget(110,-Math.PI/2);});
+ await page.waitForFunction(()=>Number(window.__caosNecromancerEnemyBodyPushes||0)>0,null,{timeout:4000});
+ const solid=await page.evaluate(()=>Number(window.__caosNecromancerEnemyBodyPushes||0));
+ assert(solid>0,'enemy overlapped a summon but no solid-body separation was applied');
+
  // Regression real do bug visto no iPhone: boss invocado não pode virar só barra + sombra verde.
  await page.evaluate(()=>window.CaosLiveCommand({command:'necro_config',enabled:true,maxSummons:3,clear:true,source:'qa'}));
  await page.evaluate(()=>{window.__caosNecromancerBossSkinRendered=0;window.__caosNecromancerBossSkinFallback=false;});
@@ -108,7 +119,7 @@ try{
  assert(restarted.summons.length===0,'old summons leaked into the next run');
  assert(restarted.enabled===true,'Live+ Necromancer configuration should persist between runs');
  assert(errors.length===0,errors.join(' | '));
- console.log(`NECROMANCER QA OK: regular=3 separated=yes duel=yes staleLock=cleared bossSkinFrames=${boss.bossSkinFrames} deathReset=yes newRunClean=yes fx=${restarted.fx}`);
+ console.log(`NECROMANCER QA OK: regular=3 separated=yes duel=yes enemyBodyPushes=${solid} staleLock=cleared bossSkinFrames=${boss.bossSkinFrames} deathReset=yes newRunClean=yes fx=${restarted.fx}`);
  await context.close();
 }finally{
  if(browser)await browser.close();
