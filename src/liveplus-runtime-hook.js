@@ -43,7 +43,15 @@ window.Blob=new Proxy(NativeBlob,{construct(Target,args,newTarget){
       const companion=window.CaosGhostAllyCompanion;
       if(companion&&typeof companion.apply==='function')out=companion.apply(out);
       const necromancer=window.CaosNecromancerCompanion;
-      if(necromancer&&typeof necromancer.apply==='function')out=necromancer.apply(out);
+      if(necromancer&&typeof necromancer.apply==='function'){
+        out=necromancer.apply(out);
+        // V0.2 inseria a chamada do comando no primeiro "const c", que pertence ao próprio
+        // necromancerCommand, criando recursão e deixando command(d) sem dispatch do Necromante.
+        out=out.replace('function necromancerCommand(d){const c=d?.command;necromancerCommand(d);','function necromancerCommand(d){const c=d?.command;');
+        if(!out.includes('function command(d){necromancerCommand(d);'))out=out.replace('function command(d){try{','function command(d){necromancerCommand(d);try{');
+        // Probe de QA: só incrementa quando uma sombra realmente chegou ao render do canvas.
+        if(!out.includes('__caosNecromancerRendered'))out=out.replace('function drawNecromancer(){if(!necroSummons.length)return;','function drawNecromancer(){if(!necroSummons.length)return;window.__caosNecromancerRendered=(window.__caosNecromancerRendered||0)+1;');
+      }
       if(!out.includes('LIVEPLUS_METEOR_DODGE')&&out.includes('function autoVector(dt){')){
         const inject=`function autoVector(dt){/*LIVEPLUS_METEOR_DODGE*/
   const activeMeteors=meteors.filter(m=>!m.hit&&m.warningLeft>0);
