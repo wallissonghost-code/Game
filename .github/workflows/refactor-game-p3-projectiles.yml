@@ -1,4 +1,4 @@
-name: Refactor game P3 projectiles
+name: Refactor game P5 enemy behavior
 
 on:
   push:
@@ -20,21 +20,26 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Apply P3 projectile extraction
+      - name: Apply domain extraction
         run: node scripts/refactor-game-p3-projectiles.mjs
       - name: Syntax checks
         run: |
           node --check src/game.js
           node --check src/core/skills-bootstrap.mjs
           node --check src/core/projectiles-runtime.mjs
+          node --check src/core/enemies-runtime.mjs
+          node --check src/core/waves-runtime.mjs
           node --check scripts/refactor-game-p3-projectiles.mjs
       - name: Architecture contracts
         run: |
           node scripts/check-game.mjs
           node scripts/check-architecture.mjs
-      - name: Projectile domain self-check
-        run: node --input-type=module -e "import('./src/core/projectiles-runtime.mjs').then(m=>{if(!m.assertProjectileState())process.exit(1); console.log('Projectile domain OK')})"
-      - name: Commit extracted projectile boundaries
+      - name: Domain self-checks
+        run: |
+          node --input-type=module -e "import('./src/core/projectiles-runtime.mjs').then(m=>{if(!m.assertProjectileState())process.exit(1); console.log('Projectile domain OK')})"
+          node --input-type=module -e "import('./src/core/enemies-runtime.mjs').then(m=>{if(!m.assertEnemyState())process.exit(1); console.log('Enemy domain OK')})"
+          node --input-type=module -e "import('./src/core/waves-runtime.mjs').then(m=>{if(!m.assertWaveState())process.exit(1); console.log('Wave domain OK')})"
+      - name: Commit extracted domain boundaries
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -43,5 +48,5 @@ jobs:
             echo 'No generated changes to commit'
             exit 0
           fi
-          git commit -m 'refactor(game): extract projectile runtime behavior'
+          git commit -m 'refactor(game): extract enemy chase and attack behavior'
           git push
