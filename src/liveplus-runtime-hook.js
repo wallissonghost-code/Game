@@ -42,6 +42,8 @@ window.Blob=new Proxy(NativeBlob,{construct(Target,args,newTarget){
       }
       const companion=window.CaosGhostAllyCompanion;
       if(companion&&typeof companion.apply==='function')out=companion.apply(out);
+      const necromancer=window.CaosNecromancerCompanion;
+      if(necromancer&&typeof necromancer.apply==='function')out=necromancer.apply(out);
       if(!out.includes('LIVEPLUS_METEOR_DODGE')&&out.includes('function autoVector(dt){')){
         const inject=`function autoVector(dt){/*LIVEPLUS_METEOR_DODGE*/
   const activeMeteors=meteors.filter(m=>!m.hit&&m.warningLeft>0);
