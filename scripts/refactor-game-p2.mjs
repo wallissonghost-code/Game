@@ -1,8 +1,9 @@
-// trigger: p2 domain extraction
+// trigger: p2 domain extraction v2
 import fs from 'node:fs';
 
 const gamePath='src/game.js';
 const bootstrapPath='src/core/skills-bootstrap.mjs';
+const archPath='scripts/check-architecture.mjs';
 
 function splitTopLevel(input){
   const out=[];let start=0,depth=0,quote=null,esc=false;
@@ -64,6 +65,14 @@ if(!bootstrap.includes("./match-state.mjs"))bootstrap=bootstrap.replace("import 
 const expose=`CaosMatchState.assertMatchState();\nCaosWavesRuntime.assertWaveState();\nCaosEnemiesRuntime.assertEnemyState();\nCaosProjectilesRuntime.assertProjectileState();\nCaosMultiplayerRuntime.assertMultiplayerState();\nCaosRenderRuntime.assertRenderState();\nwindow.CaosMatchState = Object.freeze({ ...CaosMatchState });\nwindow.CaosWavesRuntime = Object.freeze({ ...CaosWavesRuntime });\nwindow.CaosEnemiesRuntime = Object.freeze({ ...CaosEnemiesRuntime });\nwindow.CaosProjectilesRuntime = Object.freeze({ ...CaosProjectilesRuntime });\nwindow.CaosMultiplayerRuntime = Object.freeze({ ...CaosMultiplayerRuntime });\nwindow.CaosRenderRuntime = Object.freeze({ ...CaosRenderRuntime });\n`;
 if(!bootstrap.includes('CaosMatchState.assertMatchState()'))bootstrap=bootstrap.replace('CaosCombat.assertCombatDomain();\n','CaosCombat.assertCombatDomain();\n'+expose);
 fs.writeFileSync(bootstrapPath,bootstrap);
+
+let arch=fs.readFileSync(archPath,'utf8');
+if(!arch.includes("const matchStateSource = read('src/core/match-state.mjs');")){
+  arch=arch.replace("const combatSource = read('src/core/combat.mjs');\n", "const combatSource = read('src/core/combat.mjs');\nconst matchStateSource = read('src/core/match-state.mjs');\nconst enemiesRuntimeSource = read('src/core/enemies-runtime.mjs');\n");
+}
+arch=arch.replace("const soloContractView = solo+'\\n'+mobsSource+'\\n'+combatSource+'\\n'+read('src/core/contracts.mjs');","const soloContractView = solo+'\\n'+mobsSource+'\\n'+combatSource+'\\n'+matchStateSource+'\\n'+enemiesRuntimeSource+'\\n'+read('src/core/contracts.mjs');");
+arch=arch.replace("if (!solo.includes(`MAX_ENEMIES=${LIMITS.solo.maxEnemies}`)) fail(`solo MAX_ENEMIES differs from core contract ${LIMITS.solo.maxEnemies}`);","if (!soloContractView.includes(`MAX_ENEMIES=${LIMITS.solo.maxEnemies}`)) fail(`solo MAX_ENEMIES differs from core contract ${LIMITS.solo.maxEnemies}`);");
+fs.writeFileSync(archPath,arch);
 
 const finalGame=fs.readFileSync(gamePath,'utf8');
 for(const needle of ['matchRuntime.createMatchState()','wavesRuntime.createWaveState()','enemiesRuntime.createEnemyState()','projectilesRuntime.createProjectileState()','renderRuntime.createRenderState()','multiplayerRuntime.createMultiplayerState()'])if(!finalGame.includes(needle))throw Error('missing extraction '+needle);
