@@ -517,6 +517,35 @@ function divergenceCard(g){
   return `<div class="giftCatalogRow giftCatalogRowV2 caosDivergenceRow" style="display:block;padding:10px;margin:8px 0"><div class="giftMain"><b>${esc(g.name||'Presente')}</b><span>ID atual ${esc(g.id)} · ${esc(g.diamondCount||0)} 💎 · verificado ${g.liveVerifiedCount||1}×</span><div style="font-size:10px;line-height:1.55;margin-top:7px;color:#fbbf24">${rows.join('')}</div><div class="giftRowActions" style="margin-top:8px">${actions.join('')}</div><small style="display:block;margin-top:6px;opacity:.72">${types.length>1?'⚠️ MÚLTIPLAS DIVERGÊNCIAS':'⚠️ DIVERGÊNCIA DE '+types[0].toUpperCase()}</small></div></div>`;
 }
 
+function bindDivergencePanel(panel){
+  if(panel.dataset.caosActionsBound)return;
+  panel.dataset.caosActionsBound='1';
+  panel.addEventListener('click',event=>{
+    const button=event.target.closest('button');
+    if(!button||!panel.contains(button))return;
+    if(button.matches('[data-div-filter]')){
+      event.preventDefault();
+      divergenceFilter=button.dataset.divFilter||'all';
+      renderDivergencePanel();
+      return;
+    }
+    if(button.matches('[data-fix-name]')){
+      event.preventDefault();
+      correctName(button.dataset.fixName);
+      return;
+    }
+    if(button.matches('[data-fix-value]')){
+      event.preventDefault();
+      correctValue(button.dataset.fixValue);
+      return;
+    }
+    if(button.matches('[data-fix-id]')){
+      event.preventDefault();
+      void correctId(button.dataset.fixId);
+    }
+  });
+}
+
 function renderDivergencePanel(){
   const box=$('giftCatalogList');
   if(!box)return;
@@ -527,6 +556,7 @@ function renderDivergencePanel(){
     panel.style.cssText='margin:10px 0 14px;padding:10px;border:1px solid rgba(251,191,36,.24);border-radius:12px;background:rgba(251,191,36,.035)';
     box.insertAdjacentElement('beforebegin',panel);
   }
+  bindDivergencePanel(panel);
 
   const list=catalog().filter(g=>g.liveVerified&&g.liveDivergence);
   const counts={
@@ -537,17 +567,9 @@ function renderDivergencePanel(){
     multi:list.filter(g=>divergenceTypes(g.liveDivergence).length>1).length
   };
   const filtered=list.filter(g=>divergenceMatches(g,divergenceFilter));
-  const button=(k,label)=>`<button class="miniBtn${divergenceFilter===k?' active':''}" data-div-filter="${k}">${label} (${counts[k]})</button>`;
+  const button=(k,label)=>`<button type="button" class="miniBtn${divergenceFilter===k?' active':''}" data-div-filter="${k}">${label} (${counts[k]})</button>`;
 
   panel.innerHTML=`<div class="caosQuickHead" style="margin-bottom:8px"><div><span class="eyebrow">VALIDAÇÃO AO VIVO</span><h3 style="margin:2px 0">Divergências</h3></div><span class="miniStatus">${counts.all} pendentes</span></div><div class="v2CatalogActions" style="display:flex;gap:6px;flex-wrap:wrap">${button('all','TODAS')}${button('name','NOME')}${button('value','VALOR')}${button('id','ID')}${button('multi','MÚLTIPLAS')}</div><p class="hint" style="margin:8px 0">Nome novo passa a ser corrigido automaticamente nas próximas verificações. ID e valor continuam manuais para segurança.</p><div id="giftDivergenceList">${filtered.map(divergenceCard).join('')||'<div class="hint">Nenhuma divergência neste filtro.</div>'}</div>`;
-
-  panel.querySelectorAll('[data-div-filter]').forEach(b=>b.onclick=()=>{
-    divergenceFilter=b.dataset.divFilter||'all';
-    renderDivergencePanel();
-  });
-  panel.querySelectorAll('[data-fix-name]').forEach(b=>b.onclick=()=>correctName(b.dataset.fixName));
-  panel.querySelectorAll('[data-fix-value]').forEach(b=>b.onclick=()=>correctValue(b.dataset.fixValue));
-  panel.querySelectorAll('[data-fix-id]').forEach(b=>b.onclick=()=>correctId(b.dataset.fixId));
 }
 
 function decorateVerifiedCatalog(){
@@ -640,15 +662,21 @@ function installManagementObserver(){
   if(!root||root.dataset.giftManagementObserver)return;
   root.dataset.giftManagementObserver='1';
   let queued=false;
-  new MutationObserver(()=>{
+  const observer=new MutationObserver(()=>{
     if(queued)return;
     queued=true;
     requestAnimationFrame(()=>{
       queued=false;
-      decorateVerifiedCatalog();
-      ensureUniversalRuleEdit();
+      observer.disconnect();
+      try{
+        decorateVerifiedCatalog();
+        ensureUniversalRuleEdit();
+      }finally{
+        observer.observe(root,{childList:true,subtree:true});
+      }
     });
-  }).observe(root,{childList:true,subtree:true});
+  });
+  observer.observe(root,{childList:true,subtree:true});
   window.addEventListener('caos-catalog-updated',decorateVerifiedCatalog);
   decorateVerifiedCatalog();
   ensureUniversalRuleEdit();
