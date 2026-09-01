@@ -1,0 +1,45 @@
+name: Fix P2 regressions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/fix-p2-regressions.mjs'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Apply regression repairs
+        run: node scripts/fix-p2-regressions.mjs
+      - name: Syntax checks
+        run: |
+          node --check src/game.js
+          node --check src/core/natural-events-runtime.mjs
+          node --check scripts/check-game.mjs
+      - name: Contract checks
+        run: |
+          node scripts/check-game.mjs
+          node scripts/check-natural-events.mjs
+          node scripts/check-architecture.mjs
+          node scripts/audit-runtime.mjs
+      - name: Commit repairs
+        run: |
+          if git diff --quiet; then
+            echo 'No repair changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/core/natural-events-runtime.mjs scripts/check-game.mjs
+          git commit -m 'fix(game): align legacy guards with P2 runtime modules'
+          git push
