@@ -1,0 +1,40 @@
+name: Refactor game P1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/refactor-game-p1.mjs'
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply safe P1 extraction
+        run: node scripts/refactor-game-p1.mjs
+      - name: Syntax checks
+        run: |
+          node --check src/game.js
+          node --check src/core/runtime-state.js
+          node --check src/core/skills-bootstrap.mjs
+      - name: Commit generated refactor
+        run: |
+          if git diff --quiet; then
+            echo 'No refactor changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/game.js src/core/skills-bootstrap.mjs index.html
+          git commit -m 'refactor(game): extract player and multiplayer state'
+          git push
