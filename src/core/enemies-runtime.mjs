@@ -80,6 +80,32 @@ export function tryBeginAttack(enemy,target,{now,targetInv=0,targetShield=0,choi
   return {started:true,inRange:true,hitDist,attackRange};
 }
 
+export function resolveMeleeAttack(enemy,target,{now,isPrimary=true,targetInv=0,targetShield=0,choiceProtected=false,armorReduction=0,secondaryInvUntil=0,tryDodge=()=>false,onPrimaryDamage=()=>{},onSecondaryDamage=()=>{},tryPhoenix=()=>false,onKnockDown=()=>{}}={}){
+  const at=facingClock(now),attack=tryBeginAttack(enemy,target,{now:at,targetInv,targetShield,choiceProtected});
+  if(!attack.started)return {...attack,damage:0,dodged:false,downed:false,phoenix:false};
+  let damage=0,dodged=false;
+  if(isPrimary){
+    dodged=!!tryDodge(at);
+    if(!dodged){
+      damage=Math.max(1,enemy.damage*(1-(armorReduction||0)));
+      target.life=Math.max(0,target.life-damage);
+      onPrimaryDamage(at,damage);
+    }
+  }else if(at>=secondaryInvUntil){
+    damage=Math.max(1,enemy.damage*(1-(armorReduction||0)));
+    target.life=Math.max(0,target.life-damage);
+    onSecondaryDamage(at,damage);
+  }
+  const kx=enemy.x-target.x,ky=enemy.y-target.y,kd=Math.hypot(kx,ky)||1;
+  enemy.x+=kx/kd*8;enemy.y+=ky/kd*8;
+  let phoenix=false,downed=false;
+  if(target.life<=0&&!target.down){
+    phoenix=!!tryPhoenix();
+    if(!phoenix){onKnockDown(enemy);downed=true}
+  }
+  return {...attack,damage,dodged,downed,phoenix};
+}
+
 export function buildEnemySpawn({type,typeConfig,near=false,forcedTier=null,level=1,player,viewportWidth=0,viewportHeight=0,doubleXpEvent=false,enemyCount=0,maxEnemies=MAX_ENEMIES,mobDomain,variantFor=mobDomain?.variantFor,random=Math.random}={}){
   if(enemyCount>=maxEnemies||!typeConfig||!player||!mobDomain||typeof variantFor!=='function')return null;
   const c=typeConfig,a=random()*Math.PI*2,dist=near?180+random()*220:Math.max(viewportWidth,viewportHeight)*.7+random()*260;
@@ -98,6 +124,9 @@ export function assertEnemyState(){
   if(!(e.x>before))throw new Error('CAOS enemy chase invalid');
   const attacker={x:0,y:0,r:10,max:10,attackAt:0,iceFreezeUntil:0,stunUntil:0},near={x:20,y:0,r:18};
   if(!tryBeginAttack(attacker,near,{now:100,targetInv:0,targetShield:0,choiceProtected:false}).started)throw new Error('CAOS enemy attack invalid');
+  const meleeEnemy={x:0,y:0,r:10,max:10,damage:10,attackAt:0,iceFreezeUntil:0,stunUntil:0},meleeTarget={x:20,y:0,r:18,life:20,down:false};let primaryAt=0;
+  const melee=resolveMeleeAttack(meleeEnemy,meleeTarget,{now:200,isPrimary:true,armorReduction:.2,onPrimaryDamage:at=>primaryAt=at});
+  if(!melee.started||melee.damage!==8||meleeTarget.life!==12||primaryAt!==200||meleeEnemy.x!==-8)throw new Error('CAOS enemy melee resolver invalid');
   const rolls=[0,.5,.25,.5,.1,.2,.3,.4,.5],random=()=>rolls.shift()??0,mobDomain={enemyTier:()=>0,enemyEvolution:()=>1,bossTier:()=>3,variantFor:()=>({hp:1,dmg:1,xp:1,hitbox:1,speed:1})};
   const built=buildEnemySpawn({type:'wraith',typeConfig:{r:10,s:20,h:30,d:4,x:5},near:true,level:1,player:{x:0,y:0},viewportWidth:100,viewportHeight:100,mobDomain,random});
   if(!built||built.enemy.type!=='wraith'||built.enemy.hp!==30||Math.abs(built.enemy.x-290)>1e-9)throw new Error('CAOS enemy spawn builder invalid');
