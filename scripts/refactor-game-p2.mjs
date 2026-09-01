@@ -1,4 +1,4 @@
-// trigger: p2 domain extraction v4
+// trigger: p2 domain extraction v5 - regression pass
 import fs from 'node:fs';
 
 const gamePath='src/game.js';
