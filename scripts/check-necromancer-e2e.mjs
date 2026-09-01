@@ -10,6 +10,8 @@ const actionsSource=fs.readFileSync('src/liveplus-necromancer-actions.js','utf8'
 const hookSource=fs.readFileSync('src/liveplus-runtime-hook.js','utf8');
 const necroSource=fs.readFileSync('src/companions/necromancer.js','utf8');
 const physicsSource=fs.readFileSync('src/companions/necromancer-physics.js','utf8');
+const lifecycleSource=fs.readFileSync('src/companions/necromancer-lifecycle.js','utf8');
+const indexSource=fs.readFileSync('index.html','utf8');
 assert(/manifest\.actions\.splice\(0,manifest\.actions\.length/.test(actionsSource),'Live+ patch must preserve bridge ACTIONS array identity');
 assert(!/manifest\.actions\s*=\s*manifest\.actions\.filter/.test(actionsSource),'manifest actions array is being replaced; panel command will become unsupported');
 assert(/necro_raise/.test(actionsSource)&&/necro_config/.test(actionsSource),'required Necromancer Live+ actions missing');
@@ -23,6 +25,13 @@ assert(!/function drawNecromancer\([\s\S]{0,500}ctx\.filter/.test(necroSource),'
 assert(/__caosNecromancerBossSkinRendered/.test(physicsSource),'boss-skin render probe missing');
 assert(/necroBossFallback/.test(physicsSource),'summoned boss does not have a visible fallback path');
 assert(/if\(isBoss&&!e\.necroAlly\)/.test(physicsSource),'summoned boss name/tier suppression missing');
+assert(/function necroClearArmy\(/.test(lifecycleSource),'run lifecycle teardown is missing');
+assert(/enemies\.includes\(t\)/.test(lifecycleSource),'stale duel target membership guard is missing');
+assert(/visibilitychange/.test(lifecycleSource)&&/pageshow/.test(lifecycleSource),'background/resume recovery is missing');
+assert(/function reset\(\)\{necroClearArmy/.test(lifecycleSource),'new-run reset hook is missing');
+assert(/function beginDeath\(e\)\{if\(deathState\)return;necroClearArmy/.test(lifecycleSource),'death teardown hook is missing');
+assert(indexSource.indexOf('necromancer-lifecycle.js')>indexSource.indexOf('necromancer-physics.js'),'lifecycle wrapper must load after physics');
+assert(indexSource.indexOf('necromancer-lifecycle.js')<indexSource.indexOf('liveplus-runtime-hook.js'),'lifecycle wrapper must load before runtime hook');
 
 const server=spawn('python3',['-m','http.server',String(PORT),'--bind','127.0.0.1'],{stdio:['ignore','pipe','pipe']});
 async function waitServer(){for(let i=0;i<50;i++){try{const r=await fetch(BASE,{cache:'no-store'});if(r.ok)return}catch{}await sleep(200)}throw Error('Necromancer QA server did not start')}
@@ -71,6 +80,9 @@ try{
  await page.waitForFunction(()=>window.__caosNecromancer?.snapshot().summons.some(s=>s.duel),null,{timeout:5000});
  const duel=await page.evaluate(()=>window.__caosNecromancer.snapshot());
  assert(duel.summons.some(s=>s.duel),'shadow reached an enemy but no 1v1 duel lock was created');
+ // Simula alvo removido/aba retornando: nenhum lock pode sobreviver apontando para mob que saiu do array.
+ await page.evaluate(()=>{window.CaosLiveCommand({command:'clear',source:'qa'});window.dispatchEvent(new Event('pageshow'));});
+ await page.waitForFunction(()=>window.__caosNecromancer?.snapshot().summons.every(s=>!s.duel),null,{timeout:2500});
 
  // Regression real do bug visto no iPhone: boss invocado não pode virar só barra + sombra verde.
  await page.evaluate(()=>window.CaosLiveCommand({command:'necro_config',enabled:true,maxSummons:3,clear:true,source:'qa'}));
@@ -81,8 +93,22 @@ try{
  const boss=await page.evaluate(()=>({state:window.__caosNecromancer.snapshot(),bossSkinFrames:Number(window.__caosNecromancerBossSkinRendered||0),fallback:!!window.__caosNecromancerBossSkinFallback}));
  assert(boss.state.summons.length===1&&boss.state.summons[0].type==='colossus','boss summon state missing');
  assert(boss.bossSkinFrames>0,'summoned boss exists but its body/skin never rendered');
+
+ // Lifecycle bloqueante: morreu o player, a tropa daquela run morre junto.
+ await page.evaluate(()=>window.CaosLiveCommand({command:'damage',amount:9999,target:'p1',source:'qa'}));
+ await page.waitForFunction(()=>document.getElementById('deathCam')?.classList.contains('show'),null,{timeout:5000});
+ await page.waitForFunction(()=>window.__caosNecromancer?.snapshot().summons.length===0,null,{timeout:2500});
+ const dead=await page.evaluate(()=>window.__caosNecromancer.snapshot());
+ assert(dead.summons.length===0,'summons survived player death');
+
+ // Nova partida não pode ressuscitar referências da run anterior; config Live+ pode permanecer habilitada.
+ await page.evaluate(()=>window.CaosTest.reset());
+ await page.waitForFunction(()=>window.CaosTest?.snapshot().running===true,null,{timeout:5000});
+ const restarted=await page.evaluate(()=>window.__caosNecromancer.snapshot());
+ assert(restarted.summons.length===0,'old summons leaked into the next run');
+ assert(restarted.enabled===true,'Live+ Necromancer configuration should persist between runs');
  assert(errors.length===0,errors.join(' | '));
- console.log(`NECROMANCER QA OK: regular=3 separated=yes duel=yes bossSkinFrames=${boss.bossSkinFrames} bossFallback=${boss.fallback} fx=${boss.state.fx}`);
+ console.log(`NECROMANCER QA OK: regular=3 separated=yes duel=yes staleLock=cleared bossSkinFrames=${boss.bossSkinFrames} deathReset=yes newRunClean=yes fx=${restarted.fx}`);
  await context.close();
 }finally{
  if(browser)await browser.close();
