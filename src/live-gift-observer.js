@@ -5,6 +5,7 @@ const DISC_KEY='caos-private-live-gifts-v1';
 const SAVED_KEY='caos-private-live-gifts-saved-v1';
 const CAT_KEY='caos-gift-catalog-v2';
 const RULE_KEY='caos-live-rules-v2';
+const DIV_PANEL_KEY='caos-divergence-panel-collapsed-v1';
 
 let ws=null;
 let active=false;
@@ -523,6 +524,14 @@ function bindDivergencePanel(panel){
   panel.addEventListener('click',event=>{
     const button=event.target.closest('button');
     if(!button||!panel.contains(button))return;
+    if(button.matches('[data-div-toggle]')){
+      event.preventDefault();
+      const collapsed=panel.dataset.collapsed==='1';
+      panel.dataset.collapsed=collapsed?'0':'1';
+      write(DIV_PANEL_KEY,!collapsed);
+      renderDivergencePanel();
+      return;
+    }
     if(button.matches('[data-div-filter]')){
       event.preventDefault();
       divergenceFilter=button.dataset.divFilter||'all';
@@ -553,6 +562,7 @@ function renderDivergencePanel(){
   if(!panel){
     panel=document.createElement('section');
     panel.id='giftDivergencePanel';
+    panel.dataset.collapsed=read(DIV_PANEL_KEY,false)?'1':'0';
     panel.style.cssText='margin:10px 0 14px;padding:10px;border:1px solid rgba(251,191,36,.24);border-radius:12px;background:rgba(251,191,36,.035)';
     box.insertAdjacentElement('beforebegin',panel);
   }
@@ -567,9 +577,13 @@ function renderDivergencePanel(){
     multi:list.filter(g=>divergenceTypes(g.liveDivergence).length>1).length
   };
   const filtered=list.filter(g=>divergenceMatches(g,divergenceFilter));
+  const collapsed=panel.dataset.collapsed==='1';
   const button=(k,label)=>`<button type="button" class="miniBtn${divergenceFilter===k?' active':''}" data-div-filter="${k}">${label} (${counts[k]})</button>`;
+  const body=collapsed
+    ?`<p class="hint" style="margin:6px 0 0">${counts.all?`${counts.all} divergência${counts.all===1?'':'s'} guardada${counts.all===1?'':'s'} para revisar depois.`:'Nenhuma divergência pendente.'}</p>`
+    :`<div class="v2CatalogActions" style="display:flex;gap:6px;flex-wrap:wrap">${button('all','TODAS')}${button('name','NOME')}${button('value','VALOR')}${button('id','ID')}${button('multi','MÚLTIPLAS')}</div><p class="hint" style="margin:8px 0">Nome novo passa a ser corrigido automaticamente nas próximas verificações. ID e valor continuam manuais para segurança.</p><div id="giftDivergenceList">${filtered.map(divergenceCard).join('')||'<div class="hint">Nenhuma divergência neste filtro.</div>'}</div>`;
 
-  panel.innerHTML=`<div class="caosQuickHead" style="margin-bottom:8px"><div><span class="eyebrow">VALIDAÇÃO AO VIVO</span><h3 style="margin:2px 0">Divergências</h3></div><span class="miniStatus">${counts.all} pendentes</span></div><div class="v2CatalogActions" style="display:flex;gap:6px;flex-wrap:wrap">${button('all','TODAS')}${button('name','NOME')}${button('value','VALOR')}${button('id','ID')}${button('multi','MÚLTIPLAS')}</div><p class="hint" style="margin:8px 0">Nome novo passa a ser corrigido automaticamente nas próximas verificações. ID e valor continuam manuais para segurança.</p><div id="giftDivergenceList">${filtered.map(divergenceCard).join('')||'<div class="hint">Nenhuma divergência neste filtro.</div>'}</div>`;
+  panel.innerHTML=`<div class="caosQuickHead" style="margin-bottom:${collapsed?'0':'8px'}"><div><span class="eyebrow">VALIDAÇÃO AO VIVO</span><h3 style="margin:2px 0">Divergências</h3></div><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end"><span class="miniStatus">${counts.all} pendentes</span><button type="button" class="miniBtn" data-div-toggle>${collapsed?'MOSTRAR':'OCULTAR'}</button></div></div>${body}`;
 }
 
 function decorateVerifiedCatalog(){
