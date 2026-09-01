@@ -1,4 +1,4 @@
-name: Refactor game P6 enemy spawn
+name: Refactor game P7 enemy melee
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Apply P6 spawn extraction
+      - name: Apply P7 melee extraction
         run: node scripts/refactor-game-p3-projectiles.mjs
       - name: Syntax checks
         run: |
@@ -39,7 +39,7 @@ jobs:
           node --input-type=module -e "import('./src/core/projectiles-runtime.mjs').then(m=>{if(!m.assertProjectileState())process.exit(1); console.log('Projectile domain OK')})"
           node --input-type=module -e "import('./src/core/enemies-runtime.mjs').then(m=>{if(!m.assertEnemyState())process.exit(1); console.log('Enemy domain OK')})"
           node --input-type=module -e "import('./src/core/waves-runtime.mjs').then(m=>{if(!m.assertWaveState())process.exit(1); console.log('Wave domain OK')})"
-      - name: Commit extracted P6 boundaries
+      - name: Commit extracted P7 boundaries
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -48,5 +48,5 @@ jobs:
             echo 'No generated changes to commit'
             exit 0
           fi
-          git commit -m 'refactor(game): extract enemy spawn and wave composition'
+          git commit -m 'refactor(game): extract enemy melee resolution'
           git push
