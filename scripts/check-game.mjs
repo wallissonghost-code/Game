@@ -15,6 +15,8 @@ const panel=read('src/panel.js');
 const mapRuntime=read('src/map-runtime.js');
 const duo=read('src/duo.js');
 const contracts=read('src/core/contracts.mjs');
+const runtimeState=read('src/core/runtime-state.js');
+const matchState=read('src/core/match-state.mjs');
 
 // Release/version integrity
 if(!game.includes(`const VERSION='${version}'`)) fail('VERSION do jogo divergente'); else ok('versao sincronizada '+version);
@@ -47,11 +49,11 @@ for(let i=1;i<=32;i++){
 for(const f of ['assets/bosses/Ogroboss1.zip','assets/bosses/Ogro2.0Boss.zip','assets/Map/snow-frost/manifest.json']) exists(f)?ok(f):fail('asset ausente '+f);
 
 // Multiplayer/ranking essenciais
-if(!game.includes('const duoPlayer=')) fail('estado P2 ausente'); else ok('estado P2 ativo');
+if(!(game.includes('runtimeState.createDuoPlayer()')&&runtimeState.includes('createDuoPlayer'))) fail('estado P2 ausente'); else ok('estado P2 ativo');
 if(!game.includes("d?.type==='duo-input'")) fail('input P2 ausente'); else ok('input P2 ativo');
 if(!game.includes('sendDuoSnapshot')) fail('snapshot P2 ausente'); else ok('snapshot P2 ativo');
 if(!duo.includes("peer.connect('chaos-live-'+room.toLowerCase()")) fail('Duo fora da sala do Host'); else ok('Duo usa mesma sala');
-if(!game.includes('function xpNeedFor(lv)')) fail('curva XP ausente'); else ok('curva XP ativa');
+if(!(game.includes('matchRuntime.xpNeedFor')&&matchState.includes('export function xpNeedFor(lv)'))) fail('curva XP ausente'); else ok('curva XP ativa');
 if(!contracts.includes('hp: 4.2, dmg: 2.05, speed: 1.10, xp: 4.2, hitbox: 1.08')) fail('stats Elite II divergentes'); else ok('stats Elite II');
 if(!contracts.includes('hp: 7, dmg: 2.75, speed: 1.16, xp: 6.5, hitbox: 1.20')) fail('stats Corrompido II divergentes'); else ok('stats Corrompido II');
 

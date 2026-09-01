@@ -18,11 +18,13 @@ export function patchNaturalEvents(source) {
   else if (s.includes("VERSION='0.17.46'")) one("VERSION='0.17.46'", "VERSION='0.17.47'", 'version');
   else if (!s.includes("VERSION='0.17.47'")) throw new Error('NaturalEvents/version: unsupported runtime version');
 
-  one(
-    "doubleXpEvent=false,meteorEventActive=false,meteorSpawnTimer=.45,meteors=[],meteorShakeLeft=0,meteorConfig={interval:1.7,warning:1.8,radius:92,playerDamage:18,mobDamage:20,batch:1};",
-    "doubleXpEvent=false,meteorEventActive=false,doubleXpAdmin=false,meteorAdmin=false,naturalDoubleXpUntil=0,naturalMeteorUntil=0,naturalDoubleXpNextAt=0,naturalMeteorNextAt=0,meteorSpawnTimer=.45,meteors=[],meteorShakeLeft=0,meteorConfig={interval:1.7,warning:1,radius:100,playerDamage:15,mobDamage:5,batch:4};",
-    'event-state'
-  );
+  const legacyEventState="doubleXpEvent=false,meteorEventActive=false,meteorSpawnTimer=.45,meteors=[],meteorShakeLeft=0,meteorConfig={interval:1.7,warning:1.8,radius:92,playerDamage:18,mobDamage:20,batch:1};";
+  const modularEventState="doubleXpEvent=false,meteorEventActive=false,meteorSpawnTimer=.45,meteors=[],meteorConfig={interval:1.7,warning:1.8,radius:92,playerDamage:18,mobDamage:20,batch:1};";
+  const patchedLegacyEventState="doubleXpEvent=false,meteorEventActive=false,doubleXpAdmin=false,meteorAdmin=false,naturalDoubleXpUntil=0,naturalMeteorUntil=0,naturalDoubleXpNextAt=0,naturalMeteorNextAt=0,meteorSpawnTimer=.45,meteors=[],meteorShakeLeft=0,meteorConfig={interval:1.7,warning:1,radius:100,playerDamage:15,mobDamage:5,batch:4};";
+  const patchedModularEventState="doubleXpEvent=false,meteorEventActive=false,doubleXpAdmin=false,meteorAdmin=false,naturalDoubleXpUntil=0,naturalMeteorUntil=0,naturalDoubleXpNextAt=0,naturalMeteorNextAt=0,meteorSpawnTimer=.45,meteors=[],meteorConfig={interval:1.7,warning:1,radius:100,playerDamage:15,mobDamage:5,batch:4};";
+  if(s.includes(legacyEventState)) one(legacyEventState,patchedLegacyEventState,'event-state');
+  else if(s.includes(modularEventState)) one(modularEventState,patchedModularEventState,'event-state');
+  else if(!s.includes('naturalDoubleXpNextAt=0')||!s.includes('naturalMeteorNextAt=0')) throw new Error('NaturalEvents/event-state: unsupported runtime state');
 
   one(
     "function hurtEnemy(e,amount,kind='normal'){const dealt=window.CaosCombat.applyEnemyDamage(e,amount);if(dealt>0)addDamageFx(e,dealt,kind);return dealt}\nfunction clampEventNumber",
