@@ -35,7 +35,9 @@ const skillsBootstrap = read('src/core/skills-bootstrap.mjs');
 const skillsSource = read('src/core/skills.mjs');
 const mobsSource = read('src/core/mobs.mjs');
 const combatSource = read('src/core/combat.mjs');
-const soloContractView = solo+'\n'+mobsSource+'\n'+combatSource+'\n'+read('src/core/contracts.mjs');
+const matchStateSource = read('src/core/match-state.mjs');
+const enemiesRuntimeSource = read('src/core/enemies-runtime.mjs');
+const soloContractView = solo+'\n'+mobsSource+'\n'+combatSource+'\n'+matchStateSource+'\n'+enemiesRuntimeSource+'\n'+read('src/core/contracts.mjs');
 const mpClient = read('src/multiplayer-v2.js');
 const mpServer = read('cloud/game-server-v3.mjs');
 const rollbackMode = false;
@@ -166,7 +168,7 @@ for (const [token, value] of [
 ]) {
   if (!mpServer.includes(`${token}=${value}`)) fail(`multiplayer ${token} differs from core contract ${value}`);
 }
-if (!solo.includes(`MAX_ENEMIES=${LIMITS.solo.maxEnemies}`)) fail(`solo MAX_ENEMIES differs from core contract ${LIMITS.solo.maxEnemies}`);
+if (!soloContractView.includes(`MAX_ENEMIES=${LIMITS.solo.maxEnemies}`)) fail(`solo MAX_ENEMIES differs from core contract ${LIMITS.solo.maxEnemies}`);
 else ok('entity/network limits guarded');
 
 for (const primitive of ['pendingInputs', 'lastAck', 'interpActor', 'requestAnimationFrame(frame)', 'sendInput(false)']) {
