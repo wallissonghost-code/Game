@@ -9,6 +9,7 @@ const assert=(ok,msg)=>{if(!ok)throw Error(`NECROMANCER QA FAILED: ${msg}`)};
 const actionsSource=fs.readFileSync('src/liveplus-necromancer-actions.js','utf8');
 const hookSource=fs.readFileSync('src/liveplus-runtime-hook.js','utf8');
 const necroSource=fs.readFileSync('src/companions/necromancer.js','utf8');
+const physicsSource=fs.readFileSync('src/companions/necromancer-physics.js','utf8');
 assert(/manifest\.actions\.splice\(0,manifest\.actions\.length/.test(actionsSource),'Live+ patch must preserve bridge ACTIONS array identity');
 assert(!/manifest\.actions\s*=\s*manifest\.actions\.filter/.test(actionsSource),'manifest actions array is being replaced; panel command will become unsupported');
 assert(/necro_raise/.test(actionsSource)&&/necro_config/.test(actionsSource),'required Necromancer Live+ actions missing');
@@ -19,6 +20,9 @@ assert(/necroEnemyTarget\(e\)\|\|duoEnemyTarget\(e\)/.test(necroSource),'enemy c
 assert(/fx:'off'/.test(necroSource),'Necromancer no-FX contract missing');
 assert(/function drawNecromancer\(\)\{if\(!necroSummons\.length\)return;for\(const s of necroSummons\)\{const p=world\(s\.x,s\.y\);drawEnemy\(s,p\)\}\}/.test(necroSource),'Necromancer renderer should draw the mob directly without aura/filter/ring');
 assert(!/function drawNecromancer\([\s\S]{0,500}ctx\.filter/.test(necroSource),'Necromancer renderer still applies a canvas filter');
+assert(/__caosNecromancerBossSkinRendered/.test(physicsSource),'boss-skin render probe missing');
+assert(/necroBossFallback/.test(physicsSource),'summoned boss does not have a visible fallback path');
+assert(/if\(isBoss&&!e\.necroAlly\)/.test(physicsSource),'summoned boss name/tier suppression missing');
 
 const server=spawn('python3',['-m','http.server',String(PORT),'--bind','127.0.0.1'],{stdio:['ignore','pipe','pipe']});
 async function waitServer(){for(let i=0;i<50;i++){try{const r=await fetch(BASE,{cache:'no-store'});if(r.ok)return}catch{}await sleep(200)}throw Error('Necromancer QA server did not start')}
@@ -67,8 +71,18 @@ try{
  await page.waitForFunction(()=>window.__caosNecromancer?.snapshot().summons.some(s=>s.duel),null,{timeout:5000});
  const duel=await page.evaluate(()=>window.__caosNecromancer.snapshot());
  assert(duel.summons.some(s=>s.duel),'shadow reached an enemy but no 1v1 duel lock was created');
+
+ // Regression real do bug visto no iPhone: boss invocado não pode virar só barra + sombra verde.
+ await page.evaluate(()=>window.CaosLiveCommand({command:'necro_config',enabled:true,maxSummons:3,clear:true,source:'qa'}));
+ await page.evaluate(()=>{window.__caosNecromancerBossSkinRendered=0;window.__caosNecromancerBossSkinFallback=false;});
+ await page.evaluate(()=>window.CaosLiveCommand({command:'necro_raise',amount:1,mob:'colossus',tier:'corrupted',source:'qa'}));
+ await page.waitForFunction(()=>window.__caosNecromancer?.snapshot().summons.some(s=>s.type==='colossus'),null,{timeout:5000});
+ await page.waitForFunction(()=>Number(window.__caosNecromancerBossSkinRendered||0)>0,null,{timeout:8000});
+ const boss=await page.evaluate(()=>({state:window.__caosNecromancer.snapshot(),bossSkinFrames:Number(window.__caosNecromancerBossSkinRendered||0),fallback:!!window.__caosNecromancerBossSkinFallback}));
+ assert(boss.state.summons.length===1&&boss.state.summons[0].type==='colossus','boss summon state missing');
+ assert(boss.bossSkinFrames>0,'summoned boss exists but its body/skin never rendered');
  assert(errors.length===0,errors.join(' | '));
- console.log(`NECROMANCER QA OK: summons=${duel.summons.length} separated=yes duel=yes renderedFrames=${result.rendered} skin=${result.state.skinSource} fx=${duel.fx}`);
+ console.log(`NECROMANCER QA OK: regular=3 separated=yes duel=yes bossSkinFrames=${boss.bossSkinFrames} bossFallback=${boss.fallback} fx=${boss.state.fx}`);
  await context.close();
 }finally{
  if(browser)await browser.close();
