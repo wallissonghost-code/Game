@@ -36,6 +36,8 @@ jobs:
         run: npm run check:ghost-aim
       - name: Live+ ghost ally regression · spawn + move + target + shoot
         run: npm run check:ghostally
+      - name: Necromancer QA · Live+ contract + summon + skin + canvas render
+        run: npm run check:necromancer
       - name: Full gameplay bot · mobile + desktop (blocking)
         id: gameplay
         run: npm run check:gameplay
