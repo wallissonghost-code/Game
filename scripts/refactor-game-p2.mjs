@@ -1,4 +1,4 @@
-// trigger: p2 domain extraction v3
+// trigger: p2 domain extraction v4
 import fs from 'node:fs';
 
 const gamePath='src/game.js';
@@ -48,6 +48,20 @@ if(!game.includes('const matchRuntime=window.CaosMatchState')){
   game=game.replace(runtimeAnchor,domainInit+runtimeAnchor);
 }
 
+// Domain APIs must be initialized before destructuring their state factories.
+{
+  const firstState=game.indexOf(';let {score,level,xp,xpNeed');
+  const domainStart=game.indexOf(';const matchRuntime=window.CaosMatchState');
+  const runtimeStart=domainStart>=0?game.indexOf(';const runtimeState=window.CaosRuntimeState',domainStart):-1;
+  if(firstState>=0&&domainStart>firstState&&runtimeStart>domainStart){
+    const domainBlock=game.slice(domainStart,runtimeStart);
+    game=game.slice(0,domainStart)+game.slice(runtimeStart);
+    const insertion=game.indexOf(';let {score,level,xp,xpNeed');
+    if(insertion<0)throw Error('state insertion point lost while reordering domains');
+    game=game.slice(0,insertion)+domainBlock+game.slice(insertion);
+  }
+}
+
 const xpRe=/function xpNeedFor\(lv\)\{const base=60\*Math\.pow\(Math\.max\(1,lv\),1\.42\),mult=lv>=90\?1\.70:lv>=80\?1\.50:lv>=60\?1\.30:lv>=40\?1\.12:1;return Math\.floor\(base\*mult\)\}/;
 if(xpRe.test(game))game=game.replace(xpRe,'const xpNeedFor=matchRuntime.xpNeedFor');
 if(game.includes('const MAX_ENEMIES=320,GRID=64,CHUNK=640;'))game=game.replace('const MAX_ENEMIES=320,GRID=64,CHUNK=640;','const {MAX_ENEMIES,GRID,CHUNK}=enemiesRuntime.ENEMY_LIMITS;');
@@ -77,4 +91,6 @@ fs.writeFileSync(archPath,arch);
 const finalGame=fs.readFileSync(gamePath,'utf8');
 for(const needle of ['matchRuntime.createMatchState()','wavesRuntime.createWaveState()','enemiesRuntime.createEnemyState()','projectilesRuntime.createProjectileState()','renderRuntime.createRenderState()','multiplayerRuntime.createMultiplayerState()'])if(!finalGame.includes(needle))throw Error('missing extraction '+needle);
 if(finalGame.includes('function xpNeedFor(lv)'))throw Error('xpNeedFor still inline');
+const domainPos=finalGame.indexOf('const matchRuntime=window.CaosMatchState'),statePos=finalGame.indexOf('let {score,level,xp,xpNeed');
+if(domainPos<0||statePos<0||domainPos>statePos)throw Error('domain APIs are not initialized before state factories');
 console.log('P2 OK: match, waves, enemies, projectiles, multiplayer and render state boundaries extracted');
