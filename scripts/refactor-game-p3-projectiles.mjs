@@ -44,7 +44,6 @@ bootstrap=replaceExactly(bootstrap,oldGeometry,newGeometry,'shot-geometry-helper
 const oldProjectile="const vx=Math.cos(shotAim)*610,vy=Math.sin(shotAim)*610;ciLastShot={shotId,spawnX,spawnY,playerX:player.x,playerY:player.y,visualAim,visualDir:dir,aim:shotAim,muzzleScale,vx,vy,targetX:target?.x??null,targetY:target?.y??null,targetType:target?.type??null,at:performance.now()};bullets.push({shotId,x:spawnX,y:spawnY,prevX:spawnX,prevY:spawnY,vx,vy,launchVx:vx,launchVy:vy,r:4,dead:false,ammo:1,born:performance.now(),pierceLeft,hits:[],iceHits:0,damage:player.damage*bs.damageMul,ice,explosive,owner:'p1'});";
 const newProjectile="const shotBorn=performance.now(),projectile=projectilesRuntime.createProjectile({shotId,x:spawnX,y:spawnY,aim:shotAim,speed:610,born:shotBorn,pierceLeft,damage:player.damage*bs.damageMul,ice,explosive,owner:'p1'}),{vx,vy}=projectile;ciLastShot={shotId,spawnX,spawnY,playerX:player.x,playerY:player.y,visualAim,visualDir:dir,aim:shotAim,muzzleScale,vx,vy,targetX:target?.x??null,targetY:target?.y??null,targetType:target?.type??null,at:shotBorn};bullets.push(projectile);";
 bootstrap=replaceExactly(bootstrap,oldProjectile,newProjectile,'projectile-factory');
-bootstrap=bootstrap.replace("../game.js?v=01747-close-parallax2","../game.js?v=01750-p3-projectiles");
 fs.writeFileSync(bootstrapPath,bootstrap);
 
 let index=fs.readFileSync(indexPath,'utf8');
