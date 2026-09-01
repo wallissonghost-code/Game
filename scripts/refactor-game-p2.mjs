@@ -1,4 +1,4 @@
-// trigger: p2 domain extraction v2
+// trigger: p2 domain extraction v3
 import fs from 'node:fs';
 
 const gamePath='src/game.js';
