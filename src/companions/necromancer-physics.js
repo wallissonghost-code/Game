@@ -1,13 +1,13 @@
 (()=>{'use strict';
 const base=window.CaosNecromancerCompanion;
-if(!base||base.__solidBodiesV2)return;
+if(!base||base.__solidBodiesV3)return;
 const originalApply=base.apply;
 function apply(source){
   let out=originalApply(source);
-  if(typeof out!=='string'||out.includes('CAOS_NECROMANCER_SOLID_BODY_V2'))return out;
+  if(typeof out!=='string'||out.includes('CAOS_NECROMANCER_SOLID_BODY_V3'))return out;
   if(!out.includes('function updateNecromancer(dt){')||!out.includes('function drawEnemy(e,p){')||!out.includes('function drawOgreSkin(e,isBoss){'))return out;
 
-  const physics=`/*CAOS_NECROMANCER_SOLID_BODY_V2*/
+  const physics=`/*CAOS_NECROMANCER_SOLID_BODY_V3*/
 function necroResolvePlayerBodyCollision(){
   for(const s of necroSummons){
     if(!s||s.dead)continue;
@@ -26,9 +26,35 @@ function necroResolvePlayerBodyCollision(){
     }
   }
 }
+function necroResolveEnemyBodyCollisions(){
+  for(const e of enemies){
+    if(!e||e.dead)continue;
+    const enemyBoss=!!types[e.type]?.boss;
+    for(const s of necroSummons){
+      if(!s||s.dead)continue;
+      const shadowBoss=!!s.necroBoss||!!types[s.type]?.boss;
+      let dx=e.x-s.x,dy=e.y-s.y,d=Math.hypot(dx,dy);
+      const margin=(enemyBoss||shadowBoss)?12:7;
+      const min=(e.r||14)+(s.r||14)+margin;
+      if(d>=min)continue;
+      if(d<.001){const seed=((e.seed||1)*1.37+(Number(String(s.id).replace('necro-',''))||1)*2.17);dx=Math.cos(seed);dy=Math.sin(seed);d=1}
+      const nx=dx/d,ny=dy/d,overlap=Math.min(18,min-d);
+      const enemyMass=enemyBoss?5:1.25;
+      const shadowMass=shadowBoss?6:2.1;
+      const total=enemyMass+shadowMass;
+      const enemyShare=shadowMass/total;
+      const shadowShare=enemyMass/total;
+      e.x+=nx*overlap*enemyShare;
+      e.y+=ny*overlap*enemyShare;
+      s.x-=nx*overlap*shadowShare;
+      s.y-=ny*overlap*shadowShare;
+      window.__caosNecromancerEnemyBodyPushes=(window.__caosNecromancerEnemyBodyPushes||0)+1;
+    }
+  }
+}
 `;
   out=out.replace('function updateNecromancer(dt){',physics+'function updateNecromancer(dt){');
-  out=out.replace(' necroSeparateSummons();\n for(const e of enemies){',' necroSeparateSummons();necroResolvePlayerBodyCollision();\n for(const e of enemies){');
+  out=out.replace(' necroSeparateSummons();\n for(const e of enemies){',' necroSeparateSummons();necroResolvePlayerBodyCollision();necroResolveEnemyBodyCollisions();\n for(const e of enemies){');
 
   // Invocação de boss não mostra nome/tier de inimigo.
   out=out.replace("if(isBoss){ctx.fillStyle='#fde68a';", "if(isBoss&&!e.necroAlly){ctx.fillStyle='#fde68a';");
@@ -43,5 +69,5 @@ function necroResolvePlayerBodyCollision(){
   else console.warn('NECROMANCER: boss skin selector patch target not found');
   return out;
 }
-window.CaosNecromancerCompanion=Object.freeze({...base,apply,version:String(base.version||'0.3.0')+'+solid2',__solidBodiesV2:true});
+window.CaosNecromancerCompanion=Object.freeze({...base,apply,version:String(base.version||'0.3.0')+'+solid3',__solidBodiesV3:true});
 })();
