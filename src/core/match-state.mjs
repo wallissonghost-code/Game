@@ -1,6 +1,5 @@
-export function xpNeedFor(level){
-  const lv=Math.max(1,Number(level)||1);
-  const base=60*Math.pow(lv,1.42);
+export function xpNeedFor(lv){
+  const base=60*Math.pow(Math.max(1,lv),1.42);
   const mult=lv>=90?1.70:lv>=80?1.50:lv>=60?1.30:lv>=40?1.12:1;
   return Math.floor(base*mult);
 }
