@@ -4,13 +4,13 @@ if(!base||base.__guardZoneAI)return;
 const originalApply=base.apply;
 function apply(source){
   let out=originalApply(source);
-  if(typeof out!=='string'||out.includes('CAOS_NECROMANCER_GUARD_ZONE_AI_V1'))return out;
+  if(typeof out!=='string'||out.includes('CAOS_NECROMANCER_GUARD_ZONE_AI_V2'))return out;
   if(!out.includes('function necroNearestEnemy(s){')||!out.includes('function updateNecromancer(dt){'))return out;
 
-  const helper=`/*CAOS_NECROMANCER_GUARD_ZONE_AI_V1*/
+  const helper=`/*CAOS_NECROMANCER_GUARD_ZONE_AI_V2*/
 const NECRO_GUARD_AI=Object.freeze({
-  normal:{guard:270,search:500,leash:680,returnSpeed:92},
-  boss:{guard:340,search:560,leash:760,returnSpeed:82}
+  normal:{guard:160,search:500,leash:680,returnSpeed:92},
+  boss:{guard:210,search:560,leash:760,returnSpeed:82}
 });
 function necroGuardProfile(s){return s?.necroBoss?NECRO_GUARD_AI.boss:NECRO_GUARD_AI.normal}
 function necroGuardPoint(s){
@@ -50,5 +50,5 @@ function necroEnemyInsideLeash(e,s){
 
   return out;
 }
-window.CaosNecromancerCompanion=Object.freeze({...base,apply,version:String(base.version||'0.3.0')+'+guardai1',__guardZoneAI:true});
+window.CaosNecromancerCompanion=Object.freeze({...base,apply,version:String(base.version||'0.3.0')+'+guardai2',__guardZoneAI:true});
 })();
