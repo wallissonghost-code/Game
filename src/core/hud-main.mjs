@@ -1,4 +1,4 @@
-import '../companions/necromancer-ai.js?v=01755-guard1';
+import '../companions/necromancer-ai.js?v=01755-guard2';
 import '../companions/necromancer-summon-fx.js?v=01755-rise3';
 import '../companions/necromancer-run-state.js?v=01755-runstate1';
 const $=id=>document.getElementById(id);
