@@ -1,5 +1,5 @@
 import '../companions/necromancer-ai.js?v=01755-guard1';
-import '../companions/necromancer-summon-fx.js?v=01755-rise2';
+import '../companions/necromancer-summon-fx.js?v=01755-rise3';
 import '../companions/necromancer-run-state.js?v=01755-runstate1';
 const $=id=>document.getElementById(id);
 function loadStyle(){if(document.querySelector('link[data-caos-hud-main]'))return;const link=document.createElement('link');link.rel='stylesheet';link.href='src/styles/hud-premium.css?v=main1';link.dataset.caosHudMain='1';document.head.appendChild(link)}
