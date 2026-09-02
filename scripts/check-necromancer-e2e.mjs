@@ -35,10 +35,13 @@ assert(/enemies\.includes\(t\)/.test(lifecycleSource),'stale duel target members
 assert(/visibilitychange/.test(lifecycleSource)&&/pageshow/.test(lifecycleSource),'background/resume recovery is missing');
 assert(/function reset\(\)\{necroClearArmy/.test(lifecycleSource),'new-run reset hook is missing');
 assert(/function beginDeath\(e\)\{if\(deathState\)return;necroClearArmy/.test(lifecycleSource),'death teardown hook is missing');
-assert(/CAOS_NECROMANCER_SUMMON_FX_V1/.test(summonFxSource),'summon rise animation patch missing');
+assert(/CAOS_NECROMANCER_SUMMON_FX_V\d+/.test(summonFxSource),'summon rise animation patch missing');
 assert(/necroDrawRiseGround/.test(summonFxSource)&&/necroDrawRisingMob/.test(summonFxSource),'summon rise visual stages missing');
 assert(/perfMode==='low'/.test(summonFxSource)&&/enemies\.length>85/.test(summonFxSource),'summon rise mobile/performance guard missing');
 assert(/__caosNecromancerRiseFrames/.test(summonFxSource)&&/__caosNecromancerRiseCompleted/.test(summonFxSource),'summon rise QA probes missing');
+assert(/necroIdleDuration/.test(summonFxSource)&&/necroInIntro/.test(summonFxSource),'summon intro/idle phase missing');
+assert(/ctx\.fillStyle='#000000'/.test(summonFxSource),'summon ground shadow is not using the black portal fill');
+assert(/s\.facing=dx===0&&dy===0\?'down':Math\.abs\(dx\)>Math\.abs\(dy\)\?\(dx>0\?'right':'left'\):\(dy>0\?'down':'up'\)/.test(summonFxSource),'summon intro facing is not oriented away from the player');
 assert(/necroEnabled=false/.test(runStateSource),'per-run Necromancer acquisition reset missing');
 assert(/necromancer-summon-fx\.js/.test(hudSource)&&/necromancer-run-state\.js/.test(hudSource),'Necromancer runtime patches are not loaded by module bootstrap');
 assert(indexSource.indexOf('necromancer-lifecycle.js')>indexSource.indexOf('necromancer-physics.js'),'lifecycle wrapper must load after physics');
