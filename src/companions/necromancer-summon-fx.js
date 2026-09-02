@@ -1,13 +1,13 @@
 (()=>{'use strict';
 const base=window.CaosNecromancerCompanion;
-if(!base||base.__summonFxV2)return;
+if(!base||base.__summonFxV3)return;
 const originalApply=base.apply;
 function apply(source){
   let out=originalApply(source);
-  if(typeof out!=='string'||out.includes('CAOS_NECROMANCER_SUMMON_FX_V2'))return out;
+  if(typeof out!=='string'||out.includes('CAOS_NECROMANCER_SUMMON_FX_V3'))return out;
   if(!out.includes('function drawNecromancer(){')||!out.includes('function necroForcedRaise('))return out;
 
-  const fx=`/*CAOS_NECROMANCER_SUMMON_FX_V2*/
+  const fx=`/*CAOS_NECROMANCER_SUMMON_FX_V3*/
 function necroRiseDuration(s){
   const crowded=enemies.length>85||perfMode==='low';
   if(crowded)return s.necroBoss?900:560;
@@ -21,18 +21,22 @@ function necroRiseProgress(s,now=performance.now()){
 function necroInIntro(s,now=performance.now()){
   return now-(Number(s.necroBorn)||now)<necroRiseDuration(s)+necroIdleDuration(s);
 }
+function necroOutwardFacing(angle){
+  const x=Math.cos(angle),y=Math.sin(angle);
+  return Math.abs(x)>Math.abs(y)?(x>=0?'right':'left'):(y>=0?'down':'up');
+}
 function necroDrawRiseGround(s,p,t){
   const r=Math.max(16,(s.r||14)*(s.necroBoss?1.48:1.24));
   const pulse=Math.sin(Math.min(1,t)*Math.PI),scale=.58+t*.48+pulse*.05;
   ctx.save();
-  ctx.globalAlpha=.20+.48*pulse;
-  ctx.fillStyle='#010302';
+  ctx.globalAlpha=.72+.22*pulse;
+  ctx.fillStyle='#000000';
   ctx.beginPath();
   ctx.ellipse(p.x,p.y+(s.r||14)*.72,r*scale,r*.31*scale,0,0,Math.PI*2);
   ctx.fill();
   if(enemies.length<86&&perfMode!=='low'){
-    ctx.globalAlpha=.09+.17*pulse;
-    ctx.strokeStyle='#17382c';
+    ctx.globalAlpha=.18+.12*pulse;
+    ctx.strokeStyle='#07100c';
     ctx.lineWidth=Math.max(1,Math.min(2,(s.r||14)*.075));
     ctx.beginPath();
     ctx.ellipse(p.x,p.y+(s.r||14)*.72,r*(scale+.10),r*.35*(scale+.10),0,0,Math.PI*2);
@@ -47,8 +51,6 @@ function necroDrawRisingMob(s,p,t){
   const groundY=p.y+(s.r||14)*.74;
   const sink=(1-ease)*visualH*.94;
   ctx.save();
-  // Ground-anchored reveal: anything below the floor is never rendered.
-  // The full mob is translated from below the floor to its normal final pose.
   ctx.beginPath();
   ctx.rect(-W*2,-H*2,W*5,groundY+H*2);
   ctx.clip();
@@ -79,14 +81,14 @@ function drawNecromancer(){
   if(start<0||end<0)return out;
   out=out.slice(0,start)+fx+out.slice(end);
 
-  // Every raised shadow materializes beside the player, including natural raises.
   out=out.replace('spawnDist=nearPlayer?110+slot*8:0,spawnX=nearPlayer?player.x+Math.cos(angle)*spawnDist:e.x,spawnY=nearPlayer?player.y+Math.sin(angle)*spawnDist:e.y,',
     'spawnDist=104+slot*10,spawnX=player.x+Math.cos(angle)*spawnDist,spawnY=player.y+Math.sin(angle)*spawnDist,');
 
-  // Rise -> animated idle in place -> normal guard/attack AI.
+  out=out.replace("facing:e.facing||'down'","facing:necroOutwardFacing(angle)");
+
   const updateNeedle='for(const s of necroSummons){if(s.dead)continue;s.t+=dt;';
   if(out.includes(updateNeedle))out=out.replace(updateNeedle,"for(const s of necroSummons){if(s.dead)continue;s.t+=dt;if(necroInIntro(s,performance.now())){s.speedMul=performance.now()-(s.necroBorn||0)<necroRiseDuration(s)?0:.28;continue}");
   return out;
 }
-window.CaosNecromancerCompanion=Object.freeze({...base,apply,version:String(base.version||'0.3.0')+'+summonfx2',__summonFxV2:true});
+window.CaosNecromancerCompanion=Object.freeze({...base,apply,version:String(base.version||'0.3.0')+'+summonfx3',__summonFxV3:true});
 })();
