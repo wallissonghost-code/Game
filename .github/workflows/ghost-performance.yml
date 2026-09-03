@@ -7,6 +7,8 @@ on:
     paths:
       - 'src/**'
       - 'scripts/ghost-perf-suite.mjs'
+      - 'scripts/fps-stress-qa.mjs'
+      - 'package.json'
       - '.github/workflows/ghost-performance.yml'
 
 concurrency:
@@ -17,7 +19,7 @@ jobs:
   benchmark:
     name: Ghost Performance Suite
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,11 +27,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Run comparative benchmark
+      - name: Install browser benchmark dependencies
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Run comparative CPU benchmark
         run: node scripts/ghost-perf-suite.mjs
-      - name: Publish benchmark artifact
+      - name: Run Canvas FPS stress QA
+        run: node scripts/fps-stress-qa.mjs
+      - name: Publish benchmark artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ghost-performance-report
-          path: artifacts/ghost-perf-report.json
+          path: |
+            artifacts/ghost-perf-report.json
+            artifacts/fps-stress-report.json
           retention-days: 14
