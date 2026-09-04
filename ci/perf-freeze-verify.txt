@@ -1,0 +1,1 @@
+Verify corrupted mob performance weighting and global meteor freeze behavior.
