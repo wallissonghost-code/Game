@@ -1,0 +1,1 @@
+Force Ghost Fast CI on the stable post-rollback baseline before any FPS optimization is reintroduced.
