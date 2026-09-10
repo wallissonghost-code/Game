@@ -1,0 +1,1 @@
+Trigger Ghost validation for Classic visual aim synchronization with muzzle-origin shots.
