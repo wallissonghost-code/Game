@@ -21,10 +21,6 @@ function necroRiseProgress(s,now=performance.now()){
 function necroInIntro(s,now=performance.now()){
   return now-(Number(s.necroBorn)||now)<necroRiseDuration(s)+necroIdleDuration(s);
 }
-function necroOutwardFacing(angle){
-  const x=Math.cos(angle),y=Math.sin(angle);
-  return Math.abs(x)>Math.abs(y)?(x>=0?'right':'left'):(y>=0?'down':'up');
-}
 function necroDrawRiseGround(s,p,t){
   const r=Math.max(16,(s.r||14)*(s.necroBoss?1.48:1.24));
   const pulse=Math.sin(Math.min(1,t)*Math.PI),scale=.58+t*.48+pulse*.05;
@@ -84,7 +80,7 @@ function drawNecromancer(){
   out=out.replace('spawnDist=nearPlayer?110+slot*8:0,spawnX=nearPlayer?player.x+Math.cos(angle)*spawnDist:e.x,spawnY=nearPlayer?player.y+Math.sin(angle)*spawnDist:e.y,',
     'spawnDist=104+slot*10,spawnX=player.x+Math.cos(angle)*spawnDist,spawnY=player.y+Math.sin(angle)*spawnDist,');
 
-  out=out.replace("facing:e.facing||'down'","facing:necroOutwardFacing(angle)");
+  out=out.replace('necroRecalc(s,true);',"const dx=s.x-player.x,dy=s.y-player.y;s.facing=dx===0&&dy===0?'down':Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');necroRecalc(s,true);");
 
   const updateNeedle='for(const s of necroSummons){if(s.dead)continue;s.t+=dt;';
   if(out.includes(updateNeedle))out=out.replace(updateNeedle,"for(const s of necroSummons){if(s.dead)continue;s.t+=dt;if(necroInIntro(s,performance.now())){s.speedMul=performance.now()-(s.necroBorn||0)<necroRiseDuration(s)?0:.28;continue}");
