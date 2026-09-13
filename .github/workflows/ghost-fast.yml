@@ -24,17 +24,15 @@ jobs:
           node-version: '24'
 
       - name: Cache Playwright Chromium
-        id: pw-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-1.55.0-chromium
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}-chromium
 
       - name: Install Playwright package
         run: npm install --no-audit --no-fund --ignore-scripts
 
-      - name: Install Chromium if cache missed
-        if: steps.pw-cache.outputs.cache-hit != 'true'
+      - name: Ensure matching Chromium is installed
         run: npx playwright install chromium
 
       - name: Install Chromium system deps
