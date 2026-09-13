@@ -21,6 +21,10 @@ function necroRiseProgress(s,now=performance.now()){
 function necroInIntro(s,now=performance.now()){
   return now-(Number(s.necroBorn)||now)<necroRiseDuration(s)+necroIdleDuration(s);
 }
+function necroRenderMob(s,p){
+  drawEnemy(s,p);
+  window.__caosNecromancerRendered=(window.__caosNecromancerRendered||0)+1;
+}
 function necroDrawRiseGround(s,p,t){
   const r=Math.max(16,(s.r||14)*(s.necroBoss?1.48:1.24));
   const pulse=Math.sin(Math.min(1,t)*Math.PI),scale=.58+t*.48+pulse*.05;
@@ -41,7 +45,7 @@ function necroDrawRiseGround(s,p,t){
   ctx.restore();
 }
 function necroDrawRisingMob(s,p,t){
-  if(!(t>=0&&t<1)){drawEnemy(s,p);return}
+  if(!(t>=0&&t<1)){necroRenderMob(s,p);return}
   const ease=1-Math.pow(1-t,3);
   const visualH=Math.max(70,(s.r||14)*(s.necroBoss?7.2:5.2));
   const groundY=p.y+(s.r||14)*.74;
@@ -52,7 +56,7 @@ function necroDrawRisingMob(s,p,t){
   ctx.clip();
   ctx.globalAlpha=.34+.66*ease;
   ctx.translate(0,sink);
-  drawEnemy(s,p);
+  necroRenderMob(s,p);
   ctx.restore();
   window.__caosNecromancerRiseFrames=(window.__caosNecromancerRiseFrames||0)+1;
 }
@@ -65,7 +69,7 @@ function drawNecromancer(){
       necroDrawRiseGround(s,p,t);
       necroDrawRisingMob(s,p,t);
     }else{
-      drawEnemy(s,p);
+      necroRenderMob(s,p);
       if(!s.necroRiseDone){s.necroRiseDone=true;window.__caosNecromancerRiseCompleted=(window.__caosNecromancerRiseCompleted||0)+1}
       if(necroInIntro(s,now))window.__caosNecromancerIdleFrames=(window.__caosNecromancerIdleFrames||0)+1;
     }
